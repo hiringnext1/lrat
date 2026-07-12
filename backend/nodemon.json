@@ -1,0 +1,4 @@
+{
+  "ignore": ["db/*.db", "db/*.db-journal", "db/*.db-wal", "db/*.db-shm", "node_modules"],
+  "delay": 2500
+}
