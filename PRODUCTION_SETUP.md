@@ -227,3 +227,14 @@ curl https://YOUR_DOMAIN.com/api/health
 [ ] SMTP_USER=... ❌ (aapka Gmail)
 [ ] SMTP_PASS=... ❌ (App Password)
 ```
+
+---
+
+## 🔐 IMPORTANT SECURITY HARDENING (FOR CUSTOM DOMAIN LAUNCH)
+*Note to AI Agent: Jab user custom domain map kare aur full production launch kare, tab ye security steps implement aur verify zaroori hain:*
+
+1. **Cloudflare Integration:** Domain DNS ko Cloudflare par shift karein (SSL/HTTPS forced, WAF protection, DDoS protection).
+2. **SQLite Database Backups:** Backend par cron job schedule karein jo daily `backend/db/lrat.db` ko AWS S3 ya external secure storage par upload kare.
+3. **LinkedIn Proxy Configuration:** Unipile accounts connect karte waqt proxy setting compulsory karein, taaki user ka LinkedIn block na ho.
+4. **Token Expiry Audit:** JWT secret rotation process set karein aur validation intervals audit karein.
+
