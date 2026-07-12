@@ -11,11 +11,25 @@ function createTransporter() {
   const smtpPass = getSetting('SMTP_PASS') || process.env.SMTP_PASS;
 
   if (smtpUser && smtpPass) {
+    // If using gmail host, configure via official gmail service option (more robust on cloud VMs)
+    if (smtpHost.includes('gmail.com')) {
+      return nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: smtpUser,
+          pass: smtpPass
+        }
+      });
+    }
+
     return nodemailer.createTransport({
       host: smtpHost,
       port: smtpPort,
       secure: smtpPort === 465,
-      auth: { user: smtpUser, pass: smtpPass }
+      auth: { user: smtpUser, pass: smtpPass },
+      tls: {
+        rejectUnauthorized: false
+      }
     });
   }
 
@@ -25,6 +39,7 @@ function createTransporter() {
     jsonTransport: true
   });
 }
+
 
 /**
  * Sends a verification code to a user during signup.

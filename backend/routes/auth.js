@@ -92,8 +92,16 @@ router.post('/signup', validate(signupSchema), async (req, res) => {
       verificationExpiresAt
     );
 
-    // Send Verification Email
-    await emailService.sendVerificationEmail(email, name, verificationCode);
+    // Send Verification Email (Asynchronously in background to prevent request hanging)
+    emailService.sendVerificationEmail(email, name, verificationCode)
+      .then(sent => {
+        if (!sent) {
+          console.warn(`[Auth] Verification email failed to send to ${email} (Non-blocking fallback)`);
+        }
+      })
+      .catch(err => {
+        console.error(`[Auth] Async email error for ${email}:`, err.message);
+      });
 
     res.status(201).json({
       success: true,
@@ -104,6 +112,7 @@ router.post('/signup', validate(signupSchema), async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
 
 // Verify Email Signup
 router.post('/verify-signup', validate(verifySignupSchema), async (req, res) => {
@@ -217,7 +226,9 @@ router.post('/resend-verification', validate(resendVerificationSchema), async (r
     db.prepare('UPDATE users SET verification_code = ?, verification_expires_at = ? WHERE id = ?')
       .run(verificationCode, verificationExpiresAt, user.id);
 
-    await emailService.sendVerificationEmail(user.email, user.name, verificationCode);
+    // Send Verification Email (Asynchronously in background)
+    emailService.sendVerificationEmail(user.email, user.name, verificationCode)
+      .catch(err => console.error(`[Auth] Async resend-email error:`, err.message));
 
     res.json({
       success: true,
@@ -250,7 +261,9 @@ router.post('/forgot-password', validate(forgotPasswordSchema), async (req, res)
     db.prepare('UPDATE users SET reset_code = ?, reset_expires_at = ? WHERE id = ?')
       .run(resetCode, resetExpiresAt, user.id);
 
-    await emailService.sendPasswordResetEmail(user.email, user.name, resetCode);
+    // Send Reset Email (Asynchronously in background)
+    emailService.sendPasswordResetEmail(user.email, user.name, resetCode)
+      .catch(err => console.error(`[Auth] Async reset-email error:`, err.message));
 
     res.json({
       success: true,
@@ -260,6 +273,7 @@ router.post('/forgot-password', validate(forgotPasswordSchema), async (req, res)
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
 
 // Reset Password - Apply new password using code
 router.post('/reset-password', validate(resetPasswordSchema), async (req, res) => {
