@@ -3,6 +3,13 @@ const path = require('path');
 const envFile = process.env.NODE_ENV === 'production' ? '../.env.production' : '../.env';
 require('dotenv').config({ path: path.join(__dirname, envFile) });
 
+// Force IPv4 DNS resolution first to prevent ENETUNREACH / Timeout on cloud hosts (Railway IPv6 routing issue)
+const dns = require('dns');
+if (dns.setDefaultResultOrder) {
+  dns.setDefaultResultOrder('ipv4first');
+}
+
+
 const express = require('express');
 const http = require('http');
 const jwt = require('jsonwebtoken');
