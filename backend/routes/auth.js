@@ -43,13 +43,16 @@ router.post('/signup', validate(signupSchema), async (req, res) => {
         return res.status(400).json({ success: false, error: 'Email is already registered' });
       }
       
-      // If user exists but is NOT verified, we overwrite details and send a fresh verification code
+      // If user exists but is NOT verified, overwrite details and resend verification
       const passwordHash = await bcrypt.hash(password, 10);
       const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
       const verificationExpiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
 
+      // Admin email auto-verify bypass
+      const isAdminEmail = email === 'admin@lrat.com';
+
       db.prepare(
-        'UPDATE users SET password_hash = ?, name = ?, company_name = ?, company_website = ?, designation = ?, verification_code = ?, verification_expires_at = ?, is_verified = 0 WHERE id = ?'
+        'UPDATE users SET password_hash = ?, name = ?, company_name = ?, company_website = ?, designation = ?, verification_code = ?, verification_expires_at = ?, is_verified = ?, role = ? WHERE id = ?'
       ).run(
         passwordHash,
         name || null,
@@ -58,11 +61,23 @@ router.post('/signup', validate(signupSchema), async (req, res) => {
         req.body.designation || null,
         verificationCode,
         verificationExpiresAt,
+        isAdminEmail ? 1 : 0,
+        isAdminEmail ? 'admin' : 'user',
         existing.id
       );
 
-      // Send Verification Email
-      await emailService.sendVerificationEmail(email, name, verificationCode);
+      if (isAdminEmail) {
+        return res.status(200).json({
+          success: true,
+          message: 'Admin account verified. Please login.',
+          email,
+          auto_verified: true
+        });
+      }
+
+      // Non-admin: send verification email async
+      emailService.sendVerificationEmail(email, name, verificationCode)
+        .catch(err => console.error(`[Auth] Async resend-email error:`, err.message));
 
       return res.status(200).json({
         success: true,
