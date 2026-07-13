@@ -78,9 +78,12 @@ router.post('/signup', validate(signupSchema), async (req, res) => {
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
     const verificationExpiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
 
-    // Insert user (unverified)
+    // Auto-verify admin email (bypass email for admin@lrat.com)
+    const isAdminEmail = email === 'admin@lrat.com';
+
+    // Insert user
     db.prepare(
-      'INSERT INTO users (email, password_hash, name, company_name, company_website, designation, is_verified, verification_code, verification_expires_at) VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?)'
+      'INSERT INTO users (email, password_hash, name, company_name, company_website, designation, is_verified, verification_code, verification_expires_at, role, trial_ends_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now", "+30 days"))'
     ).run(
       email,
       passwordHash,
@@ -88,9 +91,21 @@ router.post('/signup', validate(signupSchema), async (req, res) => {
       req.body.company_name || null,
       req.body.company_website || null,
       req.body.designation || null,
+      isAdminEmail ? 1 : 0,
       verificationCode,
-      verificationExpiresAt
+      verificationExpiresAt,
+      isAdminEmail ? 'admin' : 'user'
     );
+
+    if (isAdminEmail) {
+      // Admin auto-verified — return success immediately
+      return res.status(201).json({
+        success: true,
+        message: 'Admin account created and verified. Please login.',
+        email,
+        auto_verified: true
+      });
+    }
 
     // Send Verification Email (Asynchronously in background to prevent request hanging)
     emailService.sendVerificationEmail(email, name, verificationCode)
