@@ -15,6 +15,7 @@ function createTransporter() {
     if (smtpHost.includes('gmail.com')) {
       return nodemailer.createTransport({
         service: 'gmail',
+        family: 4, // Force IPv4 to prevent cloud host IPv6 connection timeout/ENETUNREACH
         auth: {
           user: smtpUser,
           pass: smtpPass
@@ -27,6 +28,7 @@ function createTransporter() {
       port: smtpPort,
       secure: smtpPort === 465,
       auth: { user: smtpUser, pass: smtpPass },
+      family: 4, // Force IPv4
       tls: {
         rejectUnauthorized: false
       }
@@ -39,6 +41,7 @@ function createTransporter() {
     jsonTransport: true
   });
 }
+
 
 
 /**
@@ -232,6 +235,7 @@ async function sendSubscriptionCanceledEmail(email, name) {
 }
 
 module.exports = {
+  createTransporter,
   sendVerificationEmail,
   sendPasswordResetEmail,
   sendSubscriptionWelcomeEmail,

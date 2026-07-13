@@ -1,6 +1,8 @@
 const nodemailer = require('nodemailer');
 const axios = require('axios');
 const { getSetting } = require('../config/database');
+const emailService = require('./emailService');
+
 
 /**
  * Sends a system alert to configured channels (Slack, Email)
@@ -51,27 +53,8 @@ async function sendAlert({ type, subject, message, meta = {} }) {
   // 2. Deliver Email Notification via Nodemailer
   if (emailRecipient && emailRecipient.trim()) {
     try {
-      const smtpHost = getSetting('SMTP_HOST') || process.env.SMTP_HOST || 'smtp.gmail.com';
-      const smtpPort = parseInt(getSetting('SMTP_PORT') || process.env.SMTP_PORT || '587');
-      const smtpUser = getSetting('SMTP_USER') || process.env.SMTP_USER;
-      const smtpPass = getSetting('SMTP_PASS') || process.env.SMTP_PASS;
-
-      let transporter;
-      
-      if (smtpUser && smtpPass) {
-        transporter = nodemailer.createTransport({
-          host: smtpHost,
-          port: smtpPort,
-          secure: smtpPort === 465,
-          auth: { user: smtpUser, pass: smtpPass }
-        });
-      } else {
-        // Fallback mock/logger transport if SMTP is not fully configured
-        console.log('[Alert System] SMTP credentials not set, using fallback preview transport.');
-        transporter = nodemailer.createTransport({
-          jsonTransport: true
-        });
-      }
+      const transporter = emailService.createTransporter();
+      const smtpUser = getSetting('SMTP_USER') || process.env.SMTP_USER || 'alerts@lrat.local';
 
       const htmlContent = `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; rounded: 12px;">

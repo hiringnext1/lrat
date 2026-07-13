@@ -1,6 +1,8 @@
 const cron = require('node-cron');
 const nodemailer = require('nodemailer');
 const { getDb, getSetting } = require('../config/database');
+const emailService = require('./emailService');
+
 
 /**
  * Compiles and sends the Daily Email Digest for a specific user.
@@ -43,26 +45,8 @@ async function sendDailyDigest(userId) {
   ).get(userId).c;
 
   // 3. Setup Nodemailer Transporter using system credentials
-  const smtpHost = getSetting('SMTP_HOST') || process.env.SMTP_HOST || 'smtp.gmail.com';
-  const smtpPort = parseInt(getSetting('SMTP_PORT') || process.env.SMTP_PORT || '587');
-  const smtpUser = getSetting('SMTP_USER') || process.env.SMTP_USER;
-  const smtpPass = getSetting('SMTP_PASS') || process.env.SMTP_PASS;
-
-  let transporter;
-  if (smtpUser && smtpPass) {
-    transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: smtpPort === 465,
-      auth: { user: smtpUser, pass: smtpPass }
-    });
-  } else {
-    // Fallback logger transport
-    console.log('[Digest Service] SMTP not configured. Printing HTML preview payload to logs.');
-    transporter = nodemailer.createTransport({
-      jsonTransport: true
-    });
-  }
+  const transporter = emailService.createTransporter();
+  const smtpUser = getSetting('SMTP_USER') || process.env.SMTP_USER || 'alerts@lrat.local';
 
   // 4. HTML Template
   const todayStr = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
