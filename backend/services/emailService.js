@@ -3,6 +3,11 @@ const { getSetting } = require('../config/database');
 
 /**
  * Creates a nodemailer transporter using global SMTP settings.
+ * 
+ * IMPORTANT: We do NOT use `service: 'gmail'` because nodemailer's service 
+ * presets internally force port 465 + SSL, and the `family: 4` (IPv4) option
+ * gets ignored. Railway's IPv6 routing is broken (ENETUNREACH), so we MUST 
+ * use explicit host/port/tls config where family: 4 is respected.
  */
 function createTransporter() {
   const smtpHost = getSetting('SMTP_HOST') || process.env.SMTP_HOST || 'smtp.gmail.com';
@@ -13,27 +18,18 @@ function createTransporter() {
   if (smtpUser && smtpPass) {
     console.log(`[Email Service] Creating transporter: host=${smtpHost}, port=${smtpPort}, user=${smtpUser}`);
 
-    // If using gmail host, configure via official gmail service option (more robust on cloud VMs)
-    if (smtpHost.includes('gmail.com')) {
-      return nodemailer.createTransport({
-        service: 'gmail',
-        family: 4, // Force IPv4 to prevent cloud host IPv6 connection timeout/ENETUNREACH
-        auth: {
-          user: smtpUser,
-          pass: smtpPass
-        }
-      });
-    }
-
     return nodemailer.createTransport({
       host: smtpHost,
       port: smtpPort,
-      secure: smtpPort === 465,
+      secure: smtpPort === 465,       // true for 465 (SSL), false for 587 (STARTTLS)
       auth: { user: smtpUser, pass: smtpPass },
-      family: 4, // Force IPv4
+      family: 4,                       // Force IPv4 — Railway IPv6 is broken
       tls: {
-        rejectUnauthorized: false
-      }
+        rejectUnauthorized: false      // Allow self-signed certs on cloud VMs
+      },
+      connectionTimeout: 10000,        // 10s connection timeout
+      greetingTimeout: 10000,          // 10s SMTP greeting timeout
+      socketTimeout: 15000,            // 15s socket timeout
     });
   }
 
