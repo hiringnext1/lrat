@@ -1,57 +1,74 @@
 const nodemailer = require('nodemailer');
-const { Resend } = require('resend');
+const axios = require('axios');
 const { getSetting } = require('../config/database');
 
 // ─── Email Provider Selection ────────────────────────────────────────────────
-// Railway blocks outbound SMTP ports (465, 587). We use Resend HTTP API 
-// (port 443) as primary provider for production. SMTP is kept as fallback 
+// Railway blocks outbound SMTP ports (465, 587). We use Brevo (Sendinblue) 
+// HTTP API (port 443) as primary provider for production. SMTP is kept as fallback 
 // for local development.
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Gets the active Resend client instance, or null if not configured.
+ * Gets the active Brevo API key if configured.
+ * We prioritize the SMTP_PASS if it is a Brevo API key (starts with xsmtpsib-).
  */
-function getResendClient() {
-  const apiKey = getSetting('RESEND_API_KEY') || process.env.RESEND_API_KEY;
-  if (apiKey && apiKey.startsWith('re_')) {
-    return new Resend(apiKey);
+function getBrevoApiKey() {
+  const smtpPass = getSetting('SMTP_PASS') || process.env.SMTP_PASS;
+  if (smtpPass && smtpPass.startsWith('xsmtpsib-')) {
+    return smtpPass;
   }
   return null;
 }
 
 /**
- * Gets the "from" address for Resend emails.
- * Resend requires a verified domain or 'onboarding@resend.dev' for testing.
+ * Gets the verified sender email address.
  */
-function getResendFromAddress() {
-  return getSetting('RESEND_FROM_EMAIL') || process.env.RESEND_FROM_EMAIL || 'LRAT <onboarding@resend.dev>';
+function getSenderEmail() {
+  return getSetting('SENDER_EMAIL') || process.env.SENDER_EMAIL || 'hiringnext1@gmail.com';
 }
 
 /**
- * Sends an email via Resend HTTP API.
- * @returns {Object} { success: boolean, provider: 'resend', error?: string }
+ * Sends an email via Brevo HTTP API (Port 443 — bypasses Railway port blocking).
  */
-async function sendViaResend({ from, to, subject, html }) {
-  const resend = getResendClient();
-  if (!resend) return { success: false, provider: 'resend', error: 'Not configured' };
+async function sendViaBrevoAPI({ fromName, to, subject, html }) {
+  const apiKey = getBrevoApiKey();
+  const senderEmail = getSenderEmail();
+  
+  if (!apiKey) {
+    return { success: false, provider: 'brevo-api', error: 'Brevo API key not found' };
+  }
 
   try {
-    const { data, error } = await resend.emails.send({ from, to, subject, html });
-    if (error) {
-      console.error(`[Email/Resend] API error:`, error);
-      return { success: false, provider: 'resend', error: error.message || JSON.stringify(error) };
+    const payload = {
+      sender: { name: fromName || 'LRAT', email: senderEmail },
+      to: [{ email: to }],
+      subject: subject,
+      htmlContent: html
+    };
+
+    const response = await axios.post('https://api.brevo.com/v3/smtp/email', payload, {
+      headers: {
+        'api-key': apiKey,
+        'Content-Type': 'application/json'
+      },
+      timeout: 10000 // 10s timeout
+    });
+
+    if (response.data && (response.data.messageId || response.data.messageIds)) {
+      console.log(`[Email/BrevoAPI] ✅ Email sent to ${to} (MessageId: ${response.data.messageId})`);
+      return { success: true, provider: 'brevo-api', id: response.data.messageId };
     }
-    console.log(`[Email/Resend] ✅ Email sent to ${to} (id: ${data?.id})`);
-    return { success: true, provider: 'resend', id: data?.id };
+    return { success: false, provider: 'brevo-api', error: 'Unexpected API response' };
   } catch (err) {
-    console.error(`[Email/Resend] Failed:`, err.message);
-    return { success: false, provider: 'resend', error: err.message };
+    const errorMsg = err.response?.data?.message || err.response?.data || err.message;
+    console.error(`[Email/BrevoAPI] ❌ Failed to send to ${to}:`, errorMsg);
+    return { success: false, provider: 'brevo-api', error: typeof errorMsg === 'object' ? JSON.stringify(errorMsg) : errorMsg };
   }
 }
 
 /**
  * Creates a nodemailer transporter using global SMTP settings.
- * Used as fallback when Resend is not configured (e.g., local development).
+ * Used as fallback when Brevo HTTP API is not configured.
  */
 function createTransporter() {
   const smtpHost = getSetting('SMTP_HOST') || process.env.SMTP_HOST || 'smtp.gmail.com';
@@ -67,7 +84,7 @@ function createTransporter() {
       port: smtpPort,
       secure: smtpPort === 465,
       auth: { user: smtpUser, pass: smtpPass },
-      family: 4,                       // Force IPv4
+      family: 4,
       tls: { rejectUnauthorized: false },
       connectionTimeout: 10000,
       greetingTimeout: 10000,
@@ -81,8 +98,7 @@ function createTransporter() {
 }
 
 /**
- * Sends an email via SMTP (nodemailer).
- * @returns {Object} { success: boolean, provider: 'smtp', error?: string, isJsonTransport?: boolean }
+ * Sends an email via SMTP.
  */
 async function sendViaSMTP({ from, to, subject, html }) {
   try {
@@ -90,7 +106,6 @@ async function sendViaSMTP({ from, to, subject, html }) {
     const info = await transporter.sendMail({ from, to, subject, html });
 
     if (info.message) {
-      // JSON Transport fallback (local dev without SMTP configured)
       return { success: true, provider: 'smtp-mock', isJsonTransport: true };
     }
     console.log(`[Email/SMTP] ✅ Email sent to ${to}`);
@@ -101,74 +116,60 @@ async function sendViaSMTP({ from, to, subject, html }) {
   }
 }
 
+/**
+ * Universal send function: tries Brevo HTTP API first, falls back to SMTP.
+ */
 async function sendEmail({ from, fromName, to, subject, html }) {
-  const resendFrom = fromName ? `${fromName} <${getResendFromAddress().replace(/.*<(.+)>/, '$1')}>` : getResendFromAddress();
-  
-  // Resolve SMTP From address (ensure we don't use Brevo login username like b2811d001@smtp-brevo.com as From header)
+  const brevoKey = getBrevoApiKey();
+  const senderEmail = getSenderEmail();
+
+  // 1. Try Brevo HTTP API (Works flawlessly on Railway port blockages)
+  if (brevoKey) {
+    const result = await sendViaBrevoAPI({ fromName, to, subject, html });
+    if (result.success) return result;
+    console.warn(`[Email] Brevo API failed, falling back to SMTP: ${result.error}`);
+  }
+
+  // 2. SMTP fallback (For local setup)
   const smtpUser = getSetting('SMTP_USER') || process.env.SMTP_USER || 'noreply@lrat.local';
   let defaultSender = smtpUser;
   if (smtpUser.includes('smtp-brevo.com') || smtpUser.includes('brevo.com')) {
-    defaultSender = getSetting('SENDER_EMAIL') || process.env.SENDER_EMAIL || 'hiringnext1@gmail.com';
+    defaultSender = senderEmail;
   }
   const smtpFrom = from || `"${fromName || 'LRAT'}" <${defaultSender}>`;
 
-  // 1. Try Resend (HTTP API — works on Railway/cloud hosts)
-  const resend = getResendClient();
-  if (resend) {
-    const result = await sendViaResend({ from: resendFrom, to, subject, html });
-    if (result.success) return result;
-    console.warn(`[Email] Resend failed, falling back to SMTP: ${result.error}`);
-  }
-
-  // 2. Fallback to SMTP (works locally, may fail on Railway)
   return sendViaSMTP({ from: smtpFrom, to, subject, html });
 }
 
-
-// ─── Verify email connectivity at startup ────────────────────────────────────
-
 /**
- * Verifies email sending capability on startup. Call once during server boot.
+ * Verifies email sending capability on startup.
  */
 async function verifySmtpConnection() {
-  // Check Resend first
-  const resendKey = getSetting('RESEND_API_KEY') || process.env.RESEND_API_KEY;
-  if (resendKey && resendKey.startsWith('re_')) {
-    console.log('[Email Service] ✅ Resend API key configured — emails will be sent via Resend HTTP API.');
+  const brevoKey = getBrevoApiKey();
+  if (brevoKey) {
+    console.log('[Email Service] ✅ Brevo API Key detected. Emails will be sent via HTTP API (Port 443).');
     return true;
   }
 
-  // Check SMTP
+  // SMTP Check
   const smtpUser = getSetting('SMTP_USER') || process.env.SMTP_USER;
   const smtpPass = getSetting('SMTP_PASS') || process.env.SMTP_PASS;
 
   if (!smtpUser || !smtpPass) {
-    console.warn('[Email Service] ⚠️  No email provider configured (RESEND_API_KEY or SMTP_USER/SMTP_PASS).');
-    console.warn('[Email Service]    Verification emails will NOT be delivered!');
-    return false;
-  }
-
-  // Check for placeholder values
-  const placeholders = ['YOUR_GMAIL_ADDRESS', 'PASTE_', 'your_', 'paste_'];
-  if (placeholders.some(p => smtpUser.includes(p) || smtpPass.includes(p))) {
-    console.error('[Email Service] ❌ SMTP credentials contain PLACEHOLDER values! Email will NOT work.');
+    console.warn('[Email Service] ⚠️ No email provider configured. Verification emails will NOT be delivered!');
     return false;
   }
 
   try {
     const transporter = createTransporter();
     await transporter.verify();
-    console.log('[Email Service] ✅ SMTP connection verified — emails will be delivered via SMTP.');
+    console.log('[Email Service] ✅ SMTP connection verified successfully.');
     return true;
   } catch (err) {
     console.error(`[Email Service] ❌ SMTP connection FAILED: ${err.message}`);
-    console.error(`[Email Service]    Consider using Resend API (set RESEND_API_KEY) — SMTP ports may be blocked on this host.`);
     return false;
   }
 }
-
-
-// ─── Specific email functions ────────────────────────────────────────────────
 
 /**
  * Sends a verification code to a user during signup.
