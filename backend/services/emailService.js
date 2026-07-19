@@ -101,13 +101,16 @@ async function sendViaSMTP({ from, to, subject, html }) {
   }
 }
 
-/**
- * Universal send function: tries Resend first, falls back to SMTP.
- */
 async function sendEmail({ from, fromName, to, subject, html }) {
   const resendFrom = fromName ? `${fromName} <${getResendFromAddress().replace(/.*<(.+)>/, '$1')}>` : getResendFromAddress();
+  
+  // Resolve SMTP From address (ensure we don't use Brevo login username like b2811d001@smtp-brevo.com as From header)
   const smtpUser = getSetting('SMTP_USER') || process.env.SMTP_USER || 'noreply@lrat.local';
-  const smtpFrom = from || `"${fromName || 'LRAT'}" <${smtpUser}>`;
+  let defaultSender = smtpUser;
+  if (smtpUser.includes('smtp-brevo.com') || smtpUser.includes('brevo.com')) {
+    defaultSender = getSetting('SENDER_EMAIL') || process.env.SENDER_EMAIL || 'hiringnext1@gmail.com';
+  }
+  const smtpFrom = from || `"${fromName || 'LRAT'}" <${defaultSender}>`;
 
   // 1. Try Resend (HTTP API — works on Railway/cloud hosts)
   const resend = getResendClient();
