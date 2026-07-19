@@ -295,6 +295,10 @@ server.listen(PORT, () => {
     process.exit(1);
   }
 
+  // Verify SMTP configuration at startup so misconfiguration is caught early
+  const { verifySmtpConnection } = require('./services/emailService');
+  verifySmtpConnection().catch(err => log.error({ err }, 'SMTP verification error'));
+
   startAutomation(io);
   
   try {

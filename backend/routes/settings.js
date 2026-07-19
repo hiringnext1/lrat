@@ -99,5 +99,25 @@ router.post('/test-nvidia', async (req, res) => {
     res.json({ success: false, error: `Connection failed: ${detail}` });
   }
 });
+router.post('/test-smtp', async (req, res) => {
+  try {
+    const { verifySmtpConnection } = require('../services/emailService');
+    const smtpUser = getSetting('SMTP_USER') || process.env.SMTP_USER;
+    const smtpPass = getSetting('SMTP_PASS') || process.env.SMTP_PASS;
+
+    if (!smtpUser || !smtpPass) {
+      return res.json({ success: false, error: 'SMTP_USER and SMTP_PASS are not configured. Set them in Settings or .env file.' });
+    }
+
+    const ok = await verifySmtpConnection();
+    if (ok) {
+      res.json({ success: true, message: `SMTP connected successfully! Emails will be sent from ${smtpUser}` });
+    } else {
+      res.json({ success: false, error: `SMTP connection failed. Check credentials for ${smtpUser}. Ensure Gmail 2-Step Verification is ON and you are using an App Password.` });
+    }
+  } catch (err) {
+    res.json({ success: false, error: `SMTP test failed: ${err.message}` });
+  }
+});
 
 module.exports = router;

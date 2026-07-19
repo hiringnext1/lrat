@@ -11,6 +11,8 @@ function createTransporter() {
   const smtpPass = getSetting('SMTP_PASS') || process.env.SMTP_PASS;
 
   if (smtpUser && smtpPass) {
+    console.log(`[Email Service] Creating transporter: host=${smtpHost}, port=${smtpPort}, user=${smtpUser}`);
+
     // If using gmail host, configure via official gmail service option (more robust on cloud VMs)
     if (smtpHost.includes('gmail.com')) {
       return nodemailer.createTransport({
@@ -36,10 +38,47 @@ function createTransporter() {
   }
 
   // Fallback jsonTransport for mock/logs testing
-  console.log('[Email Service] SMTP is not configured. Falling back to log preview transport.');
+  console.log('[Email Service] ⚠️  SMTP is NOT configured (SMTP_USER/SMTP_PASS missing). Falling back to log preview transport.');
+  console.log(`[Email Service] DEBUG: SMTP_USER=${smtpUser || '(empty)'}, SMTP_PASS=${smtpPass ? '***set***' : '(empty)'}`);
   return nodemailer.createTransport({
     jsonTransport: true
   });
+}
+
+/**
+ * Verifies SMTP connection on startup. Call this once during server boot.
+ * Logs clear diagnostics so production misconfigurations are caught early.
+ */
+async function verifySmtpConnection() {
+  const smtpUser = getSetting('SMTP_USER') || process.env.SMTP_USER;
+  const smtpPass = getSetting('SMTP_PASS') || process.env.SMTP_PASS;
+
+  if (!smtpUser || !smtpPass) {
+    console.warn('[Email Service] ⚠️  SMTP NOT CONFIGURED — verification emails will NOT be delivered!');
+    console.warn('[Email Service]    Set SMTP_USER and SMTP_PASS in .env / .env.production or via Settings UI.');
+    return false;
+  }
+
+  // Check for placeholder values that indicate unconfigured production env
+  const placeholders = ['YOUR_GMAIL_ADDRESS', 'PASTE_', 'your_', 'paste_'];
+  if (placeholders.some(p => smtpUser.includes(p) || smtpPass.includes(p))) {
+    console.error('[Email Service] ❌ SMTP credentials contain PLACEHOLDER values! Email will NOT work.');
+    console.error(`[Email Service]    SMTP_USER="${smtpUser}" — update .env.production with real Gmail address.`);
+    return false;
+  }
+
+  try {
+    const transporter = createTransporter();
+    await transporter.verify();
+    console.log('[Email Service] ✅ SMTP connection verified successfully — emails will be delivered.');
+    return true;
+  } catch (err) {
+    console.error(`[Email Service] ❌ SMTP connection FAILED: ${err.message}`);
+    console.error(`[Email Service]    Host: ${getSetting('SMTP_HOST') || process.env.SMTP_HOST || 'smtp.gmail.com'}`);
+    console.error(`[Email Service]    User: ${smtpUser}`);
+    console.error('[Email Service]    Check: Gmail App Password, 2-Step Verification enabled, firewall/port 587 open.');
+    return false;
+  }
 }
 
 
@@ -236,6 +275,7 @@ async function sendSubscriptionCanceledEmail(email, name) {
 
 module.exports = {
   createTransporter,
+  verifySmtpConnection,
   sendVerificationEmail,
   sendPasswordResetEmail,
   sendSubscriptionWelcomeEmail,
