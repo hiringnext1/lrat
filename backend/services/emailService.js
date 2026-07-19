@@ -14,7 +14,7 @@ const { getSetting } = require('../config/database');
  */
 function getBrevoApiKey() {
   const smtpPass = getSetting('SMTP_PASS') || process.env.SMTP_PASS;
-  if (smtpPass && smtpPass.startsWith('xsmtpsib-')) {
+  if (smtpPass && (smtpPass.startsWith('xkeysib-') || smtpPass.startsWith('xsmtpsib-'))) {
     return smtpPass;
   }
   return null;
