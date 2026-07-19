@@ -44,9 +44,7 @@ async function sendDailyDigest(userId) {
     "SELECT COUNT(*) as c FROM accounts WHERE user_id = ? AND is_active = 1 AND status = 'active'"
   ).get(userId).c;
 
-  // 3. Setup Nodemailer Transporter using system credentials
-  const transporter = emailService.createTransporter();
-  const smtpUser = getSetting('SMTP_USER') || process.env.SMTP_USER || 'alerts@lrat.local';
+  // 3. Build HTML (email is sent via unified emailService.sendEmail)
 
   // 4. HTML Template
   const todayStr = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
@@ -121,8 +119,8 @@ async function sendDailyDigest(userId) {
   `;
 
   try {
-    await transporter.sendMail({
-      from: `"LRAT Outreach Summary" <${smtpUser || 'digest@lrat.local'}>`,
+    await emailService.sendEmail({
+      fromName: 'LRAT Outreach Summary',
       to: user.email,
       subject: `📊 LRAT Daily Outreach Digest — ${todayStr}`,
       html: htmlContent

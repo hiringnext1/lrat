@@ -1,13 +1,57 @@
 const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const { getSetting } = require('../config/database');
+
+// ─── Email Provider Selection ────────────────────────────────────────────────
+// Railway blocks outbound SMTP ports (465, 587). We use Resend HTTP API 
+// (port 443) as primary provider for production. SMTP is kept as fallback 
+// for local development.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Gets the active Resend client instance, or null if not configured.
+ */
+function getResendClient() {
+  const apiKey = getSetting('RESEND_API_KEY') || process.env.RESEND_API_KEY;
+  if (apiKey && apiKey.startsWith('re_')) {
+    return new Resend(apiKey);
+  }
+  return null;
+}
+
+/**
+ * Gets the "from" address for Resend emails.
+ * Resend requires a verified domain or 'onboarding@resend.dev' for testing.
+ */
+function getResendFromAddress() {
+  return getSetting('RESEND_FROM_EMAIL') || process.env.RESEND_FROM_EMAIL || 'LRAT <onboarding@resend.dev>';
+}
+
+/**
+ * Sends an email via Resend HTTP API.
+ * @returns {Object} { success: boolean, provider: 'resend', error?: string }
+ */
+async function sendViaResend({ from, to, subject, html }) {
+  const resend = getResendClient();
+  if (!resend) return { success: false, provider: 'resend', error: 'Not configured' };
+
+  try {
+    const { data, error } = await resend.emails.send({ from, to, subject, html });
+    if (error) {
+      console.error(`[Email/Resend] API error:`, error);
+      return { success: false, provider: 'resend', error: error.message || JSON.stringify(error) };
+    }
+    console.log(`[Email/Resend] ✅ Email sent to ${to} (id: ${data?.id})`);
+    return { success: true, provider: 'resend', id: data?.id };
+  } catch (err) {
+    console.error(`[Email/Resend] Failed:`, err.message);
+    return { success: false, provider: 'resend', error: err.message };
+  }
+}
 
 /**
  * Creates a nodemailer transporter using global SMTP settings.
- * 
- * IMPORTANT: We do NOT use `service: 'gmail'` because nodemailer's service 
- * presets internally force port 465 + SSL, and the `family: 4` (IPv4) option
- * gets ignored. Railway's IPv6 routing is broken (ENETUNREACH), so we MUST 
- * use explicit host/port/tls config where family: 4 is respected.
+ * Used as fallback when Resend is not configured (e.g., local development).
  */
 function createTransporter() {
   const smtpHost = getSetting('SMTP_HOST') || process.env.SMTP_HOST || 'smtp.gmail.com';
@@ -16,79 +60,117 @@ function createTransporter() {
   const smtpPass = getSetting('SMTP_PASS') || process.env.SMTP_PASS;
 
   if (smtpUser && smtpPass) {
-    console.log(`[Email Service] Creating transporter: host=${smtpHost}, port=${smtpPort}, user=${smtpUser}`);
+    console.log(`[Email/SMTP] Creating transporter: host=${smtpHost}, port=${smtpPort}, user=${smtpUser}`);
 
     return nodemailer.createTransport({
       host: smtpHost,
       port: smtpPort,
-      secure: smtpPort === 465,       // true for 465 (SSL), false for 587 (STARTTLS)
+      secure: smtpPort === 465,
       auth: { user: smtpUser, pass: smtpPass },
-      family: 4,                       // Force IPv4 — Railway IPv6 is broken
-      tls: {
-        rejectUnauthorized: false      // Allow self-signed certs on cloud VMs
-      },
-      connectionTimeout: 10000,        // 10s connection timeout
-      greetingTimeout: 10000,          // 10s SMTP greeting timeout
-      socketTimeout: 15000,            // 15s socket timeout
+      family: 4,                       // Force IPv4
+      tls: { rejectUnauthorized: false },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000,
     });
   }
 
   // Fallback jsonTransport for mock/logs testing
-  console.log('[Email Service] ⚠️  SMTP is NOT configured (SMTP_USER/SMTP_PASS missing). Falling back to log preview transport.');
-  console.log(`[Email Service] DEBUG: SMTP_USER=${smtpUser || '(empty)'}, SMTP_PASS=${smtpPass ? '***set***' : '(empty)'}`);
-  return nodemailer.createTransport({
-    jsonTransport: true
-  });
+  console.log('[Email/SMTP] ⚠️  SMTP is NOT configured. Falling back to log preview transport.');
+  return nodemailer.createTransport({ jsonTransport: true });
 }
 
 /**
- * Verifies SMTP connection on startup. Call this once during server boot.
- * Logs clear diagnostics so production misconfigurations are caught early.
+ * Sends an email via SMTP (nodemailer).
+ * @returns {Object} { success: boolean, provider: 'smtp', error?: string, isJsonTransport?: boolean }
+ */
+async function sendViaSMTP({ from, to, subject, html }) {
+  try {
+    const transporter = createTransporter();
+    const info = await transporter.sendMail({ from, to, subject, html });
+
+    if (info.message) {
+      // JSON Transport fallback (local dev without SMTP configured)
+      return { success: true, provider: 'smtp-mock', isJsonTransport: true };
+    }
+    console.log(`[Email/SMTP] ✅ Email sent to ${to}`);
+    return { success: true, provider: 'smtp' };
+  } catch (err) {
+    console.error(`[Email/SMTP] Failed to send to ${to}:`, err.message);
+    return { success: false, provider: 'smtp', error: err.message };
+  }
+}
+
+/**
+ * Universal send function: tries Resend first, falls back to SMTP.
+ */
+async function sendEmail({ from, fromName, to, subject, html }) {
+  const resendFrom = fromName ? `${fromName} <${getResendFromAddress().replace(/.*<(.+)>/, '$1')}>` : getResendFromAddress();
+  const smtpUser = getSetting('SMTP_USER') || process.env.SMTP_USER || 'noreply@lrat.local';
+  const smtpFrom = from || `"${fromName || 'LRAT'}" <${smtpUser}>`;
+
+  // 1. Try Resend (HTTP API — works on Railway/cloud hosts)
+  const resend = getResendClient();
+  if (resend) {
+    const result = await sendViaResend({ from: resendFrom, to, subject, html });
+    if (result.success) return result;
+    console.warn(`[Email] Resend failed, falling back to SMTP: ${result.error}`);
+  }
+
+  // 2. Fallback to SMTP (works locally, may fail on Railway)
+  return sendViaSMTP({ from: smtpFrom, to, subject, html });
+}
+
+
+// ─── Verify email connectivity at startup ────────────────────────────────────
+
+/**
+ * Verifies email sending capability on startup. Call once during server boot.
  */
 async function verifySmtpConnection() {
+  // Check Resend first
+  const resendKey = getSetting('RESEND_API_KEY') || process.env.RESEND_API_KEY;
+  if (resendKey && resendKey.startsWith('re_')) {
+    console.log('[Email Service] ✅ Resend API key configured — emails will be sent via Resend HTTP API.');
+    return true;
+  }
+
+  // Check SMTP
   const smtpUser = getSetting('SMTP_USER') || process.env.SMTP_USER;
   const smtpPass = getSetting('SMTP_PASS') || process.env.SMTP_PASS;
 
   if (!smtpUser || !smtpPass) {
-    console.warn('[Email Service] ⚠️  SMTP NOT CONFIGURED — verification emails will NOT be delivered!');
-    console.warn('[Email Service]    Set SMTP_USER and SMTP_PASS in .env / .env.production or via Settings UI.');
+    console.warn('[Email Service] ⚠️  No email provider configured (RESEND_API_KEY or SMTP_USER/SMTP_PASS).');
+    console.warn('[Email Service]    Verification emails will NOT be delivered!');
     return false;
   }
 
-  // Check for placeholder values that indicate unconfigured production env
+  // Check for placeholder values
   const placeholders = ['YOUR_GMAIL_ADDRESS', 'PASTE_', 'your_', 'paste_'];
   if (placeholders.some(p => smtpUser.includes(p) || smtpPass.includes(p))) {
     console.error('[Email Service] ❌ SMTP credentials contain PLACEHOLDER values! Email will NOT work.');
-    console.error(`[Email Service]    SMTP_USER="${smtpUser}" — update .env.production with real Gmail address.`);
     return false;
   }
 
   try {
     const transporter = createTransporter();
     await transporter.verify();
-    console.log('[Email Service] ✅ SMTP connection verified successfully — emails will be delivered.');
+    console.log('[Email Service] ✅ SMTP connection verified — emails will be delivered via SMTP.');
     return true;
   } catch (err) {
     console.error(`[Email Service] ❌ SMTP connection FAILED: ${err.message}`);
-    console.error(`[Email Service]    Host: ${getSetting('SMTP_HOST') || process.env.SMTP_HOST || 'smtp.gmail.com'}`);
-    console.error(`[Email Service]    User: ${smtpUser}`);
-    console.error('[Email Service]    Check: Gmail App Password, 2-Step Verification enabled, firewall/port 587 open.');
+    console.error(`[Email Service]    Consider using Resend API (set RESEND_API_KEY) — SMTP ports may be blocked on this host.`);
     return false;
   }
 }
 
 
+// ─── Specific email functions ────────────────────────────────────────────────
 
 /**
  * Sends a verification code to a user during signup.
- * @param {string} email - Recipient email address
- * @param {string} name - User's name
- * @param {string} code - 6-digit verification pin
  */
 async function sendVerificationEmail(email, name, code) {
-  const transporter = createTransporter();
-  const smtpUser = getSetting('SMTP_USER') || process.env.SMTP_USER || 'noreply@lrat.local';
-
   const htmlContent = `
     <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; border: 1px solid #e2e8f0; padding: 30px; border-radius: 16px; background-color: #ffffff; color: #1e293b;">
       <div style="text-align: center; margin-bottom: 20px;">
@@ -107,40 +189,27 @@ async function sendVerificationEmail(email, name, code) {
     </div>
   `;
 
-  try {
-    const info = await transporter.sendMail({
-      from: `"LRAT Security" <${smtpUser}>`,
-      to: email,
-      subject: `🔑 Verify your LRAT account — ${code}`,
-      html: htmlContent
-    });
+  const result = await sendEmail({
+    fromName: 'LRAT Security',
+    to: email,
+    subject: `🔑 Verify your LRAT account — ${code}`,
+    html: htmlContent
+  });
 
-    if (info.message) {
-      // JSON Transport fallback: output to server console log
-      console.log(`\n======================================================`);
-      console.log(`[Email Mock Logger] Verification email sent to ${email}`);
-      console.log(`CODE: ${code}`);
-      console.log(`======================================================\n`);
-    } else {
-      console.log(`[Email Service] Verification email sent successfully to ${email}`);
-    }
-    return true;
-  } catch (err) {
-    console.error(`[Email Service] Failed to send verification email to ${email}:`, err.message);
-    return false;
+  if (result.isJsonTransport) {
+    console.log(`\n======================================================`);
+    console.log(`[Email Mock Logger] Verification email sent to ${email}`);
+    console.log(`CODE: ${code}`);
+    console.log(`======================================================\n`);
   }
+
+  return result.success;
 }
 
 /**
  * Sends a password reset pin to a user.
- * @param {string} email - Recipient email address
- * @param {string} name - User's name
- * @param {string} code - 6-digit password reset pin
  */
 async function sendPasswordResetEmail(email, name, code) {
-  const transporter = createTransporter();
-  const smtpUser = getSetting('SMTP_USER') || process.env.SMTP_USER || 'noreply@lrat.local';
-
   const htmlContent = `
     <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; border: 1px solid #e2e8f0; padding: 30px; border-radius: 16px; background-color: #ffffff; color: #1e293b;">
       <div style="text-align: center; margin-bottom: 20px;">
@@ -159,36 +228,27 @@ async function sendPasswordResetEmail(email, name, code) {
     </div>
   `;
 
-  try {
-    const info = await transporter.sendMail({
-      from: `"LRAT Security" <${smtpUser}>`,
-      to: email,
-      subject: `🔒 Reset your LRAT password — ${code}`,
-      html: htmlContent
-    });
+  const result = await sendEmail({
+    fromName: 'LRAT Security',
+    to: email,
+    subject: `🔒 Reset your LRAT password — ${code}`,
+    html: htmlContent
+  });
 
-    if (info.message) {
-      // JSON Transport fallback
-      console.log(`\n======================================================`);
-      console.log(`[Email Mock Logger] Password Reset email sent to ${email}`);
-      console.log(`CODE: ${code}`);
-      console.log(`======================================================\n`);
-    } else {
-      console.log(`[Email Service] Password reset email sent successfully to ${email}`);
-    }
-    return true;
-  } catch (err) {
-    console.error(`[Email Service] Failed to send password reset email to ${email}:`, err.message);
-    return false;
+  if (result.isJsonTransport) {
+    console.log(`\n======================================================`);
+    console.log(`[Email Mock Logger] Password Reset email sent to ${email}`);
+    console.log(`CODE: ${code}`);
+    console.log(`======================================================\n`);
   }
+
+  return result.success;
 }
 
 /**
  * Billing: Welcome email after successful subscription.
  */
 async function sendSubscriptionWelcomeEmail(email, name, planType) {
-  const transporter = createTransporter();
-  const smtpUser = getSetting('SMTP_USER') || process.env.SMTP_USER || 'noreply@lrat.local';
   const planLabels = { starter: 'Starter Playbook', professional: 'Professional Engine', enterprise: 'Enterprise Cluster', trial: 'Trial' };
   const planLabel = planLabels[planType] || planType;
 
@@ -206,20 +266,19 @@ async function sendSubscriptionWelcomeEmail(email, name, planType) {
       <div style="border-top: 1px solid #f1f5f9; margin-top: 30px; padding-top: 15px; text-align: center; font-size: 11px; color: #94a3b8;">© 2026 LRAT Outreach Automation Platform.</div>
     </div>
   `;
-  try {
-    await transporter.sendMail({ from: `"LRAT" <${smtpUser}>`, to: email, subject: `🎉 Welcome to LRAT ${planLabel} Plan!`, html: htmlContent });
-  } catch (err) {
-    console.error('[Email] Failed to send welcome email:', err.message);
-  }
+
+  await sendEmail({
+    fromName: 'LRAT',
+    to: email,
+    subject: `🎉 Welcome to LRAT ${planLabel} Plan!`,
+    html: htmlContent
+  });
 }
 
 /**
  * Billing: Payment failed dunning email.
  */
 async function sendPaymentFailedEmail(email, name) {
-  const transporter = createTransporter();
-  const smtpUser = getSetting('SMTP_USER') || process.env.SMTP_USER || 'noreply@lrat.local';
-
   const htmlContent = `
     <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; border: 1px solid #fecaca; padding: 30px; border-radius: 16px; background-color: #ffffff; color: #1e293b;">
       <div style="text-align: center; margin-bottom: 20px;">
@@ -234,20 +293,19 @@ async function sendPaymentFailedEmail(email, name) {
       <div style="border-top: 1px solid #f1f5f9; margin-top: 30px; padding-top: 15px; text-align: center; font-size: 11px; color: #94a3b8;">© 2026 LRAT Outreach Automation Platform.</div>
     </div>
   `;
-  try {
-    await transporter.sendMail({ from: `"LRAT Billing" <${smtpUser}>`, to: email, subject: `⚠️ Action required: LRAT payment failed`, html: htmlContent });
-  } catch (err) {
-    console.error('[Email] Failed to send payment failed email:', err.message);
-  }
+
+  await sendEmail({
+    fromName: 'LRAT Billing',
+    to: email,
+    subject: `⚠️ Action required: LRAT payment failed`,
+    html: htmlContent
+  });
 }
 
 /**
  * Billing: Subscription canceled email.
  */
 async function sendSubscriptionCanceledEmail(email, name) {
-  const transporter = createTransporter();
-  const smtpUser = getSetting('SMTP_USER') || process.env.SMTP_USER || 'noreply@lrat.local';
-
   const htmlContent = `
     <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; border: 1px solid #e2e8f0; padding: 30px; border-radius: 16px; background-color: #ffffff; color: #1e293b;">
       <div style="text-align: center; margin-bottom: 20px;">
@@ -262,15 +320,18 @@ async function sendSubscriptionCanceledEmail(email, name) {
       <div style="border-top: 1px solid #f1f5f9; margin-top: 30px; padding-top: 15px; text-align: center; font-size: 11px; color: #94a3b8;">© 2026 LRAT Outreach Automation Platform.</div>
     </div>
   `;
-  try {
-    await transporter.sendMail({ from: `"LRAT Billing" <${smtpUser}>`, to: email, subject: `Your LRAT subscription has been canceled`, html: htmlContent });
-  } catch (err) {
-    console.error('[Email] Failed to send cancelation email:', err.message);
-  }
+
+  await sendEmail({
+    fromName: 'LRAT Billing',
+    to: email,
+    subject: `Your LRAT subscription has been canceled`,
+    html: htmlContent
+  });
 }
 
 module.exports = {
   createTransporter,
+  sendEmail,
   verifySmtpConnection,
   sendVerificationEmail,
   sendPasswordResetEmail,

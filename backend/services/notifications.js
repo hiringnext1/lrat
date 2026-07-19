@@ -53,9 +53,6 @@ async function sendAlert({ type, subject, message, meta = {} }) {
   // 2. Deliver Email Notification via Nodemailer
   if (emailRecipient && emailRecipient.trim()) {
     try {
-      const transporter = emailService.createTransporter();
-      const smtpUser = getSetting('SMTP_USER') || process.env.SMTP_USER || 'alerts@lrat.local';
-
       const htmlContent = `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; rounded: 12px;">
           <div style="background: ${type === 'hot_lead' ? '#10b981' : type === 'restricted' ? '#ef4444' : '#f59e0b'}; padding: 15px; text-align: center; border-radius: 8px 8px 0 0; color: white;">
@@ -83,18 +80,13 @@ async function sendAlert({ type, subject, message, meta = {} }) {
         </div>
       `;
 
-      const info = await transporter.sendMail({
-        from: `"LRAT Outreach Engine" <${smtpUser || 'alerts@lrat.local'}>`,
+      await emailService.sendEmail({
+        fromName: 'LRAT Outreach Engine',
         to: emailRecipient,
         subject: `[LRAT ALERT] ${subject}`,
         html: htmlContent
       });
-
-      if (info.message) {
-        console.log('[Alert System] Email preview content logged (JSON Transport)');
-      } else {
-        console.log('[Alert System] Email alert sent successfully to:', emailRecipient);
-      }
+      console.log('[Alert System] Email alert sent successfully to:', emailRecipient);
     } catch (err) {
       console.error('[Alert System] Email delivery failed:', err.message);
     }
