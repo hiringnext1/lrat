@@ -1,25 +1,12 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { 
-  Users, 
-  DollarSign, 
-  Activity, 
-  Megaphone, 
-  UserCheck, 
-  TrendingDown, 
-  ShieldAlert, 
-  Edit, 
-  UserX, 
-  RefreshCw, 
-  Search, 
-  Settings, 
-  UserCheck2,
-  CheckCircle,
-  XCircle,
-  Clock,
-  Loader2
+  Users, DollarSign, Activity, TrendingDown, ShieldAlert, 
+  Edit, RefreshCw, Search, CheckCircle, XCircle, Clock, 
+  Loader2, Key, UserCheck, Ban, LogIn, Megaphone
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { GlassCard, PageHeader, PrimaryBtn, GhostBtn, StatusBadge, LoadingSpinner, PageBg, PageStyle } from '../components/PageShell';
 
 export default function Admin() {
   const [metrics, setMetrics] = useState(null);
@@ -28,7 +15,7 @@ export default function Admin() {
   const [usersLoading, setUsersLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   
-  // Modal State for modifying plan/role
+  // Modals
   const [selectedUser, setSelectedUser] = useState(null);
   const [modalLoading, setModalLoading] = useState(false);
   const [editPlanType, setEditPlanType] = useState('trial');
@@ -37,34 +24,27 @@ export default function Admin() {
   const [editRole, setEditRole] = useState('user');
   const [editTrialEnds, setEditTrialEnds] = useState('');
 
-  // Fetch metrics data
+  // Password reset modal
+  const [passwordUser, setPasswordUser] = useState(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [passLoading, setPassLoading] = useState(false);
+
   async function fetchMetrics() {
     setMetricsLoading(true);
     try {
       const res = await axios.get('/api/admin/metrics');
-      if (res.data?.success) {
-        setMetrics(res.data.data);
-      }
-    } catch (err) {
-      console.error('Failed to fetch admin metrics:', err);
-    } finally {
-      setMetricsLoading(false);
-    }
+      if (res.data?.success) setMetrics(res.data.data);
+    } catch (err) { console.error(err); }
+    finally { setMetricsLoading(false); }
   }
 
-  // Fetch users data
   async function fetchUsers() {
     setUsersLoading(true);
     try {
       const res = await axios.get('/api/admin/users');
-      if (res.data?.success) {
-        setUsers(res.data.data || []);
-      }
-    } catch (err) {
-      console.error('Failed to fetch admin users list:', err);
-    } finally {
-      setUsersLoading(false);
-    }
+      if (res.data?.success) setUsers(res.data.data || []);
+    } catch (err) { console.error(err); }
+    finally { setUsersLoading(false); }
   }
 
   useEffect(() => {
@@ -72,30 +52,21 @@ export default function Admin() {
     fetchUsers();
   }, []);
 
-  // Set initial edit state when user is selected
   const handleOpenEdit = (user) => {
     setSelectedUser(user);
     setEditPlanType(user.plan_type || 'trial');
     setEditPlanStatus(user.plan_status || 'trialing');
     setEditAccountsLimit(user.plan_accounts_limit || 1);
     setEditRole(user.role || 'user');
-    
-    if (user.trial_ends_at) {
-      // Format YYYY-MM-DD
-      setEditTrialEnds(new Date(user.trial_ends_at).toISOString().split('T')[0]);
-    } else {
-      setEditTrialEnds('');
-    }
+    setEditTrialEnds(user.trial_ends_at ? new Date(user.trial_ends_at).toISOString().split('T')[0] : '');
   };
 
-  // Submit plan & role update modifications
   const handleUpdateSubmit = async (e) => {
     e.preventDefault();
     if (!selectedUser) return;
     setModalLoading(true);
 
     try {
-      // 1. Update user plan
       await axios.put(`/api/admin/users/${selectedUser.id}/plan`, {
         plan_type: editPlanType,
         plan_status: editPlanStatus,
@@ -103,12 +74,8 @@ export default function Admin() {
         trial_ends_at: editTrialEnds ? new Date(editTrialEnds).toISOString() : null
       });
 
-      // 2. Update user role
-      await axios.put(`/api/admin/users/${selectedUser.id}/role`, {
-        role: editRole
-      });
+      await axios.put(`/api/admin/users/${selectedUser.id}/role`, { role: editRole });
 
-      alert('User records updated successfully.');
       setSelectedUser(null);
       fetchUsers();
       fetchMetrics();
@@ -119,7 +86,50 @@ export default function Admin() {
     }
   };
 
-  // Filtered users list based on search
+  // Toggle user suspension
+  const handleToggleSuspend = async (user) => {
+    if (!window.confirm(`Are you sure you want to ${user.plan_status === 'suspended' ? 'activate' : 'suspend'} ${user.email}?`)) return;
+    try {
+      await axios.put(`/api/admin/users/${user.id}/suspend`);
+      fetchUsers();
+      fetchMetrics();
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to update user status');
+    }
+  };
+
+  // Direct Password Reset
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    if (!passwordUser || !newPassword) return;
+    setPassLoading(true);
+    try {
+      await axios.put(`/api/admin/users/${passwordUser.id}/password`, { password: newPassword });
+      alert(`Password for ${passwordUser.email} has been reset to: ${newPassword}`);
+      setPasswordUser(null);
+      setNewPassword('');
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to reset password');
+    } finally {
+      setPassLoading(false);
+    }
+  };
+
+  // Impersonate User ("Login As")
+  const handleImpersonate = async (user) => {
+    if (!window.confirm(`Impersonate ${user.email}? You will be logged in as this user.`)) return;
+    try {
+      const res = await axios.post(`/api/admin/users/${user.id}/impersonate`);
+      if (res.data?.success && res.data.token) {
+        localStorage.setItem('lrat_token', res.data.token);
+        localStorage.setItem('lrat_user', JSON.stringify(res.data.user));
+        window.location.href = '/dashboard';
+      }
+    } catch (err) {
+      alert(err.response?.data?.error || 'Impersonation failed');
+    }
+  };
+
   const filteredUsers = users.filter(user => {
     const query = searchQuery.toLowerCase();
     return (
@@ -130,399 +140,279 @@ export default function Admin() {
   });
 
   return (
-    <div className="p-6 md:p-8 space-y-8 bg-[#fbfcfd] dark:bg-slate-950 min-h-screen text-left relative overflow-hidden">
-      {/* Background ambient grids */}
-      <div className="absolute top-0 left-1/4 w-80 h-80 rounded-full blur-3xl opacity-10 dark:opacity-5 bg-gradient-to-br from-indigo-500 to-purple-500 pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-80 h-80 rounded-full blur-3xl opacity-10 dark:opacity-5 bg-gradient-to-br from-pink-500 to-blue-500 pointer-events-none" />
+    <div className={`p-6 space-y-6 ${PageBg}`} style={PageStyle}>
 
-      {/* Header Panel */}
-      <div className="bg-white dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80 rounded-[32px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.01)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 relative z-10">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight flex items-center gap-2.5">
-            <ShieldAlert className="text-red-500" size={28} strokeWidth={2.5} />
-            Super Admin Panel
-          </h1>
-          <p className="text-xs text-slate-400 font-semibold uppercase mt-0.5 tracking-wider">Configure settings, plans, and monitor SaaS revenue KPIs</p>
-        </div>
+      <PageHeader
+        icon={ShieldAlert}
+        title="Super Admin Panel"
+        subtitle="Manage users, subscriptions, system health & platform MRR"
+        accent="text-red-400"
+        actions={
+          <GhostBtn onClick={() => { fetchMetrics(); fetchUsers(); }}>
+            <RefreshCw size={13} /> Refresh
+          </GhostBtn>
+        }
+      />
 
-        <button
-          onClick={() => { fetchMetrics(); fetchUsers(); }}
-          className="flex items-center gap-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider hover:opacity-90 active:scale-[0.98] transition-all duration-150 shrink-0"
-        >
-          <RefreshCw size={14} />
-          <span>Refresh Data</span>
-        </button>
-      </div>
-
-      {/* Metrics Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
+      {/* Metrics Strip */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {metricsLoading ? (
-          [1, 2, 3, 4].map(idx => (
-            <div key={idx} className="h-28 bg-white dark:bg-slate-900/40 rounded-3xl border border-slate-100 dark:border-slate-800/80 animate-pulse" />
-          ))
+          [1,2,3,4].map(i => <GlassCard key={i} className="h-24 animate-pulse" />)
         ) : metrics ? (
           <>
-            {/* MRR Card */}
-            <div className="bg-white dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80 rounded-3xl p-5 shadow-[0_8px_30px_rgb(0,0,0,0.01)] flex items-center gap-4">
-              <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 rounded-2xl">
-                <DollarSign size={20} strokeWidth={2.5} />
+            <GlassCard className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-emerald-500/15 text-emerald-400">
+                  <DollarSign size={18} />
+                </div>
+                <div>
+                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Platform MRR</p>
+                  <p className="text-xl font-black text-white mt-0.5">${metrics.mrr || 0}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Est. Monthly Revenue</p>
-                <h3 className="text-xl font-black text-slate-850 dark:text-white tracking-tight mt-0.5">${metrics.mrr || 0} USD</h3>
-              </div>
-            </div>
+            </GlassCard>
 
-            {/* Total Subscribers Card */}
-            <div className="bg-white dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80 rounded-3xl p-5 shadow-[0_8px_30px_rgb(0,0,0,0.01)] flex items-center gap-4">
-              <div className="p-3.5 bg-blue-50 dark:bg-blue-950/30 text-blue-600 rounded-2xl">
-                <Users size={20} strokeWidth={2.5} />
+            <GlassCard className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-blue-500/15 text-blue-400">
+                  <Users size={18} />
+                </div>
+                <div>
+                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Active Users</p>
+                  <p className="text-xl font-black text-white mt-0.5">{metrics.totalSubscribers || 0}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Active Subscribers</p>
-                <h3 className="text-xl font-black text-slate-850 dark:text-white tracking-tight mt-0.5">{metrics.totalSubscribers || 0} users</h3>
-              </div>
-            </div>
+            </GlassCard>
 
-            {/* Churn Rate Card */}
-            <div className="bg-white dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80 rounded-3xl p-5 shadow-[0_8px_30px_rgb(0,0,0,0.01)] flex items-center gap-4">
-              <div className="p-3.5 bg-rose-50 dark:bg-rose-950/30 text-rose-600 rounded-2xl">
-                <TrendingDown size={20} strokeWidth={2.5} />
+            <GlassCard className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-purple-500/15 text-purple-400">
+                  <Activity size={18} />
+                </div>
+                <div>
+                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Active LinkedIn Nodes</p>
+                  <p className="text-xl font-black text-white mt-0.5">{metrics.activeAccounts || 0}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Customer Churn Rate</p>
-                <h3 className="text-xl font-black text-slate-850 dark:text-white tracking-tight mt-0.5">{metrics.churnRate || 0}%</h3>
-              </div>
-            </div>
+            </GlassCard>
 
-            {/* System Health / Linked accounts Card */}
-            <div className="bg-white dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80 rounded-3xl p-5 shadow-[0_8px_30px_rgb(0,0,0,0.01)] flex items-center gap-4">
-              <div className="p-3.5 bg-purple-50 dark:bg-purple-950/30 text-purple-600 rounded-2xl">
-                <Activity size={20} strokeWidth={2.5} />
+            <GlassCard className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-rose-500/15 text-rose-400">
+                  <TrendingDown size={18} />
+                </div>
+                <div>
+                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Churn Rate</p>
+                  <p className="text-xl font-black text-white mt-0.5">{metrics.churnRate || 0}%</p>
+                </div>
               </div>
-              <div>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Active Linked Nodes</p>
-                <h3 className="text-xl font-black text-slate-850 dark:text-white tracking-tight mt-0.5">{metrics.activeAccounts || 0} profiles</h3>
-              </div>
-            </div>
+            </GlassCard>
           </>
         ) : null}
       </div>
 
-      {/* Users Management Workspace */}
-      <div className="bg-white dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80 rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.01)] overflow-hidden relative z-10">
-        
-        {/* Table Search Header */}
-        <div className="p-6 border-b border-slate-100 dark:border-slate-800/85 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="relative w-full sm:max-w-xs">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-              <Search size={14} />
-            </div>
+      {/* Users Table */}
+      <GlassCard className="p-5">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 pb-4 border-b border-white/8">
+          <div className="relative w-full sm:w-64">
+            <Search size={12} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
             <input
               type="text"
-              placeholder="Search user, email, or company..."
+              placeholder="Search email, name, company..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="block w-full pl-9 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/55 rounded-xl text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              className="w-full pl-9 pr-4 py-2 bg-white/5 border border-white/8 rounded-xl text-xs text-white placeholder-slate-600 focus:outline-none focus:border-blue-500/50"
             />
           </div>
-          
-          <div className="text-[10px] font-bold text-slate-450 dark:text-slate-500 uppercase tracking-wider">
-            Total Users: <span className="font-black text-slate-800 dark:text-slate-200">{filteredUsers.length}</span>
-          </div>
+          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+            Total Users: <span className="text-white font-black">{filteredUsers.length}</span>
+          </span>
         </div>
 
-        {/* User Table Grid */}
-        <div className="overflow-x-auto">
-          {usersLoading ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-3">
-              <Loader2 className="animate-spin text-blue-600" size={24} />
-              <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Retrieving user database...</p>
-            </div>
-          ) : filteredUsers.length === 0 ? (
-            <div className="text-center py-20 text-slate-550 dark:text-slate-500 uppercase tracking-widest text-[10px]">
-              No users match your current filter search queries.
-            </div>
-          ) : (
-            <table className="w-full text-left border-collapse">
+        {usersLoading ? (
+          <LoadingSpinner text="Retrieving users..." />
+        ) : filteredUsers.length === 0 ? (
+          <p className="text-center py-16 text-slate-500 text-xs font-bold uppercase tracking-wider">No users match query</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-[10px]">
               <thead>
-                <tr className="bg-slate-50/50 dark:bg-slate-800/20 border-b border-slate-100 dark:border-slate-800/80 text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-wider">
-                  <th className="py-4 px-6">User profile</th>
-                  <th className="py-4 px-6">Plan details</th>
-                  <th className="py-4 px-6">Access details</th>
-                  <th className="py-4 px-6">Engagement metrics</th>
-                  <th className="py-4 px-6">Last Login</th>
-                  <th className="py-4 px-6 text-center">Settings</th>
+                <tr className="border-b border-white/6 text-slate-500 font-black uppercase tracking-widest">
+                  <th className="py-3 px-4">User</th>
+                  <th className="py-3 px-4">Plan & Status</th>
+                  <th className="py-3 px-4">Role</th>
+                  <th className="py-3 px-4">Nodes/Campaigns</th>
+                  <th className="py-3 px-4">Last Login</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-850 text-xs">
+              <tbody>
                 {filteredUsers.map(user => {
                   const isAdminRole = user.role === 'admin';
+                  const isSuspended = user.plan_status === 'suspended';
                   const isPlanActive = user.plan_status === 'active' || user.plan_status === 'trialing';
-                  
+
                   return (
-                    <tr key={user.id} className="hover:bg-slate-50/40 dark:hover:bg-slate-800/10 transition-colors">
-                      {/* Column 1: User profile details */}
-                      <td className="py-4.5 px-6">
-                        <div className="flex flex-col">
-                          <span className="font-extrabold text-slate-900 dark:text-white">{user.name || 'Anonymous User'}</span>
-                          <span className="text-[10px] text-slate-450 dark:text-slate-500 font-semibold lowercase mt-0.5">{user.email}</span>
-                          {(user.company_name || user.designation) && (
-                            <span className="text-[9px] text-slate-400 dark:text-slate-500 mt-1 uppercase tracking-wide">
-                              {user.designation || 'Staff'} @ {user.company_name || 'N/A'}
-                            </span>
-                          )}
-                        </div>
+                    <tr key={user.id} className="border-b border-white/4 hover:bg-white/3 transition-colors">
+                      <td className="py-3 px-4">
+                        <p className="font-bold text-white text-xs">{user.name || 'User'}</p>
+                        <p className="text-slate-400 font-mono text-[9px]">{user.email}</p>
+                        {user.company_name && <p className="text-slate-500 text-[9px] mt-0.5">{user.company_name}</p>}
                       </td>
 
-                      {/* Column 2: Plan details */}
-                      <td className="py-4.5 px-6">
-                        <div className="flex flex-col">
-                          <div className="flex items-center gap-1.5">
-                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
-                              user.plan_type === 'scale' || user.plan_type === 'enterprise' ? 'bg-purple-100 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400' :
-                              user.plan_type === 'agency' || user.plan_type === 'professional' ? 'bg-blue-100 dark:bg-blue-950/40 text-blue-750 dark:text-blue-400' :
-                              user.plan_type === 'free' ? 'bg-slate-100 dark:bg-slate-800 text-slate-600' :
-                              'bg-indigo-50 dark:bg-indigo-950/30 text-indigo-755 dark:text-indigo-400'
-                            }`}>
-                              {user.plan_type}
-                            </span>
-                            
-                            <span className={`flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider ${
-                              isPlanActive ? 'text-emerald-500' : 'text-rose-500'
-                            }`}>
-                              {isPlanActive ? <CheckCircle size={10} /> : <XCircle size={10} />}
-                              {user.plan_status}
-                            </span>
-                          </div>
-                          
-                          <span className="text-[9px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wide mt-1.5">
-                            Node limit: {user.plan_accounts_limit} ({user.accountsCount} active)
-                          </span>
-                        </div>
-                      </td>
-
-                      {/* Column 3: Access details */}
-                      <td className="py-4.5 px-6">
-                        <div className="flex flex-col gap-1">
-                          <span className={`self-start px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider ${
-                            isAdminRole ? 'bg-red-50 dark:bg-red-950/30 text-red-650 dark:text-red-400 border border-red-200/50' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${
+                            user.plan_type === 'enterprise' ? 'bg-purple-500/15 text-purple-400' :
+                            user.plan_type === 'professional' ? 'bg-blue-500/15 text-blue-400' : 'bg-white/8 text-slate-400'
                           }`}>
-                            {user.role}
+                            {user.plan_type}
                           </span>
-
-                          <span className="text-[9px] text-slate-400 dark:text-slate-500 uppercase tracking-wider font-semibold">
-                            Setup: {user.onboarding_completed ? '✅ Done' : `❌ Step (${user.onboarding_step || 'welcome'})`}
+                          <span className={`text-[8px] font-black uppercase ${isSuspended ? 'text-red-400' : isPlanActive ? 'text-emerald-400' : 'text-amber-400'}`}>
+                            {user.plan_status}
                           </span>
                         </div>
+                        <p className="text-slate-500 text-[9px]">Limit: {user.plan_accounts_limit} nodes</p>
                       </td>
 
-                      {/* Column 4: Engagement metrics */}
-                      <td className="py-4.5 px-6 text-slate-550 dark:text-slate-400 font-medium text-[10px]">
-                        <div className="flex flex-col gap-0.5">
-                          <span>Nodes: {user.accountsCount}</span>
-                          <span>Campaigns: {user.campaignsCount}</span>
+                      <td className="py-3 px-4">
+                        <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${
+                          isAdminRole ? 'bg-red-500/15 text-red-400 border border-red-500/25' : 'bg-white/6 text-slate-400'
+                        }`}>
+                          {user.role}
+                        </span>
+                      </td>
+
+                      <td className="py-3 px-4 text-slate-400 font-bold">
+                        {user.accountsCount} nodes • {user.campaignsCount} campaigns
+                      </td>
+
+                      <td className="py-3 px-4 text-slate-500 whitespace-nowrap">
+                        {user.last_login ? new Date(user.last_login).toLocaleDateString() : 'Never'}
+                      </td>
+
+                      <td className="py-3 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          {/* Impersonate */}
+                          <button onClick={() => handleImpersonate(user)} className="p-1.5 rounded-lg text-slate-500 hover:text-blue-400 hover:bg-white/8 transition-all" title="Impersonate (Login as User)">
+                            <LogIn size={13} />
+                          </button>
+
+                          {/* Password Reset */}
+                          <button onClick={() => setPasswordUser(user)} className="p-1.5 rounded-lg text-slate-500 hover:text-amber-400 hover:bg-white/8 transition-all" title="Reset Password">
+                            <Key size={13} />
+                          </button>
+
+                          {/* Suspend / Unsuspend */}
+                          <button onClick={() => handleToggleSuspend(user)} className={`p-1.5 rounded-lg transition-all ${isSuspended ? 'text-emerald-400 hover:bg-emerald-500/10' : 'text-red-400 hover:bg-red-500/10'}`} title={isSuspended ? 'Activate User' : 'Suspend User'}>
+                            <Ban size={13} />
+                          </button>
+
+                          {/* Edit Config */}
+                          <button onClick={() => handleOpenEdit(user)} className="p-1.5 rounded-lg text-slate-500 hover:text-purple-400 hover:bg-white/8 transition-all" title="Configure Limits & Role">
+                            <Edit size={13} />
+                          </button>
                         </div>
-                      </td>
-
-                      {/* Column 5: Last Login */}
-                      <td className="py-4.5 px-6 text-[10px] text-slate-400 dark:text-slate-500">
-                        {user.last_login ? (
-                          <div className="flex flex-col">
-                            <span className="font-semibold text-slate-600 dark:text-slate-350">
-                              {new Date(user.last_login).toLocaleDateString()}
-                            </span>
-                            <span className="text-[9px] mt-0.5">
-                              {new Date(user.last_login).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="flex items-center gap-1 uppercase tracking-wider text-[9px] font-semibold">
-                            <Clock size={11} /> Never
-                          </span>
-                        )}
-                      </td>
-
-                      {/* Column 6: Edit configuration settings */}
-                      <td className="py-4.5 px-6 text-center">
-                        <button
-                          onClick={() => handleOpenEdit(user)}
-                          className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/20 rounded-xl transition-colors inline-flex items-center justify-center cursor-pointer"
-                          title="Modify user specifications"
-                        >
-                          <Edit size={14} />
-                        </button>
                       </td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
-          )}
-        </div>
-      </div>
+          </div>
+        )}
+      </GlassCard>
 
-      {/* Edit User Modal Dialog Slider */}
+      {/* Edit Config Modal */}
       <AnimatePresence>
         {selectedUser && (
           <>
-            {/* Backdrop Blur overlay */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.4 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setSelectedUser(null)}
-              className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-40 cursor-pointer"
-            />
-
-            {/* Slider container */}
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-              className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white dark:bg-slate-900 shadow-2xl border-l border-slate-100 dark:border-slate-800 z-50 flex flex-col justify-between text-left"
-            >
-              {/* Modal header */}
-              <div className="p-6 border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/30 flex items-center justify-between">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedUser(null)} className="fixed inset-0 z-40" style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }} />
+            <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 28, stiffness: 240 }} className="fixed right-0 top-0 bottom-0 w-full max-w-md z-50 flex flex-col p-6 space-y-5" style={{ background: '#0D1221', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>
+              <div className="flex justify-between items-center pb-4 border-b border-white/8">
                 <div>
-                  <h3 className="text-sm font-black text-slate-850 dark:text-slate-100 uppercase tracking-wide">
-                    Configure User Node
-                  </h3>
-                  <p className="text-[10px] text-slate-400 dark:text-slate-550 font-bold uppercase tracking-wider mt-0.5">
-                    Modifying specifications for {selectedUser.email}
-                  </p>
+                  <h3 className="text-sm font-black text-white uppercase tracking-wider">Configure User</h3>
+                  <p className="text-[10px] text-slate-500 font-mono mt-0.5">{selectedUser.email}</p>
                 </div>
-                <button
-                  onClick={() => setSelectedUser(null)}
-                  className="px-2.5 py-1 text-[10px] font-black uppercase border border-slate-200 dark:border-slate-700/80 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer text-slate-400 hover:text-slate-600 transition-colors"
-                >
-                  ESC
-                </button>
+                <button onClick={() => setSelectedUser(null)} className="text-[10px] text-slate-500 hover:text-white uppercase font-bold">Close ×</button>
               </div>
 
-              {/* Form Content */}
-              <form onSubmit={handleUpdateSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
-                
-                {/* 1. Subscription Plan Level */}
+              <form onSubmit={handleUpdateSubmit} className="space-y-4 flex-1 overflow-y-auto">
                 <div>
-                  <label className="block text-[10px] font-black uppercase text-slate-400 dark:text-slate-550 tracking-widest mb-2">
-                    SaaS Pricing Plan level
-                  </label>
-                  <select
-                    value={editPlanType}
-                    onChange={(e) => setEditPlanType(e.target.value)}
-                    className="block w-full py-3 px-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-semibold focus:outline-none dark:text-white"
-                  >
+                  <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Plan Type</label>
+                  <select value={editPlanType} onChange={e => setEditPlanType(e.target.value)} className="w-full bg-white/5 border border-white/8 rounded-xl px-4 py-2.5 text-white text-xs" style={{ colorScheme: 'dark' }}>
                     <option value="trial">Trial</option>
-                    <option value="starter">Starter / Solo</option>
-                    <option value="professional">Professional / Agency</option>
-                    <option value="enterprise">Enterprise / Scale</option>
+                    <option value="starter">Starter / Solo ($49/mo)</option>
+                    <option value="professional">Professional / Agency ($99/mo)</option>
+                    <option value="enterprise">Enterprise / Scale ($199/mo)</option>
                     <option value="free">Free Limit</option>
                   </select>
                 </div>
 
-                {/* 2. Plan Status */}
                 <div>
-                  <label className="block text-[10px] font-black uppercase text-slate-400 dark:text-slate-550 tracking-widest mb-2">
-                    Billing Status
-                  </label>
-                  <select
-                    value={editPlanStatus}
-                    onChange={(e) => setEditPlanStatus(e.target.value)}
-                    className="block w-full py-3 px-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-semibold focus:outline-none dark:text-white"
-                  >
+                  <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Status</label>
+                  <select value={editPlanStatus} onChange={e => setEditPlanStatus(e.target.value)} className="w-full bg-white/5 border border-white/8 rounded-xl px-4 py-2.5 text-white text-xs" style={{ colorScheme: 'dark' }}>
                     <option value="trialing">Trialing</option>
-                    <option value="active">Active (Subscribed)</option>
-                    <option value="past_due">Past Due (Unpaid)</option>
-                    <option value="canceled">Canceled / Incomplete</option>
+                    <option value="active">Active</option>
+                    <option value="past_due">Past Due</option>
+                    <option value="suspended">Suspended</option>
+                    <option value="canceled">Canceled</option>
                   </select>
                 </div>
 
-                {/* 3. Account / Node Limits */}
                 <div>
-                  <label className="block text-[10px] font-black uppercase text-slate-400 dark:text-slate-550 tracking-widest mb-2">
-                    LinkedIn Node accounts limit
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={100}
-                    value={editAccountsLimit}
-                    onChange={(e) => setEditAccountsLimit(e.target.value)}
-                    className="block w-full py-3 px-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-semibold focus:outline-none dark:text-white"
-                  />
-                  <p className="text-[9px] text-slate-450 dark:text-slate-500 mt-1 uppercase font-semibold">Maximum number of LinkedIn channels they can link concurrently.</p>
+                  <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Account Node Limit</label>
+                  <input type="number" min={1} max={100} value={editAccountsLimit} onChange={e => setEditAccountsLimit(e.target.value)} className="w-full bg-white/5 border border-white/8 rounded-xl px-4 py-2.5 text-white text-xs" />
                 </div>
 
-                {/* 4. Trial Expiration Date */}
-                {editPlanType === 'trial' && (
-                  <div>
-                    <label className="block text-[10px] font-black uppercase text-slate-400 dark:text-slate-550 tracking-widest mb-2">
-                      Trial expiration date
-                    </label>
-                    <input
-                      type="date"
-                      value={editTrialEnds}
-                      onChange={(e) => setEditTrialEnds(e.target.value)}
-                      className="block w-full py-3 px-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-semibold focus:outline-none dark:text-white"
-                    />
-                  </div>
-                )}
-
-                <hr className="border-slate-100 dark:border-slate-800" />
-
-                {/* 5. User role authorization */}
                 <div>
-                  <label className="block text-[10px] font-black uppercase text-slate-400 dark:text-slate-550 tracking-widest mb-2">
-                    Super Admin role authority
-                  </label>
-                  <div className="flex gap-4">
-                    <label className="flex items-center gap-2 text-xs cursor-pointer font-bold uppercase tracking-wider text-slate-600 dark:text-slate-450">
-                      <input
-                        type="radio"
-                        name="userRole"
-                        value="user"
-                        checked={editRole === 'user'}
-                        onChange={() => setEditRole('user')}
-                        className="w-4 h-4 text-blue-600"
-                      />
-                      Standard User
+                  <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Role Authority</label>
+                  <div className="flex gap-4 pt-1">
+                    <label className="flex items-center gap-2 text-xs text-slate-300 font-bold cursor-pointer">
+                      <input type="radio" name="role" value="user" checked={editRole === 'user'} onChange={() => setEditRole('user')} /> Standard User
                     </label>
-                    <label className="flex items-center gap-2 text-xs cursor-pointer font-bold uppercase tracking-wider text-slate-600 dark:text-slate-450">
-                      <input
-                        type="radio"
-                        name="userRole"
-                        value="admin"
-                        checked={editRole === 'admin'}
-                        onChange={() => setEditRole('admin')}
-                        className="w-4 h-4 text-red-650"
-                      />
-                      Super Admin
+                    <label className="flex items-center gap-2 text-xs text-red-400 font-bold cursor-pointer">
+                      <input type="radio" name="role" value="admin" checked={editRole === 'admin'} onChange={() => setEditRole('admin')} /> Super Admin
                     </label>
                   </div>
+                </div>
+
+                <div className="pt-4 flex gap-3">
+                  <button type="button" onClick={() => setSelectedUser(null)} className="flex-1 py-2.5 border border-white/10 rounded-xl text-slate-400 text-xs font-bold uppercase tracking-wider">Cancel</button>
+                  <button type="submit" disabled={modalLoading} className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-lg shadow-blue-500/20">
+                    {modalLoading ? 'Saving...' : 'Save Changes'}
+                  </button>
                 </div>
               </form>
-
-              {/* Modal footer */}
-              <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 flex gap-3">
-                <button
-                  onClick={() => setSelectedUser(null)}
-                  className="flex-1 py-3 border border-slate-200 dark:border-slate-850 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleUpdateSubmit}
-                  disabled={modalLoading}
-                  className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-2xl text-xs font-black uppercase tracking-widest shadow-md transition-all active:scale-[0.98] disabled:opacity-50"
-                >
-                  {modalLoading ? <Loader2 size={12} className="animate-spin" /> : null}
-                  <span>Save changes</span>
-                </button>
-              </div>
             </motion.div>
           </>
+        )}
+      </AnimatePresence>
+
+      {/* Password Reset Modal */}
+      <AnimatePresence>
+        {passwordUser && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="w-full max-w-sm p-6 rounded-2xl border border-white/10 space-y-4" style={{ background: '#0D1221' }}>
+              <h3 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
+                <Key size={15} className="text-amber-400" /> Reset Password
+              </h3>
+              <p className="text-[10px] text-slate-500 font-mono">User: {passwordUser.email}</p>
+
+              <form onSubmit={handlePasswordSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">New Password</label>
+                  <input type="text" required minLength={6} value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="e.g. AdminPass123" className="w-full bg-white/5 border border-white/8 rounded-xl px-4 py-2.5 text-white text-xs font-mono" />
+                </div>
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => setPasswordUser(null)} className="flex-1 py-2.5 border border-white/10 rounded-xl text-slate-400 text-xs font-bold uppercase tracking-wider">Cancel</button>
+                  <button type="submit" disabled={passLoading} className="flex-1 py-2.5 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-black uppercase tracking-wider">
+                    {passLoading ? 'Resetting...' : 'Set Password'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>
