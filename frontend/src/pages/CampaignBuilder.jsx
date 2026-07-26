@@ -1396,7 +1396,7 @@ export default function CampaignBuilder() {
     const m = STEP_META[activeStep.type];
     const Icon = m?.icon;
 
-    const inputCls = 'w-full border border-slate-200 dark:border-slate-805 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/20 focus:border-blue-500 bg-white dark:bg-slate-900 dark:text-slate-200 transition-all';
+    const inputCls = 'w-full border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-sans font-medium leading-relaxed tracking-normal text-slate-800 dark:text-slate-200 placeholder:text-slate-300 dark:placeholder:text-slate-600 placeholder:font-normal focus:outline-none focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/20 focus:border-blue-500 bg-white dark:bg-slate-900 transition-all';
     const lbl = 'block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5';
 
     function setStepData(k, v) {

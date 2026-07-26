@@ -9,6 +9,20 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Force all form elements to inherit Inter — browsers override this by default */
+input, textarea, select, button {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
+/* Textarea specific — better readability */
+textarea {
+  line-height: 1.65;
+  letter-spacing: 0.01em;
+}
+
 body {
   @apply bg-gray-50 text-gray-900 text-[14px] leading-relaxed;
 }
