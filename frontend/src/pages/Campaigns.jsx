@@ -1,35 +1,20 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Plus, Megaphone, Play, Pause, Trash2, Edit, 
-  Users, UserCheck, MessageSquare, Calendar, 
-  TrendingUp, Activity, ChevronRight, BarChart3, AlertCircle,
-  Upload, Copy
-} from 'lucide-react';
+import { Plus, Megaphone, Play, Pause, Trash2, Edit, Users, ChevronRight, AlertCircle, Upload, Copy, Activity } from 'lucide-react';
 import axios from 'axios';
 import ImportModal from '../components/ImportModal';
+import { GlassCard, PageHeader, PrimaryBtn, GhostBtn, StatusBadge, EmptyState, LoadingSpinner, PageBg, PageStyle } from '../components/PageShell';
 
-const STATUS_COLORS = {
-  draft: 'bg-slate-50 text-slate-500 border-slate-200 dark:bg-slate-900/40 dark:text-slate-400 dark:border-slate-800',
-  active: 'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/30',
-  paused: 'bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30',
-  completed: 'bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900/30',
-  stalled: 'bg-rose-50 text-rose-600 border-rose-100 dark:bg-rose-950/20 dark:text-rose-450 dark:border-rose-900/30',
-};
-
-function ConversionRate({ label, value, total, color, labelColor }) {
-  const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+function ConversionBar({ label, value, total, color }) {
+  const pct = total > 0 ? Math.round((value / total) * 100) : 0;
   return (
-    <div className="flex-1 min-w-[120px] text-left">
-      <div className="flex justify-between items-end mb-1.5">
-        <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">{label}</span>
-        <span className={`text-[10px] font-extrabold ${labelColor}`}>{percentage}%</span>
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between text-[9px]">
+        <span className="text-slate-500 font-bold uppercase tracking-wider">{label}</span>
+        <span className="font-black" style={{ color }}>{pct}%</span>
       </div>
-      <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-        <div 
-          className={`h-full rounded-full transition-all duration-1000 ${color}`} 
-          style={{ width: `${percentage}%` }}
-        />
+      <div className="h-1.5 rounded-full overflow-hidden bg-white/5">
+        <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${pct}%`, background: color }} />
       </div>
     </div>
   );
@@ -42,25 +27,19 @@ export default function Campaigns() {
   const [loading, setLoading] = useState(true);
   const [showScraper, setShowScraper] = useState(false);
   const [selectedCampaignId, setSelectedCampaignId] = useState('');
+  const [filter, setFilter] = useState('all');
 
   async function fetchCampaigns() {
     try {
       const res = await axios.get('/api/campaigns');
       setCampaigns(res.data.data || []);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); }
   }
 
   async function fetchAccounts() {
-    try {
-      const res = await axios.get('/api/accounts');
-      setAccounts(res.data.data || []);
-    } catch (e) {
-      console.error(e);
-    }
+    const res = await axios.get('/api/accounts');
+    setAccounts(res.data.data || []);
   }
 
   async function toggleStatus(e, campaign) {
@@ -72,250 +51,178 @@ export default function Campaigns() {
 
   async function deleteCampaign(e, id) {
     e.stopPropagation();
-    if (!window.confirm('Delete this campaign and ALL its associated leads? This cannot be undone.')) return;
+    if (!window.confirm('Delete this campaign and ALL its leads? This cannot be undone.')) return;
     try {
       await axios.delete(`/api/campaigns/${id}`);
       fetchCampaigns();
-      window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', title: 'Campaign Deleted', body: 'Campaign and associated leads removed successfully.' } }));
-    } catch (e) {
-      window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', title: 'Delete Failed', body: 'Failed to delete campaign.' } }));
-    }
+    } catch (e) { console.error(e); }
   }
 
-  async function duplicateCampaign(id) {
+  async function duplicateCampaign(e, id) {
+    e.stopPropagation();
     try {
       const res = await axios.post(`/api/campaigns/${id}/clone`);
-      if (res.data?.success) {
-        fetchCampaigns();
-        window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'success', title: 'Campaign Duplicated', body: 'A copy of this campaign has been created in drafts.' } }));
-      }
-    } catch (e) {
-      console.error(e);
-      window.dispatchEvent(new CustomEvent('show-toast', { detail: { type: 'error', title: 'Duplication Failed', body: 'Failed to clone this campaign.' } }));
-    }
+      if (res.data?.success) fetchCampaigns();
+    } catch (e) { console.error(e); }
   }
 
-  useEffect(() => { 
-    fetchCampaigns(); 
-    fetchAccounts();
-  }, []);
+  useEffect(() => { fetchCampaigns(); fetchAccounts(); }, []);
+
+  const filters = ['all', 'active', 'paused', 'draft', 'completed'];
+  const filtered = filter === 'all' ? campaigns : campaigns.filter(c => c.status === filter);
+
+  const activeCnt = campaigns.filter(c => c.status === 'active').length;
+  const totalSent = campaigns.reduce((s, c) => s + (c.connections_sent || 0), 0);
 
   return (
-    <div className="p-6 md:p-8 space-y-8 bg-[#fbfcfd] dark:bg-slate-950 min-h-screen text-left relative overflow-hidden">
-      
-      {/* Ambient background glows */}
-      <div className="absolute top-0 right-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+    <div className={`p-6 space-y-6 ${PageBg}`} style={PageStyle}>
 
-      {/* Header Widget */}
-      <div className="bg-white dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80 rounded-[32px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.01)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 relative z-10">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight flex items-center gap-2.5">
-            <Megaphone className="text-blue-600 dark:text-blue-400" size={28} strokeWidth={2.5} />
-            Outreach Campaigns
-          </h1>
-          <p className="text-xs text-slate-400 font-semibold uppercase mt-0.5 tracking-wider">Configure visual message flows and target prospect pools</p>
-        </div>
-        
-        <button
-          onClick={() => navigate('/dashboard/campaigns/new/build')}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-blue-500/20 active:scale-95 shrink-0"
-        >
-          <Plus size={16} strokeWidth={3} />
-          <span>Create Campaign</span>
-        </button>
+      <PageHeader
+        icon={Megaphone}
+        title="Campaigns"
+        subtitle="Configure automated outreach sequences"
+        accent="text-blue-400"
+        actions={
+          <PrimaryBtn onClick={() => navigate('/dashboard/campaigns/new/build')} id="create-campaign-btn">
+            <Plus size={13} strokeWidth={3} /> Create Campaign
+          </PrimaryBtn>
+        }
+      />
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          { label: 'Total Campaigns', val: campaigns.length, color: 'text-blue-400' },
+          { label: 'Active', val: activeCnt, color: 'text-emerald-400' },
+          { label: 'Total Sent', val: totalSent.toLocaleString(), color: 'text-purple-400' },
+          { label: 'Avg. Accept Rate', val: campaigns.length > 0 ? Math.round(campaigns.reduce((s,c)=>s+(c.accepted||0),0)/Math.max(campaigns.reduce((s,c)=>s+(c.connections_sent||0),0),1)*100)+'%' : '0%', color: 'text-amber-400' },
+        ].map(({ label, val, color }) => (
+          <GlassCard key={label} className="p-4">
+            <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">{label}</p>
+            <p className={`text-2xl font-black mt-1 ${color}`}>{val}</p>
+          </GlassCard>
+        ))}
       </div>
 
-      {/* Loading & Empty states */}
-      {loading ? (
-        <div className="flex flex-col items-center justify-center py-32 gap-3 relative z-10">
-          <div className="w-10 h-10 border-4 border-blue-600 dark:border-blue-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-xs font-extrabold text-slate-400 uppercase tracking-widest animate-pulse">Syncing campaign modules...</p>
-        </div>
-      ) : campaigns.length === 0 ? (
-        <div className="bg-white dark:bg-slate-900/40 rounded-[40px] border border-dashed border-slate-200 dark:border-slate-800/80 p-20 text-center shadow-sm relative z-10">
-          <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6 border border-slate-100 dark:border-slate-700/50">
-            <Activity size={36} className="text-slate-400 dark:text-slate-500" />
-          </div>
-          <h3 className="text-lg font-black text-slate-800 dark:text-slate-200 uppercase tracking-tight">No active campaigns</h3>
-          <p className="text-xs text-slate-450 dark:text-slate-500 mt-2 max-w-sm mx-auto font-semibold uppercase tracking-wider leading-relaxed">
-            Create your first visual automated sequence to target matching prospects.
-          </p>
+      {/* Filter Pills */}
+      <div className="flex items-center gap-2">
+        {filters.map(f => (
           <button
-            onClick={() => navigate('/dashboard/campaigns/new/build')}
-            className="mt-8 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-md active:scale-95"
+            key={f}
+            onClick={() => setFilter(f)}
+            className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all border ${
+              filter === f
+                ? 'bg-blue-600 border-blue-600 text-white'
+                : 'border-white/8 bg-white/4 text-slate-500 hover:text-white hover:bg-white/8'
+            }`}
           >
-            Build First Sequence
+            {f}
           </button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 relative z-10">
-          {campaigns.map((campaign) => {
-            const isStalled = campaign.is_stalled;
-            const statusStyle = isStalled ? STATUS_COLORS.stalled : STATUS_COLORS[campaign.status];
-            
-            return (
-              <div
-                key={campaign.id}
-                onClick={() => navigate(`/dashboard/leads?campaign_id=${campaign.id}`)}
-                className="bg-white dark:bg-slate-900/60 rounded-[32px] border border-slate-100 dark:border-slate-800/80 p-6 md:p-8 cursor-pointer hover:border-slate-200 dark:hover:border-slate-700/80 hover:shadow-xl transition-all duration-300 group relative overflow-hidden flex flex-col justify-between"
-              >
-                {/* Glow highlight based on status */}
-                <div className={`absolute top-0 right-0 w-36 h-36 -mr-16 -mt-16 rounded-full blur-3xl opacity-20 transition-all bg-gradient-to-tr ${
-                  isStalled ? 'from-rose-450 to-transparent' : campaign.status === 'active' ? 'from-emerald-450 to-transparent' : 'from-slate-400 to-transparent'
-                }`} />
+        ))}
+        <span className="text-[9px] text-slate-600 font-bold ml-2">{filtered.length} campaigns</span>
+      </div>
 
-                <div>
-                  {/* Top Row: Title, Status and Action Panel */}
-                  <div className="flex items-start justify-between gap-4 mb-6">
+      {/* Campaign Cards */}
+      {loading ? (
+        <LoadingSpinner text="Loading campaigns..." />
+      ) : filtered.length === 0 ? (
+        <GlassCard className="py-4">
+          <EmptyState
+            icon={Activity}
+            title="No campaigns found"
+            subtitle="Create your first automated LinkedIn outreach campaign."
+            action={<PrimaryBtn onClick={() => navigate('/dashboard/campaigns/new/build')}><Plus size={13}/>Build First Campaign</PrimaryBtn>}
+          />
+        </GlassCard>
+      ) : (
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          {filtered.map(campaign => {
+            const isStalled = campaign.is_stalled;
+            return (
+              <GlassCard
+                key={campaign.id}
+                className="p-5 cursor-pointer hover:border-white/15 transition-all group"
+                style={{ position: 'relative', overflow: 'hidden' }}
+              >
+                {/* Status glow */}
+                <div className="absolute top-0 right-0 w-40 h-40 -mr-16 -mt-16 rounded-full blur-3xl opacity-10 pointer-events-none"
+                  style={{ background: isStalled ? '#ef4444' : campaign.status === 'active' ? '#10b981' : '#475569' }}
+                />
+
+                <div onClick={() => navigate(`/dashboard/leads?campaign_id=${campaign.id}`)}>
+                  {/* Top: Name + Status + Actions */}
+                  <div className="flex items-start justify-between gap-3 mb-4">
                     <div className="min-w-0">
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <h3 className="text-xl font-black text-slate-850 dark:text-slate-100 truncate tracking-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                          {campaign.name}
-                        </h3>
+                      <div className="flex items-center gap-2 mb-2">
+                        <h3 className="text-base font-black text-white truncate group-hover:text-blue-400 transition-colors">{campaign.name}</h3>
                         {campaign.status === 'active' && !isStalled && (
-                          <span className="flex h-2.5 w-2.5 relative shrink-0">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                          <span className="flex h-2 w-2 relative shrink-0">
+                            <span className="animate-ping absolute h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                            <span className="relative rounded-full h-2 w-2 bg-emerald-500" />
                           </span>
                         )}
                       </div>
-                      
-                      <div className="flex items-center gap-3 flex-wrap">
-                        <span className={`text-[9px] px-3 py-1 rounded-full font-black uppercase tracking-wider border ${statusStyle}`}>
-                          {isStalled ? 'Stalled (No Accounts)' : campaign.status}
-                        </span>
-                        
-                        <span className="text-[11px] text-slate-400 dark:text-slate-500 flex items-center gap-1 font-semibold uppercase tracking-wider">
-                          <Calendar size={12} className="text-slate-350" /> 
-                          {new Date(campaign.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      <div className="flex items-center gap-2">
+                        <StatusBadge status={isStalled ? 'stalled' : campaign.status} />
+                        <span className="text-[9px] text-slate-600 font-medium">
+                          {new Date(campaign.created_at).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })}
                         </span>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1.5 shrink-0 relative z-20">
-                      {isStalled && (
-                        <div className="p-2 text-rose-500 animate-bounce" title="No linked account is currently processing this campaign.">
-                          <AlertCircle size={18} />
-                        </div>
-                      )}
-                      
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedCampaignId(campaign.id);
-                          setShowScraper(true);
-                        }}
-                        className="p-2 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all"
-                        title="Import Leads for Campaign"
-                      >
-                        <Upload size={16} />
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-1 shrink-0 relative z-20" onClick={e => e.stopPropagation()}>
+                      {isStalled && <AlertCircle size={15} className="text-red-400 animate-bounce mr-1" />}
+                      <button onClick={e => { e.stopPropagation(); setSelectedCampaignId(campaign.id); setShowScraper(true); }} className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-400 hover:bg-white/8 transition-all" title="Import Leads"><Upload size={13} /></button>
+                      <button onClick={e => { e.stopPropagation(); navigate(`/dashboard/campaigns/${campaign.id}/build`); }} className="p-1.5 rounded-lg text-slate-500 hover:text-blue-400 hover:bg-white/8 transition-all" title="Edit"><Edit size={13} /></button>
+                      <button onClick={e => toggleStatus(e, campaign)} className={`p-1.5 rounded-lg transition-all ${campaign.status === 'active' ? 'text-amber-400 hover:bg-amber-500/10' : 'text-emerald-400 hover:bg-emerald-500/10'}`} title="Toggle">
+                        {campaign.status === 'active' ? <Pause size={13} /> : <Play size={13} fill="currentColor" />}
                       </button>
-
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/dashboard/campaigns/${campaign.id}/build`);
-                        }}
-                        className="p-2 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all"
-                        title="Edit Campaign Sequence Flow"
-                      >
-                        <Edit size={16} />
-                      </button>
-                      
-                      <button
-                        onClick={(e) => toggleStatus(e, campaign)}
-                        className={`p-2 rounded-xl transition-all border ${
-                          campaign.status === 'active' 
-                            ? 'bg-amber-50 text-amber-600 border-amber-100/50 hover:bg-amber-100 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30' 
-                            : 'bg-emerald-50 text-emerald-600 border-emerald-100/50 hover:bg-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/30'
-                        }`}
-                        title={campaign.status === 'active' ? 'Pause Campaign' : 'Resume Campaign'}
-                      >
-                        {campaign.status === 'active' ? <Pause size={16} /> : <Play size={16} fill="currentColor" />}
-                      </button>
-                      
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          duplicateCampaign(campaign.id);
-                        }}
-                        className="p-2 text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all"
-                        title="Duplicate Campaign"
-                      >
-                        <Copy size={16} />
-                      </button>
-
-                      <button
-                        onClick={(e) => deleteCampaign(e, campaign.id)}
-                        className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-xl transition-all"
-                        title="Delete Campaign"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      <button onClick={e => duplicateCampaign(e, campaign.id)} className="p-1.5 rounded-lg text-slate-500 hover:text-amber-400 hover:bg-white/8 transition-all" title="Duplicate"><Copy size={13} /></button>
+                      <button onClick={e => deleteCampaign(e, campaign.id)} className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all" title="Delete"><Trash2 size={13} /></button>
                     </div>
                   </div>
 
-                  {/* Middle Row: Progress Conversion Metrics */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6 bg-slate-50/50 dark:bg-slate-900/30 p-4.5 rounded-2xl border border-slate-100 dark:border-slate-800/80">
-                    <ConversionRate 
-                      label="Acceptance Conversion" 
-                      value={campaign.accepted} 
-                      total={campaign.connections_sent} 
-                      color="bg-purple-500" 
-                      labelColor="text-purple-600 dark:text-purple-400"
-                    />
-                    <ConversionRate 
-                      label="Hot Response Conversion" 
-                      value={campaign.replied} 
-                      total={campaign.accepted} 
-                      color="bg-emerald-500" 
-                      labelColor="text-emerald-600 dark:text-emerald-400"
-                    />
+                  {/* Conversion Bars */}
+                  <div className="space-y-3 mb-4 p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)' }}>
+                    <ConversionBar label="Acceptance Rate" value={campaign.accepted} total={campaign.connections_sent} color="#10b981" />
+                    <ConversionBar label="Reply Rate" value={campaign.replied} total={campaign.accepted} color="#a78bfa" />
                   </div>
 
-                  {/* Stats Counter List */}
-                  <div className="grid grid-cols-4 gap-2 mb-6">
+                  {/* Stats Row */}
+                  <div className="grid grid-cols-4 gap-2 mb-4">
                     {[
-                      { label: 'Outreach', value: campaign.connections_sent },
-                      { label: 'Accepted', value: campaign.accepted },
-                      { label: 'Pitch Sent', value: campaign.jd_sent },
-                      { label: 'AI Replies', value: campaign.replied },
-                    ].map((stat, i) => (
-                      <div key={i} className="text-left">
-                        <p className="text-lg font-black text-slate-850 dark:text-slate-150 leading-none">{stat.value || 0}</p>
-                        <p className="text-[9px] text-slate-400 dark:text-slate-500 font-extrabold uppercase tracking-widest mt-1.5">{stat.label}</p>
+                      { label: 'Sent', val: campaign.connections_sent || 0 },
+                      { label: 'Accepted', val: campaign.accepted || 0 },
+                      { label: 'Pitched', val: campaign.jd_sent || 0 },
+                      { label: 'Replied', val: campaign.replied || 0 },
+                    ].map(s => (
+                      <div key={s.label}>
+                        <p className="text-lg font-black text-white">{s.val}</p>
+                        <p className="text-[8px] text-slate-500 uppercase tracking-widest font-bold mt-0.5">{s.label}</p>
                       </div>
                     ))}
                   </div>
-                </div>
 
-                {/* Footer Details */}
-                <div className="pt-4.5 border-t border-slate-50 dark:border-slate-850 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
-                    <Users size={14} className="text-blue-500" />
-                    <span>{campaign.lead_count || 0} Target Prospects</span>
-                  </div>
-                  
-                  <div className="flex items-center gap-0.5 text-blue-600 dark:text-blue-400 text-xs font-black uppercase tracking-widest group-hover:translate-x-1.5 transition-transform">
-                    <span>Manage Pipeline</span>
-                    <ChevronRight size={14} strokeWidth={2.5} />
+                  {/* Footer */}
+                  <div className="flex items-center justify-between pt-3 border-t border-white/6">
+                    <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
+                      <Users size={11} className="text-blue-400" />
+                      {campaign.lead_count || 0} prospects
+                    </div>
+                    <div className="flex items-center gap-1 text-[10px] text-blue-400 font-black group-hover:translate-x-1 transition-transform">
+                      Manage Pipeline <ChevronRight size={12} />
+                    </div>
                   </div>
                 </div>
-
-              </div>
+              </GlassCard>
             );
           })}
         </div>
       )}
+
       {showScraper && (
-        <ImportModal 
-          onClose={() => setShowScraper(false)} 
-          accounts={accounts} 
-          campaigns={campaigns} 
-          defaultCampaignId={selectedCampaignId}
-          onImported={fetchCampaigns} 
-        />
+        <ImportModal onClose={() => setShowScraper(false)} accounts={accounts} campaigns={campaigns} defaultCampaignId={selectedCampaignId} onImported={fetchCampaigns} />
       )}
     </div>
   );

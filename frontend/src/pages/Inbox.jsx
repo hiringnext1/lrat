@@ -22,15 +22,12 @@ export default function Inbox() {
     finally { setLoading(false); }
   }
 
-  useEffect(() => {
-    fetchConversations(sortBy);
-  }, [sortBy]);
+  useEffect(() => { fetchConversations(sortBy); }, [sortBy]);
 
   useEffect(() => {
-    axios.get('/api/accounts').then((r) => setAccounts(r.data.data || []));
-    axios.get('/api/campaigns').then((r) => setCampaigns(r.data.data || []));
-    axios.get('/api/inbox/canned').then((r) => setCannedMessages(r.data.data || []));
-
+    axios.get('/api/accounts').then(r => setAccounts(r.data.data || []));
+    axios.get('/api/campaigns').then(r => setCampaigns(r.data.data || []));
+    axios.get('/api/inbox/canned').then(r => setCannedMessages(r.data.data || []));
     const onNewReply = () => fetchConversations(sortBy);
     socket.on('new_reply', onNewReply);
     return () => socket.off('new_reply', onNewReply);
@@ -38,16 +35,11 @@ export default function Inbox() {
 
   function onMarkedReplied() {
     fetchConversations();
-    if (activeConv?.lead) {
-      setActiveConv((prev) => ({ ...prev, lead: { ...prev.lead, reply_received: 1 } }));
-    }
+    if (activeConv?.lead) setActiveConv(prev => ({ ...prev, lead: { ...prev.lead, reply_received: 1 } }));
   }
 
   function onLeadUpdate() {
     fetchConversations();
-    if (activeConv?.lead?.id) {
-      axios.get('/api/leads', { params: { limit: 1 } }).then(() => {});
-    }
   }
 
   async function selectConversation(conv) {
@@ -55,30 +47,25 @@ export default function Inbox() {
     if (conv?.lead && !conv.lead.is_read) {
       try {
         await axios.put(`/api/inbox/conversations/${conv.id}/read`, { lead_id: conv.lead.id });
-        // Update local state to reflect read status
-        setConversations(prev => prev.map(c => 
-          c.id === conv.id ? { ...c, lead: { ...c.lead, is_read: 1 } } : c
-        ));
+        setConversations(prev => prev.map(c => c.id === conv.id ? { ...c, lead: { ...c.lead, is_read: 1 } } : c));
         window.dispatchEvent(new Event('inbox_updated'));
-      } catch (e) {
-        console.error('Failed to mark as read', e);
-      }
+      } catch (e) { console.error(e); }
     }
   }
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="flex items-center justify-center h-full" style={{ background: '#080C18' }}>
         <div className="text-center">
-          <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-sm text-gray-400 mt-2">Loading inbox…</p>
+          <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-3">Loading inbox...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="absolute inset-0 flex overflow-hidden bg-white dark:bg-slate-950">
+    <div className="absolute inset-0 flex overflow-hidden" style={{ background: '#080C18' }}>
       <ConversationList
         conversations={conversations}
         activeId={activeConv?.id}
@@ -93,10 +80,7 @@ export default function Inbox() {
         onMarkedReplied={onMarkedReplied}
         cannedMessages={cannedMessages}
       />
-      <LeadInfoPanel
-        lead={activeConv?.lead}
-        onUpdate={onLeadUpdate}
-      />
+      <LeadInfoPanel lead={activeConv?.lead} onUpdate={onLeadUpdate} />
     </div>
   );
 }
