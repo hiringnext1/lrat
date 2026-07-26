@@ -71,7 +71,7 @@ function SocialProofPanel({ title, subtitle }) {
   ];
   const testimonials = [
     { text: "Went from 20 manual messages/day to 500+ automated. Closed 8 deals in first month.", name: "Rahul V.", role: "Head of Sales" },
-    { text: "My agency earns ₹2L/month from LinkedIn outreach. GrowLeads automates 80% of the work.", name: "Priya K.", role: "Agency Founder" },
+    { text: "My agency earns ₹2L/month from LinkedIn outreach. GrowLeadz automates 80% of the work.", name: "Priya K.", role: "Agency Founder" },
   ];
 
   return (
@@ -229,7 +229,7 @@ export default function Login() {
               <motion.div key="login" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}>
                 <div className="mb-8">
                   <h1 className="text-3xl font-black text-white tracking-tight">Welcome back</h1>
-                  <p className="text-slate-400 text-sm mt-2 font-medium">Sign in to your GrowLeads dashboard</p>
+                  <p className="text-slate-400 text-sm mt-2 font-medium">Sign in to your GrowLeadz dashboard</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -259,7 +259,7 @@ export default function Login() {
 
                 <div className="mt-6 pt-6 border-t border-white/8 text-center">
                   <p className="text-sm text-slate-500 font-medium">
-                    New to GrowLeads?{' '}
+                    New to GrowLeadz?{' '}
                     <Link to="/signup" className="text-blue-400 hover:text-blue-300 font-bold transition-colors">
                       Create free account →
                     </Link>

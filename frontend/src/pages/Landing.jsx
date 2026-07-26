@@ -96,6 +96,21 @@ function DarkBackground() {
   );
 }
 
+// ─── TOP ANNOUNCEMENT BANNER ──────────────────────────────────────────────────
+function TopBanner() {
+  return (
+    <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white text-xs font-bold py-2.5 px-4 text-center relative z-[110] flex flex-wrap items-center justify-center gap-2 shadow-md">
+      <span className="flex items-center gap-1.5">
+        <Flame size={14} className="text-amber-300 fill-amber-300 animate-bounce" />
+        <strong>Special Launch Offer:</strong> Get your 1st Month of GrowLeadz for <strong>$5</strong> (Regular $39/mo)
+      </span>
+      <a href="#pricing" className="bg-white text-blue-900 px-3 py-1 rounded-full text-[10px] font-black hover:bg-slate-100 transition-all uppercase tracking-wider shadow-sm">
+        Claim Offer →
+      </a>
+    </div>
+  );
+}
+
 // ─── NAVIGATION ────────────────────────────────────────────────────────────
 function Navigation() {
   const [scrolled, setScrolled] = useState(false);
@@ -153,7 +168,7 @@ function Navigation() {
               id="nav-cta-btn"
               className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg shadow-blue-500/25 transition-all hover:scale-105 active:scale-95"
             >
-              Start Free →
+              Claim 1st Month @ $5 →
             </button>
           </Link>
         </div>
@@ -199,9 +214,9 @@ function Hero() {
           <div className="lg:col-span-6 text-left space-y-8">
             <FadeIn delay={0}>
               {/* Badge */}
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-[11px] font-bold uppercase tracking-wider">
-                <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-                #1 B2B LinkedIn Lead Generation Platform
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-blue-500/15 via-indigo-500/15 to-purple-500/15 border border-blue-500/30 text-blue-400 text-[11px] font-bold uppercase tracking-wider">
+                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                🔥 Special Launch Deal — Get 1st Month for $5
               </div>
 
               {/* Headline */}
@@ -220,8 +235,8 @@ function Hero() {
 
               {/* Trust indicators */}
               <div className="flex flex-wrap gap-4 mt-4">
-                {['No credit card required', 'Setup in 10 minutes', '98% Account Safety'].map((t, i) => (
-                  <div key={i} className="flex items-center gap-1.5 text-slate-400 text-xs font-medium">
+                {['First month only $5 (Save $34)', '14-Day Money-Back Guarantee', '1-Click Instant Cancellation'].map((t, i) => (
+                  <div key={i} className="flex items-center gap-1.5 text-slate-300 text-xs font-semibold">
                     <Check size={14} className="text-emerald-400" />
                     {t}
                   </div>
@@ -235,7 +250,7 @@ function Hero() {
                     id="hero-primary-cta"
                     className="w-full sm:w-auto group bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-8 py-4 rounded-xl font-bold text-sm uppercase tracking-wider shadow-xl shadow-blue-500/30 transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
                   >
-                    Start Generating Leads Free
+                    🚀 Claim 1st Month for $5
                     <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                   </button>
                 </Link>
@@ -415,7 +430,7 @@ function PainSolution() {
       <div className="max-w-7xl mx-auto">
         <FadeIn>
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <span className="text-[11px] font-black text-blue-400 uppercase tracking-widest">Why GrowLeads?</span>
+            <span className="text-[11px] font-black text-blue-400 uppercase tracking-widest">Why GrowLeadz?</span>
             <h2 className="text-4xl md:text-5xl font-black text-white mt-4 tracking-tight leading-[1.1]">
               Your LinkedIn outreach is{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-400">broken.</span>
@@ -444,7 +459,7 @@ function PainSolution() {
 
                   {/* Solution */}
                   <div>
-                    <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest block mb-2">✅ GrowLeads Solves This</span>
+                    <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest block mb-2">✅ GrowLeadz Solves This</span>
                     <p className="text-sm text-slate-300 leading-relaxed font-medium">{item.solution}</p>
                   </div>
                 </div>
@@ -478,7 +493,7 @@ function Features() {
       label: 'AI-Personalized Outreach',
       badge: 'Claude AI Powered',
       title: 'Messages so personal, prospects think you wrote them.',
-      desc: 'GrowLeads uses Claude AI to analyze each prospect\'s LinkedIn profile — their role, skills, company, and interests — and writes a hyper-targeted connection note in under 1 second.',
+      desc: 'GrowLeadz uses AI to analyze each prospect\'s LinkedIn profile — their role, skills, company, and interests — and writes a hyper-targeted connection note in under 1 second.',
       points: ['Profile scraping & scoring', 'Sub-1s AI generation', 'Custom tone & templates', '3x higher reply rates'],
       visual: <AIOutreachVisual />,
     },
@@ -508,7 +523,7 @@ function Features() {
       label: 'Anti-Ban Safety System',
       badge: '98% safety rate',
       title: 'Built-in protection that LinkedIn can\'t detect.',
-      desc: 'Every action mimics human behavior: 35-second profile views, randomized cooldown timers, daily limits, and warmup ramps. GrowLeads keeps your accounts safe, always.',
+      desc: 'Every action mimics human behavior: 35-second profile views, randomized cooldown timers, daily limits, and warmup ramps. GrowLeadz keeps your accounts safe, always.',
       points: ['35s profile view gating', '15-28 min cooldowns', 'Daily cap enforcement', 'Warmup ramp schedules'],
       visual: <SafetyVisual />,
     },
@@ -845,7 +860,7 @@ function HowItWorks() {
       number: "01",
       icon: Search,
       title: "Import Your ICP Leads",
-      desc: "Upload a CSV or paste a LinkedIn search URL. GrowLeads automatically extracts names, companies, roles and filters duplicates across all your accounts.",
+      desc: "Upload a CSV or paste a LinkedIn search URL. GrowLeadz automatically extracts names, companies, roles and filters duplicates across all your accounts.",
       time: "< 2 minutes",
       color: "blue",
     },
@@ -872,7 +887,7 @@ function HowItWorks() {
       <div className="max-w-7xl mx-auto">
         <FadeIn>
           <div className="text-center max-w-2xl mx-auto mb-20">
-            <span className="text-[11px] font-black text-blue-400 uppercase tracking-widest">How GrowLeads Works</span>
+            <span className="text-[11px] font-black text-blue-400 uppercase tracking-widest">How GrowLeadz Works</span>
             <h2 className="text-4xl md:text-5xl font-black text-white mt-4 tracking-tight leading-[1.1]">
               From zero to booked meetings{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">in 3 simple steps.</span>
@@ -943,7 +958,7 @@ function ROICalculator() {
               Calculate your pipeline potential.
             </h2>
             <p className="text-slate-400 mt-4 text-sm font-medium">
-              Adjust the sliders to see how GrowLeads impacts your B2B sales numbers.
+              Adjust the sliders to see how GrowLeadz impacts your B2B sales numbers.
             </p>
           </div>
         </FadeIn>
@@ -1031,7 +1046,7 @@ function Testimonials() {
       role: "Head of Sales, Series-B SaaS",
       company: "TechFlow India",
       avatar: "RV",
-      quote: "GrowLeads completely transformed our outbound. We went from 20 manual messages a day to 500+ automated ones across 10 accounts — with a 3x higher reply rate. Closed 8 deals in first month.",
+      quote: "GrowLeadz completely transformed our outbound. We went from 20 manual messages a day to 500+ automated ones across 10 accounts — with a 3x higher reply rate. Closed 8 deals in first month.",
       metrics: { value: "3x", label: "Reply Rate Increase" },
       color: "blue",
     },
@@ -1040,7 +1055,7 @@ function Testimonials() {
       role: "Founder, B2B Lead Gen Agency",
       company: "GrowthLabs",
       avatar: "PK",
-      quote: "My clients pay ₹2L/month for LinkedIn outreach services. GrowLeads automates 80% of the work. The anti-ban system is bulletproof — not a single account restricted in 6 months.",
+      quote: "My clients pay ₹2L/month for LinkedIn outreach services. GrowLeadz automates 80% of the work. The anti-ban system is bulletproof — not a single account restricted in 6 months.",
       metrics: { value: "₹2L", label: "Monthly Client Revenue" },
       color: "indigo",
     },
@@ -1120,28 +1135,33 @@ function Pricing() {
 
   const plans = [
     {
-      name: "Starter",
-      price: { monthly: 39, yearly: 31 },
-      desc: "Perfect for solo salespeople & SDRs",
-      accounts: "1 LinkedIn Account",
-      btn: "Start Free Trial",
-      pop: false,
+      name: "Starter Playbook",
+      badge: "🔥 87% OFF 1ST MONTH",
+      price: { monthly: 5, regular: 39, yearly: 31 },
+      desc: "Perfect for founders, solo sales & SDRs",
+      accounts: "1 Connected LinkedIn Account",
+      btn: "Claim 1st Month for $5 →",
+      pop: true,
+      offerNote: "First month $5, then $39/mo · Cancel anytime",
       features: [
         "1 Connected LinkedIn Account",
         "25 Daily Connection Cap",
-        "AI-Personalized Messages (Claude)",
+        "AI-Personalized Messages (Nvidia Llama)",
         "Campaign Sequence Builder",
-        "Basic Analytics Dashboard",
+        "BONUS: Cold Outreach Prompts ($49 Value)",
+        "14-Day 100% Money-Back Guarantee",
         "Email Support",
       ],
     },
     {
-      name: "Professional",
-      price: { monthly: 119, yearly: 95 },
+      name: "Professional Engine",
+      badge: null,
+      price: { monthly: 119, regular: 119, yearly: 95 },
       desc: "For growing sales teams & agencies",
-      accounts: "3 LinkedIn Accounts",
-      btn: "Start 7-Day Free Trial",
-      pop: true,
+      accounts: "3 Connected LinkedIn Accounts",
+      btn: "Start Professional Plan",
+      pop: false,
+      offerNote: "Billed monthly · Cancel anytime",
       features: [
         "3 Connected LinkedIn Accounts",
         "Warmup Schedules (auto-enforced)",
@@ -1154,12 +1174,14 @@ function Pricing() {
       ],
     },
     {
-      name: "Enterprise",
-      price: { monthly: 349, yearly: 279 },
+      name: "Enterprise Cluster",
+      badge: null,
+      price: { monthly: 349, regular: 349, yearly: 279 },
       desc: "For high-volume agencies & enterprises",
-      accounts: "10+ LinkedIn Accounts",
+      accounts: "10+ Connected LinkedIn Accounts",
       btn: "Book Demo Call",
       pop: false,
+      offerNote: "Custom billing available",
       features: [
         "10+ Connected LinkedIn Accounts",
         "Dedicated Residential Proxy Pool",
@@ -1178,13 +1200,13 @@ function Pricing() {
       <div className="max-w-7xl mx-auto">
         <FadeIn>
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <span className="text-[11px] font-black text-blue-400 uppercase tracking-widest">Pricing Plans</span>
+            <span className="text-[11px] font-black text-blue-400 uppercase tracking-widest">Special Launch Pricing</span>
             <h2 className="text-4xl md:text-5xl font-black text-white mt-4 tracking-tight leading-[1.1]">
-              Simple pricing.{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">Massive ROI.</span>
+              Try GrowLeadz for{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">$5 First Month.</span>
             </h2>
             <p className="text-slate-400 mt-4 text-sm font-medium">
-              Start free. Upgrade when you're ready. Cancel anytime.
+              Start with full Starter features for just $5. 14-day 100% money-back guarantee. Cancel anytime in 1-click.
             </p>
 
             {/* Toggle */}
@@ -1211,12 +1233,12 @@ function Pricing() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
           {plans.map((plan, i) => (
             <FadeIn key={i} delay={i * 0.1}>
-              <div className={`relative rounded-3xl h-full flex flex-col ${plan.pop ? 'p-px bg-gradient-to-b from-blue-500 via-indigo-500 to-purple-600' : ''}`}>
-                <div className={`${plan.pop ? 'bg-[#0A0F1E] rounded-3xl' : 'bg-[#0D1526]/60 border border-white/10 rounded-3xl'} p-8 h-full flex flex-col`}>
-                  {plan.pop && (
+              <div className={`relative rounded-3xl h-full flex flex-col ${plan.pop ? 'p-px bg-gradient-to-b from-amber-400 via-blue-500 to-indigo-600 shadow-[0_0_40px_rgba(59,130,246,0.2)]' : ''}`}>
+                <div className={`${plan.pop ? 'bg-[#0A0F24] rounded-3xl' : 'bg-[#0D1526]/60 border border-white/10 rounded-3xl'} p-8 h-full flex flex-col`}>
+                  {plan.badge && (
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                      <span className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-[9px] font-black px-4 py-1.5 rounded-full uppercase tracking-wider shadow-lg">
-                        Most Popular
+                      <span className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[9px] font-black px-4 py-1.5 rounded-full uppercase tracking-wider shadow-lg">
+                        {plan.badge}
                       </span>
                     </div>
                   )}
@@ -1227,21 +1249,29 @@ function Pricing() {
                   </div>
 
                   <div className="mb-6">
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-5xl font-black text-white">${billing === 'monthly' ? plan.price.monthly : plan.price.yearly}</span>
-                      <span className="text-slate-400 text-sm font-medium">/mo</span>
+                    <div className="flex items-baseline gap-2">
+                      {plan.price.monthly === 5 && billing === 'monthly' ? (
+                        <>
+                          <span className="text-2xl font-bold text-slate-500 line-through">${plan.price.regular}</span>
+                          <span className="text-5xl font-black text-amber-400">$5</span>
+                          <span className="text-slate-400 text-sm font-medium">/ 1st mo</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-5xl font-black text-white">${billing === 'monthly' ? plan.price.monthly : plan.price.yearly}</span>
+                          <span className="text-slate-400 text-sm font-medium">/mo</span>
+                        </>
+                      )}
                     </div>
                     <p className="text-[11px] text-blue-400 font-bold mt-1">{plan.accounts}</p>
-                    {billing === 'yearly' && (
-                      <p className="text-[10px] text-emerald-400 font-bold mt-1">Save ${(plan.price.monthly - plan.price.yearly) * 12}/year</p>
-                    )}
+                    <p className="text-[10px] text-slate-400 font-semibold mt-1">{plan.offerNote}</p>
                   </div>
 
                   <ul className="space-y-3 flex-1 mb-8">
                     {plan.features.map((f, fi) => (
                       <li key={fi} className="flex items-start gap-3 text-xs font-medium text-slate-300">
-                        <Check size={14} className="text-blue-400 shrink-0 mt-0.5" />
-                        {f}
+                        <Check size={14} className={f.includes('BONUS') || f.includes('Guarantee') ? 'text-amber-400 shrink-0 mt-0.5' : 'text-blue-400 shrink-0 mt-0.5'} />
+                        <span className={f.includes('BONUS') ? 'text-amber-300 font-bold' : ''}>{f}</span>
                       </li>
                     ))}
                   </ul>
@@ -1251,7 +1281,7 @@ function Pricing() {
                       id={`pricing-btn-${i}`}
                       className={`w-full py-4 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
                         plan.pop
-                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg shadow-blue-500/20 hover:scale-105'
+                          ? 'bg-gradient-to-r from-amber-500 via-orange-500 to-blue-600 hover:from-amber-400 hover:to-blue-500 text-white shadow-xl shadow-amber-500/20 hover:scale-105'
                           : 'bg-white/8 hover:bg-white/12 border border-white/12 text-white hover:border-blue-500/30'
                       }`}
                     >
@@ -1266,9 +1296,19 @@ function Pricing() {
 
         {/* Money-back guarantee */}
         <FadeIn delay={0.3}>
-          <div className="mt-10 text-center flex items-center justify-center gap-2 text-slate-400 text-xs font-semibold">
-            <Shield size={14} className="text-emerald-400" />
-            30-day money-back guarantee · No contracts · Cancel anytime
+          <div className="mt-10 text-center flex flex-wrap items-center justify-center gap-6 text-slate-400 text-xs font-semibold">
+            <span className="flex items-center gap-1.5">
+              <Shield size={14} className="text-emerald-400" />
+              14-Day 100% Money-Back Guarantee
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Lock size={14} className="text-blue-400" />
+              Stripe 256-Bit Encrypted Checkout
+            </span>
+            <span className="flex items-center gap-1.5">
+              <CheckCircle size={14} className="text-indigo-400" />
+              1-Click Cancel Anytime
+            </span>
           </div>
         </FadeIn>
       </div>
@@ -1282,23 +1322,23 @@ function FAQs() {
 
   const faqs = [
     {
-      q: "Will my LinkedIn accounts get banned using GrowLeads?",
-      a: "GrowLeads is engineered from the ground up with account safety as the #1 priority. Every action uses human-mimicking delays (35-second profile views, 15-28 minute cooldowns between invites), residential proxies per account, warmup schedules for new accounts, and a hard 25 connections/day cap. Our customers report a 98%+ account safety rate over 6+ months of use.",
+      q: "Will my LinkedIn accounts get banned using GrowLeadz?",
+      a: "GrowLeadz is engineered from the ground up with account safety as the #1 priority. Every action uses human-mimicking delays (35-second profile views, 15-28 minute cooldowns between invites), residential proxies per account, warmup schedules for new accounts, and a hard 25 connections/day cap. Our customers report a 98%+ account safety rate over 6+ months of use.",
     },
     {
       q: "How does the AI personalization work?",
-      a: "GrowLeads uses Claude AI (Anthropic) to analyze each prospect's LinkedIn profile — their current role, previous companies, skills, and interests. It then writes a hyper-targeted connection message tailored to each individual in under 1 second. Messages are so personalized that prospects rarely suspect automation.",
+      a: "GrowLeadz uses Nvidia NIM AI (Llama 3.1 70B) to analyze each prospect's LinkedIn profile — their current role, previous companies, skills, and interests. It then writes a hyper-targeted connection message tailored to each individual in under 1 second. Messages are so personalized that prospects rarely suspect automation.",
     },
     {
       q: "How many LinkedIn accounts can I manage?",
       a: "Our Starter plan supports 1 account, Professional supports 3, and Enterprise supports 10+ accounts. Each account gets its own dedicated residential proxy, isolated browser fingerprint, and independent warmup schedule to prevent any cross-account linkage.",
     },
     {
-      q: "What integrations does GrowLeads support?",
-      a: "GrowLeads integrates with Unipile for LinkedIn message syncing, Claude AI for personalization, and webhooks for real-time reply detection. You can export leads to CSV for CRM import (Salesforce, HubSpot, etc.) and our REST API is available on the Enterprise plan for custom integrations.",
+      q: "What integrations does GrowLeadz support?",
+      a: "GrowLeadz integrates with Unipile for LinkedIn message syncing, Nvidia AI for personalization, and webhooks for real-time reply detection. You can export leads to CSV for CRM import (Salesforce, HubSpot, etc.) and our REST API is available on the Enterprise plan for custom integrations.",
     },
     {
-      q: "Do I need technical knowledge to use GrowLeads?",
+      q: "Do I need technical knowledge to use GrowLeadz?",
       a: "No coding required. The onboarding wizard walks you through connecting your LinkedIn accounts, setting up your first campaign, and configuring safety settings in under 15 minutes. Our support team is available to help with any setup questions.",
     },
     {
@@ -1393,7 +1433,7 @@ function FinalCTA() {
               </h2>
 
               <p className="text-white/70 text-lg font-medium max-w-xl mx-auto">
-                Join 500+ B2B teams already generating pipeline on autopilot with GrowLeads.
+                Join 500+ B2B teams already generating pipeline on autopilot with GrowLeadz.
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
@@ -1443,7 +1483,7 @@ function Footer() {
               <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
                 <Zap size={15} className="text-white fill-white" />
               </div>
-              <span className="text-lg font-black tracking-tight text-white uppercase">GrowLeads</span>
+              <span className="text-lg font-black tracking-tight text-white uppercase">GrowLeadz</span>
             </div>
             <p className="text-slate-500 text-xs font-medium leading-relaxed max-w-sm">
               The #1 B2B LinkedIn Lead Generation platform for sales teams and agencies. Automate outreach safely. Close more deals.
@@ -1483,7 +1523,7 @@ function Footer() {
 
         <div className="border-t border-white/8 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">
-            © 2026 GrowLeads · LinkedIn Recruiter Automation Tool · All Rights Reserved
+            © 2026 GrowLeadz · LinkedIn Recruiter Automation Tool · All Rights Reserved
           </p>
           <div className="flex items-center gap-2 text-[10px] text-slate-600 font-semibold">
             <Shield size={12} className="text-blue-500" />
@@ -1544,7 +1584,7 @@ export default function Landing() {
   useEffect(() => {
     window.scrollTo(0, 0);
 
-    document.title = "GrowLeads — B2B LinkedIn Lead Generation Platform | Automate Outreach Safely";
+    document.title = "GrowLeadz — B2B LinkedIn Lead Generation Platform | Automate Outreach Safely";
 
     let metaDesc = document.querySelector('meta[name="description"]');
     if (!metaDesc) {
@@ -1552,7 +1592,7 @@ export default function Landing() {
       metaDesc.name = 'description';
       document.head.appendChild(metaDesc);
     }
-    metaDesc.content = "GrowLeads is the #1 B2B LinkedIn Lead Generation platform. Automate outreach across 10+ accounts with AI personalization, anti-ban safety, and a unified inbox. Book more meetings, faster.";
+    metaDesc.content = "GrowLeadz is the #1 B2B LinkedIn Lead Generation platform. Automate outreach across 10+ accounts with AI personalization, anti-ban safety, and a unified inbox. Book more meetings, faster.";
 
     const schemaId = 'lrat-b2b-schema';
     if (!document.getElementById(schemaId)) {
@@ -1562,7 +1602,7 @@ export default function Landing() {
       s.innerHTML = JSON.stringify({
         "@context": "https://schema.org",
         "@type": "SoftwareApplication",
-        "name": "GrowLeads - B2B LinkedIn Lead Generation",
+        "name": "GrowLeadz - B2B LinkedIn Lead Generation",
         "operatingSystem": "All",
         "applicationCategory": "BusinessApplication",
         "offers": { "@type": "Offer", "price": "39.00", "priceCurrency": "USD" },
@@ -1581,6 +1621,7 @@ export default function Landing() {
   return (
     <div className="min-h-screen text-white font-sans selection:bg-blue-500 selection:text-white antialiased overflow-x-hidden">
       <DarkBackground />
+      <TopBanner />
       <Navigation />
 
       <main>

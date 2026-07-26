@@ -30,7 +30,7 @@ export default function GrowLeadsLogo({ size = 'md', className = '', showText = 
       {showText && (
         <div className="flex items-center tracking-tight font-black uppercase">
           <span className={`${s.text} text-white font-black tracking-tight`}>Grow</span>
-          <span className={`${s.text} text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400 font-black tracking-tight`}>Leads</span>
+          <span className={`${s.text} text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400 font-black tracking-tight`}>Leadz</span>
         </div>
       )}
     </div>
