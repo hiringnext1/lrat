@@ -477,7 +477,7 @@ router.get('/print', (req, res) => {
       <html lang="en">
       <head>
         <meta charset="UTF-8">
-        <title>LRAT Performance Analytics Report</title>
+        <title>GrowLeads Performance Analytics Report</title>
         <style>
           body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; padding: 40px; line-height: 1.5; margin: 0; background: #ffffff; }
           .header { border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
@@ -506,7 +506,7 @@ router.get('/print', (req, res) => {
       <body>
         <div class="header">
           <div>
-            <div class="title">LRAT Outreach Performance Report</div>
+            <div class="title">GrowLeads Outreach Performance Report</div>
             <div style="font-size: 12px; color: #94a3b8; font-weight: 500; margin-top: 3px;">LinkedIn Outreach Automation Platform Analytics</div>
           </div>
           <div class="date">Report Generated: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} (IST)</div>

@@ -1,7 +1,7 @@
 {
   "name": "lrat-backend",
   "version": "1.0.0",
-  "description": "LRAT Backend — Express + SQLite + Socket.io",
+  "description": "GrowLeads Backend — Express + SQLite + Socket.io",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

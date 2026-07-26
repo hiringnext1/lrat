@@ -281,7 +281,7 @@ const PORT = process.env.PORT || 3001;
 
 server.listen(PORT, () => {
   log.info(`\n====================================`);
-  log.info(`  LRAT Backend running on port ${PORT}`);
+  log.info(`  GrowLeads Backend running on port ${PORT}`);
   log.info(`  http://localhost:${PORT}/api/health`);
   log.info(`====================================\n`);
 

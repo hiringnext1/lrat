@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Lock, Mail, AlertCircle, KeyRound, ChevronLeft, Zap, ArrowRight, Check, Shield, Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
+import GrowLeadsLogo from '../components/GrowLeadsLogo';
 
 // ─── DARK BACKGROUND ────────────────────────────────────────────────────────
 function Background() {
@@ -70,7 +71,7 @@ function SocialProofPanel({ title, subtitle }) {
   ];
   const testimonials = [
     { text: "Went from 20 manual messages/day to 500+ automated. Closed 8 deals in first month.", name: "Rahul V.", role: "Head of Sales" },
-    { text: "My agency earns ₹2L/month from LinkedIn outreach. LRAT automates 80% of the work.", name: "Priya K.", role: "Agency Founder" },
+    { text: "My agency earns ₹2L/month from LinkedIn outreach. GrowLeads automates 80% of the work.", name: "Priya K.", role: "Agency Founder" },
   ];
 
   return (
@@ -81,13 +82,10 @@ function SocialProofPanel({ title, subtitle }) {
 
       {/* Logo */}
       <div className="relative z-10">
-        <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform">
-            <Zap size={20} className="text-white fill-white" />
-          </div>
-          <span className="text-xl font-black text-white tracking-tight uppercase">LRAT</span>
+        <Link to="/" className="inline-block group">
+          <GrowLeadsLogo size="lg" />
         </Link>
-        <p className="text-slate-400 text-xs font-medium mt-2 ml-1">B2B LinkedIn Lead Generation Platform</p>
+        <p className="text-slate-400 text-xs font-medium mt-2">B2B LinkedIn Lead Generation Platform</p>
       </div>
 
       {/* Heading */}
@@ -221,11 +219,8 @@ export default function Login() {
       {/* Right: Form */}
       <div className="flex-1 flex flex-col justify-center items-center px-6 py-12 relative z-10 min-h-screen">
         {/* Mobile Logo */}
-        <div className="lg:hidden mb-8 flex items-center gap-2">
-          <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
-            <Zap size={18} className="text-white fill-white" />
-          </div>
-          <span className="text-lg font-black text-white uppercase">LRAT</span>
+        <div className="lg:hidden mb-8">
+          <GrowLeadsLogo size="lg" />
         </div>
 
         <div className="w-full max-w-sm">
@@ -234,7 +229,7 @@ export default function Login() {
               <motion.div key="login" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}>
                 <div className="mb-8">
                   <h1 className="text-3xl font-black text-white tracking-tight">Welcome back</h1>
-                  <p className="text-slate-400 text-sm mt-2 font-medium">Sign in to your LRAT dashboard</p>
+                  <p className="text-slate-400 text-sm mt-2 font-medium">Sign in to your GrowLeads dashboard</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -264,7 +259,7 @@ export default function Login() {
 
                 <div className="mt-6 pt-6 border-t border-white/8 text-center">
                   <p className="text-sm text-slate-500 font-medium">
-                    New to LRAT?{' '}
+                    New to GrowLeads?{' '}
                     <Link to="/signup" className="text-blue-400 hover:text-blue-300 font-bold transition-colors">
                       Create free account →
                     </Link>

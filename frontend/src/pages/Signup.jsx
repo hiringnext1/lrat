@@ -3,6 +3,7 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { Lock, Mail, User, AlertCircle, Zap, ArrowRight, Check, Eye, EyeOff, Building2, RefreshCw } from 'lucide-react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
+import GrowLeadsLogo from '../components/GrowLeadsLogo';
 
 function Background() {
   return (
@@ -61,13 +62,10 @@ function FeaturePanel() {
       <div className="absolute top-0 left-0 w-64 h-64 bg-blue-500/10 blur-3xl rounded-full" />
 
       <div className="relative z-10">
-        <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform">
-            <Zap size={20} className="text-white fill-white" />
-          </div>
-          <span className="text-xl font-black text-white tracking-tight uppercase">LRAT</span>
+        <Link to="/" className="inline-block group">
+          <GrowLeadsLogo size="lg" />
         </Link>
-        <p className="text-slate-400 text-xs font-medium mt-2 ml-1">B2B LinkedIn Lead Generation Platform</p>
+        <p className="text-slate-400 text-xs font-medium mt-2">B2B LinkedIn Lead Generation Platform</p>
       </div>
 
       <div className="relative z-10 space-y-5">
@@ -183,11 +181,8 @@ export default function Signup() {
       {/* Right: Form */}
       <div className="flex-1 flex flex-col justify-center items-center px-6 py-12 relative z-10 min-h-screen">
         {/* Mobile Logo */}
-        <div className="lg:hidden mb-8 flex items-center gap-2">
-          <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
-            <Zap size={18} className="text-white fill-white" />
-          </div>
-          <span className="text-lg font-black text-white uppercase">LRAT</span>
+        <div className="lg:hidden mb-8">
+          <GrowLeadsLogo size="lg" />
         </div>
 
         <div className="w-full max-w-sm">

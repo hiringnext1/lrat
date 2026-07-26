@@ -12,6 +12,7 @@ import {
   PhoneCall, PieChart, Megaphone, UserCheck, Flame
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import GrowLeadsLogo from '../components/GrowLeadsLogo';
 
 // ─── ANIMATION HELPERS ──────────────────────────────────────────────────────
 const FadeIn = ({ children, delay = 0, y = 40, className = "" }) => (
@@ -123,10 +124,7 @@ function Navigation() {
       }`}>
         {/* Logo */}
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
-            <Zap size={18} className="text-white fill-white" />
-          </div>
-          <span className="text-lg font-black tracking-tight text-white uppercase">LRAT</span>
+          <GrowLeadsLogo size="md" />
           <span className="hidden sm:block text-[9px] font-bold text-blue-400 border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 rounded-full uppercase tracking-wider">B2B Lead Gen</span>
         </div>
 
@@ -417,7 +415,7 @@ function PainSolution() {
       <div className="max-w-7xl mx-auto">
         <FadeIn>
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <span className="text-[11px] font-black text-blue-400 uppercase tracking-widest">Why LRAT?</span>
+            <span className="text-[11px] font-black text-blue-400 uppercase tracking-widest">Why GrowLeads?</span>
             <h2 className="text-4xl md:text-5xl font-black text-white mt-4 tracking-tight leading-[1.1]">
               Your LinkedIn outreach is{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-400">broken.</span>
@@ -446,7 +444,7 @@ function PainSolution() {
 
                   {/* Solution */}
                   <div>
-                    <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest block mb-2">✅ LRAT Solves This</span>
+                    <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest block mb-2">✅ GrowLeads Solves This</span>
                     <p className="text-sm text-slate-300 leading-relaxed font-medium">{item.solution}</p>
                   </div>
                 </div>
@@ -480,7 +478,7 @@ function Features() {
       label: 'AI-Personalized Outreach',
       badge: 'Claude AI Powered',
       title: 'Messages so personal, prospects think you wrote them.',
-      desc: 'LRAT uses Claude AI to analyze each prospect\'s LinkedIn profile — their role, skills, company, and interests — and writes a hyper-targeted connection note in under 1 second.',
+      desc: 'GrowLeads uses Claude AI to analyze each prospect\'s LinkedIn profile — their role, skills, company, and interests — and writes a hyper-targeted connection note in under 1 second.',
       points: ['Profile scraping & scoring', 'Sub-1s AI generation', 'Custom tone & templates', '3x higher reply rates'],
       visual: <AIOutreachVisual />,
     },
@@ -510,7 +508,7 @@ function Features() {
       label: 'Anti-Ban Safety System',
       badge: '98% safety rate',
       title: 'Built-in protection that LinkedIn can\'t detect.',
-      desc: 'Every action mimics human behavior: 35-second profile views, randomized cooldown timers, daily limits, and warmup ramps. LRAT keeps your accounts safe, always.',
+      desc: 'Every action mimics human behavior: 35-second profile views, randomized cooldown timers, daily limits, and warmup ramps. GrowLeads keeps your accounts safe, always.',
       points: ['35s profile view gating', '15-28 min cooldowns', 'Daily cap enforcement', 'Warmup ramp schedules'],
       visual: <SafetyVisual />,
     },
@@ -847,7 +845,7 @@ function HowItWorks() {
       number: "01",
       icon: Search,
       title: "Import Your ICP Leads",
-      desc: "Upload a CSV or paste a LinkedIn search URL. LRAT automatically extracts names, companies, roles and filters duplicates across all your accounts.",
+      desc: "Upload a CSV or paste a LinkedIn search URL. GrowLeads automatically extracts names, companies, roles and filters duplicates across all your accounts.",
       time: "< 2 minutes",
       color: "blue",
     },
@@ -874,7 +872,7 @@ function HowItWorks() {
       <div className="max-w-7xl mx-auto">
         <FadeIn>
           <div className="text-center max-w-2xl mx-auto mb-20">
-            <span className="text-[11px] font-black text-blue-400 uppercase tracking-widest">How LRAT Works</span>
+            <span className="text-[11px] font-black text-blue-400 uppercase tracking-widest">How GrowLeads Works</span>
             <h2 className="text-4xl md:text-5xl font-black text-white mt-4 tracking-tight leading-[1.1]">
               From zero to booked meetings{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">in 3 simple steps.</span>
@@ -945,7 +943,7 @@ function ROICalculator() {
               Calculate your pipeline potential.
             </h2>
             <p className="text-slate-400 mt-4 text-sm font-medium">
-              Adjust the sliders to see how LRAT impacts your B2B sales numbers.
+              Adjust the sliders to see how GrowLeads impacts your B2B sales numbers.
             </p>
           </div>
         </FadeIn>
@@ -1033,7 +1031,7 @@ function Testimonials() {
       role: "Head of Sales, Series-B SaaS",
       company: "TechFlow India",
       avatar: "RV",
-      quote: "LRAT completely transformed our outbound. We went from 20 manual messages a day to 500+ automated ones across 10 accounts — with a 3x higher reply rate. Closed 8 deals in first month.",
+      quote: "GrowLeads completely transformed our outbound. We went from 20 manual messages a day to 500+ automated ones across 10 accounts — with a 3x higher reply rate. Closed 8 deals in first month.",
       metrics: { value: "3x", label: "Reply Rate Increase" },
       color: "blue",
     },
@@ -1042,7 +1040,7 @@ function Testimonials() {
       role: "Founder, B2B Lead Gen Agency",
       company: "GrowthLabs",
       avatar: "PK",
-      quote: "My clients pay ₹2L/month for LinkedIn outreach services. LRAT automates 80% of the work. The anti-ban system is bulletproof — not a single account restricted in 6 months.",
+      quote: "My clients pay ₹2L/month for LinkedIn outreach services. GrowLeads automates 80% of the work. The anti-ban system is bulletproof — not a single account restricted in 6 months.",
       metrics: { value: "₹2L", label: "Monthly Client Revenue" },
       color: "indigo",
     },
@@ -1284,23 +1282,23 @@ function FAQs() {
 
   const faqs = [
     {
-      q: "Will my LinkedIn accounts get banned using LRAT?",
-      a: "LRAT is engineered from the ground up with account safety as the #1 priority. Every action uses human-mimicking delays (35-second profile views, 15-28 minute cooldowns between invites), residential proxies per account, warmup schedules for new accounts, and a hard 25 connections/day cap. Our customers report a 98%+ account safety rate over 6+ months of use.",
+      q: "Will my LinkedIn accounts get banned using GrowLeads?",
+      a: "GrowLeads is engineered from the ground up with account safety as the #1 priority. Every action uses human-mimicking delays (35-second profile views, 15-28 minute cooldowns between invites), residential proxies per account, warmup schedules for new accounts, and a hard 25 connections/day cap. Our customers report a 98%+ account safety rate over 6+ months of use.",
     },
     {
       q: "How does the AI personalization work?",
-      a: "LRAT uses Claude AI (Anthropic) to analyze each prospect's LinkedIn profile — their current role, previous companies, skills, and interests. It then writes a hyper-targeted connection message tailored to each individual in under 1 second. Messages are so personalized that prospects rarely suspect automation.",
+      a: "GrowLeads uses Claude AI (Anthropic) to analyze each prospect's LinkedIn profile — their current role, previous companies, skills, and interests. It then writes a hyper-targeted connection message tailored to each individual in under 1 second. Messages are so personalized that prospects rarely suspect automation.",
     },
     {
       q: "How many LinkedIn accounts can I manage?",
       a: "Our Starter plan supports 1 account, Professional supports 3, and Enterprise supports 10+ accounts. Each account gets its own dedicated residential proxy, isolated browser fingerprint, and independent warmup schedule to prevent any cross-account linkage.",
     },
     {
-      q: "What integrations does LRAT support?",
-      a: "LRAT integrates with Unipile for LinkedIn message syncing, Claude AI for personalization, and webhooks for real-time reply detection. You can export leads to CSV for CRM import (Salesforce, HubSpot, etc.) and our REST API is available on the Enterprise plan for custom integrations.",
+      q: "What integrations does GrowLeads support?",
+      a: "GrowLeads integrates with Unipile for LinkedIn message syncing, Claude AI for personalization, and webhooks for real-time reply detection. You can export leads to CSV for CRM import (Salesforce, HubSpot, etc.) and our REST API is available on the Enterprise plan for custom integrations.",
     },
     {
-      q: "Do I need technical knowledge to use LRAT?",
+      q: "Do I need technical knowledge to use GrowLeads?",
       a: "No coding required. The onboarding wizard walks you through connecting your LinkedIn accounts, setting up your first campaign, and configuring safety settings in under 15 minutes. Our support team is available to help with any setup questions.",
     },
     {
@@ -1395,7 +1393,7 @@ function FinalCTA() {
               </h2>
 
               <p className="text-white/70 text-lg font-medium max-w-xl mx-auto">
-                Join 500+ B2B teams already generating pipeline on autopilot with LRAT.
+                Join 500+ B2B teams already generating pipeline on autopilot with GrowLeads.
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
@@ -1445,7 +1443,7 @@ function Footer() {
               <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
                 <Zap size={15} className="text-white fill-white" />
               </div>
-              <span className="text-lg font-black tracking-tight text-white uppercase">LRAT</span>
+              <span className="text-lg font-black tracking-tight text-white uppercase">GrowLeads</span>
             </div>
             <p className="text-slate-500 text-xs font-medium leading-relaxed max-w-sm">
               The #1 B2B LinkedIn Lead Generation platform for sales teams and agencies. Automate outreach safely. Close more deals.
@@ -1485,7 +1483,7 @@ function Footer() {
 
         <div className="border-t border-white/8 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">
-            © 2026 LRAT · LinkedIn Recruiter Automation Tool · All Rights Reserved
+            © 2026 GrowLeads · LinkedIn Recruiter Automation Tool · All Rights Reserved
           </p>
           <div className="flex items-center gap-2 text-[10px] text-slate-600 font-semibold">
             <Shield size={12} className="text-blue-500" />
@@ -1546,7 +1544,7 @@ export default function Landing() {
   useEffect(() => {
     window.scrollTo(0, 0);
 
-    document.title = "LRAT — B2B LinkedIn Lead Generation Platform | Automate Outreach Safely";
+    document.title = "GrowLeads — B2B LinkedIn Lead Generation Platform | Automate Outreach Safely";
 
     let metaDesc = document.querySelector('meta[name="description"]');
     if (!metaDesc) {
@@ -1554,7 +1552,7 @@ export default function Landing() {
       metaDesc.name = 'description';
       document.head.appendChild(metaDesc);
     }
-    metaDesc.content = "LRAT is the #1 B2B LinkedIn Lead Generation platform. Automate outreach across 10+ accounts with AI personalization, anti-ban safety, and a unified inbox. Book more meetings, faster.";
+    metaDesc.content = "GrowLeads is the #1 B2B LinkedIn Lead Generation platform. Automate outreach across 10+ accounts with AI personalization, anti-ban safety, and a unified inbox. Book more meetings, faster.";
 
     const schemaId = 'lrat-b2b-schema';
     if (!document.getElementById(schemaId)) {
@@ -1564,7 +1562,7 @@ export default function Landing() {
       s.innerHTML = JSON.stringify({
         "@context": "https://schema.org",
         "@type": "SoftwareApplication",
-        "name": "LRAT - B2B LinkedIn Lead Generation",
+        "name": "GrowLeads - B2B LinkedIn Lead Generation",
         "operatingSystem": "All",
         "applicationCategory": "BusinessApplication",
         "offers": { "@type": "Offer", "price": "39.00", "priceCurrency": "USD" },

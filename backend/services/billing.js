@@ -1,5 +1,5 @@
 /**
- * LRAT Billing Service
+ * GrowLeads Billing Service
  * Handles plan logic, Stripe integration, and subscription management.
  */
 const { getDb } = require('../config/database');
@@ -134,6 +134,31 @@ function canAddAccount(userId) {
 }
 
 /**
+ * Check if a user can add more campaigns.
+ * Returns { allowed: bool, current: number, limit: number }
+ */
+function canAddCampaign(userId) {
+  const db = getDb();
+  const user = db.prepare('SELECT plan_type, plan_status FROM users WHERE id = ?').get(userId);
+  if (!user) return { allowed: false, current: 0, limit: 0, reason: 'User not found' };
+
+  const currentCount = db.prepare('SELECT COUNT(*) as c FROM campaigns WHERE user_id = ?').get(userId).c;
+  const limit = getPlanLimits(user.plan_type).campaigns_limit;
+
+  if (currentCount >= limit) {
+    return {
+      allowed: false,
+      current: currentCount,
+      limit,
+      plan: user.plan_type,
+      reason: `Your ${getPlanLimits(user.plan_type).label} plan allows ${limit} campaign(s).`,
+    };
+  }
+
+  return { allowed: true, current: currentCount, limit, plan: user.plan_type };
+}
+
+/**
  * Activate trial for a newly verified user (called from auth route on verify-signup).
  */
 function activateTrial(userId) {
@@ -240,6 +265,7 @@ module.exports = {
   isSubscriptionActive,
   getTrialDaysRemaining,
   canAddAccount,
+  canAddCampaign,
   activateTrial,
   upgradePlan,
   updatePlanStatus,

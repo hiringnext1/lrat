@@ -1,5 +1,5 @@
 /**
- * LRAT Structured Logger (R1)
+ * GrowLeads Structured Logger (R1)
  * 
  * Centralized Pino-based logging with:
  * - JSON output in production, pretty print in development

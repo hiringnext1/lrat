@@ -1,5 +1,5 @@
 // End-to-End User Journey Simulation and System Flow Audit
-// This script simulates a full customer journey on LRAT without external network dependencies.
+// This script simulates a full customer journey on GrowLeads without external network dependencies.
 
 process.env.PORT = 4000;
 process.env.NODE_ENV = 'test';

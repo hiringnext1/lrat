@@ -32,7 +32,7 @@ router.post('/connect-link', requireActiveSubscription, async (req, res) => {
       success_redirect_url: successUrl,
       failure_redirect_url: failUrl,
       notify_url: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/api/accounts/webhook`,
-      name: 'LRAT LinkedIn Account',
+      name: 'GrowLeads LinkedIn Account',
     };
 
     console.log('[Unipile Debug] Sending Request Body:', JSON.stringify(requestBody, null, 2));
@@ -355,7 +355,7 @@ router.delete('/:id', requireActiveSubscription, async (req, res) => {
       }
     }
 
-    res.json({ success: true, message: 'Account deleted successfully from LRAT and Unipile' });
+    res.json({ success: true, message: 'Account deleted successfully from GrowLeads and Unipile' });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

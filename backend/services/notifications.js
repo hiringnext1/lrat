@@ -56,7 +56,7 @@ async function sendAlert({ type, subject, message, meta = {} }) {
       const htmlContent = `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; rounded: 12px;">
           <div style="background: ${type === 'hot_lead' ? '#10b981' : type === 'restricted' ? '#ef4444' : '#f59e0b'}; padding: 15px; text-align: center; border-radius: 8px 8px 0 0; color: white;">
-            <h2 style="margin: 0; font-size: 20px;">LRAT System Alert</h2>
+            <h2 style="margin: 0; font-size: 20px;">GrowLeads System Alert</h2>
           </div>
           <div style="padding: 20px; color: #1e293b;">
             <h3 style="margin-top: 0; color: #0f172a;">${subject}</h3>
@@ -75,15 +75,15 @@ async function sendAlert({ type, subject, message, meta = {} }) {
             ` : ''}
           </div>
           <div style="margin-top: 30px; text-align: center; font-size: 11px; color: #94a3b8; border-top: 1px solid #f1f5f9; padding-top: 15px;">
-            This is an automated alert from LRAT Outreach Automation Platform.
+            This is an automated alert from GrowLeads Outreach Automation Platform.
           </div>
         </div>
       `;
 
       await emailService.sendEmail({
-        fromName: 'LRAT Outreach Engine',
+        fromName: 'GrowLeads Outreach Engine',
         to: emailRecipient,
-        subject: `[LRAT ALERT] ${subject}`,
+        subject: `[GrowLeads ALERT] ${subject}`,
         html: htmlContent
       });
       console.log('[Alert System] Email alert sent successfully to:', emailRecipient);

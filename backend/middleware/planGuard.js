@@ -1,5 +1,5 @@
 /**
- * LRAT Plan Guard Middleware
+ * GrowLeads Plan Guard Middleware
  * Use to protect routes that require an active subscription.
  */
 const billing = require('../services/billing');

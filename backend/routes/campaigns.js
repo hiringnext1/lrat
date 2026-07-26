@@ -33,9 +33,17 @@ router.get('/', (req, res) => {
   }
 });
 
+const billing = require('../services/billing');
+
 router.post('/', requireActiveSubscription, (req, res) => {
   try {
     const db = getDb();
+    
+    // Enforce billing plan campaign limit check
+    const canAdd = billing.canAddCampaign(req.userId);
+    if (!canAdd.allowed) {
+      return res.status(403).json({ success: false, error: canAdd.reason });
+    }
     const {
       name,
       connection_note_template,
