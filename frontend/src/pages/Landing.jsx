@@ -9,7 +9,7 @@ import {
   RefreshCw, Send, AlertTriangle, Key, Play, Inbox,
   LineChart, Building2, Briefcase, Star, Quote,
   MousePointer, Rocket, Timer, Gauge, CalendarCheck,
-  PhoneCall, PieChart, Megaphone, UserCheck, Flame
+  PhoneCall, PieChart, Megaphone, UserCheck, Flame, X
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import GrowLeadsLogo from '../components/GrowLeadsLogo';
@@ -102,7 +102,7 @@ function TopBanner() {
     <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white text-xs font-bold py-2.5 px-4 text-center relative z-[110] flex flex-wrap items-center justify-center gap-2 shadow-md">
       <span className="flex items-center gap-1.5">
         <Flame size={14} className="text-amber-300 fill-amber-300 animate-bounce" />
-        <strong>Special Launch Offer:</strong> Get your 1st Month of GrowLeadz for <strong>$5</strong> (Regular $39/mo)
+        <strong>Special Launch Offer:</strong> Get your 1st Month of GrowLeadz for <strong>$5</strong> — <span className="bg-amber-400 text-slate-900 font-black px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider">Save 87% Today</span>
       </span>
       <a href="#pricing" className="bg-white text-blue-900 px-3 py-1 rounded-full text-[10px] font-black hover:bg-slate-100 transition-all uppercase tracking-wider shadow-sm">
         Claim Offer →
@@ -1579,6 +1579,77 @@ function IntegrationMarquee() {
   );
 }
 
+// ─── FLOATING BOTTOM-RIGHT OFFER WIDGET ──────────────────────────────────────
+function FloatingOfferBadge() {
+  const [dismissed, setDismissed] = useState(false);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 250) {
+        setVisible(true);
+      } else {
+        setVisible(false);
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  if (dismissed || !visible) return null;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0, y: 40, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 40, scale: 0.95 }}
+        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+        className="fixed bottom-6 right-6 z-[120] max-w-sm"
+      >
+        <div className="relative bg-[#0B1120]/95 backdrop-blur-2xl border border-amber-500/40 p-4 rounded-2xl shadow-[0_10px_40px_rgba(245,158,11,0.25)] flex items-center gap-3">
+          {/* Ambient Glow */}
+          <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-blue-500/10 pointer-events-none" />
+
+          {/* Flame Icon */}
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/30">
+            <Flame size={20} className="text-white fill-white animate-bounce" />
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <span className="bg-amber-500/20 text-amber-300 text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider border border-amber-500/30">
+                SAVE 87% TODAY
+              </span>
+            </div>
+            <p className="text-xs font-black text-white tracking-tight">
+              Get 1st Month for <span className="text-amber-400">$5</span>
+            </p>
+          </div>
+
+          {/* Claim Button */}
+          <a
+            href="#pricing"
+            className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white text-[11px] font-extrabold px-3.5 py-2 rounded-xl transition-all shadow-md hover:scale-105 active:scale-95 shrink-0 uppercase tracking-wider"
+          >
+            Claim →
+          </a>
+
+          {/* Close Button */}
+          <button
+            onClick={() => setDismissed(true)}
+            className="text-slate-400 hover:text-white p-1 hover:bg-white/10 rounded-lg transition-colors shrink-0"
+            title="Dismiss offer"
+          >
+            <X size={15} />
+          </button>
+        </div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
 // ─── MAIN LANDING PAGE ────────────────────────────────────────────────────────
 export default function Landing() {
   useEffect(() => {
@@ -1639,6 +1710,7 @@ export default function Landing() {
       </main>
 
       <Footer />
+      <FloatingOfferBadge />
 
       {/* Google Fonts */}
       <style dangerouslySetInnerHTML={{ __html: `
