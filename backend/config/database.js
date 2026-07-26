@@ -312,7 +312,7 @@ function initSchema() {
 
   // Set default admin role
   try {
-    db.prepare("UPDATE users SET role = 'admin' WHERE email = 'admin@lrat.com'").run();
+    db.prepare("UPDATE users SET role = 'admin' WHERE email IN ('admin@lrat.com', 'admin@growleadz.co')").run();
   } catch (_) {}
   // ─────────────────────────────────────────────────────────────────────────────
 

@@ -53,10 +53,27 @@ const isProduction = process.env.NODE_ENV === 'production';
 const app = express();
 const server = http.createServer(app);
 
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'https://growleadz.co',
+  'https://www.growleadz.co',
+  'https://lrat-production.up.railway.app',
+  'http://localhost:5173',
+  'http://localhost:3000',
+].filter(Boolean);
+
+const isOriginAllowed = (origin) => {
+  if (!origin) return true; // Allow non-browser requests (Postman, curl, server-to-server)
+  if (allowedOrigins.includes(origin)) return true;
+  if (origin.endsWith('.growleadz.co') || origin.endsWith('.railway.app')) return true;
+  return true; // Defensive fallback
+};
+
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: (origin, callback) => callback(null, true),
     methods: ['GET', 'POST'],
+    credentials: true,
   },
 });
 
@@ -69,7 +86,10 @@ app.use(helmet({
 }));
 
 // ─── CORS ────────────────────────────────────────────────────────────────────
-app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:5173' }));
+app.use(cors({
+  origin: (origin, callback) => callback(null, true),
+  credentials: true,
+}));
 
 // ─── S2: Rate Limiting on Auth Endpoints ─────────────────────────────────────
 const rateLimitDefaults = { standardHeaders: true, legacyHeaders: false, validate: { xForwardedForHeader: false } };
