@@ -407,91 +407,158 @@ function getStepSummary(step) {
 }
 
 // ─── ACTION COOLDOWN BUBBLE CONNECTOR ───────────────────────────────────────
-function DelayConnector({ days, unit = 'days', onChange }) {
-  const [editing, setEditing]   = useState(false);
-  const [val, setVal]           = useState(days);
-  const [unitSel, setUnitSel]   = useState(unit);
-  const ref = useRef();
+const HOUR_PRESETS = [1, 2, 4, 6, 12, 24, 48, 72];
+const DAY_PRESETS  = [1, 2, 3, 5, 7, 10, 14, 30];
 
-  // Sync if parent value changes (e.g. on load)
+function DelayConnector({ days, unit = 'days', onChange }) {
+  const [open, setOpen]       = useState(false);
+  const [val, setVal]         = useState(days);
+  const [unitSel, setUnitSel] = useState(unit);
+  const popRef = useRef();
+
+  // Sync on external change (e.g. load from saved campaign)
   useEffect(() => { setVal(days); setUnitSel(unit); }, [days, unit]);
 
-  function commit() {
+  // Close popover on outside click
+  useEffect(() => {
+    if (!open) return;
+    function onClickOut(e) {
+      if (popRef.current && !popRef.current.contains(e.target)) applyAndClose();
+    }
+    document.addEventListener('mousedown', onClickOut);
+    return () => document.removeEventListener('mousedown', onClickOut);
+  }, [open, val, unitSel]);
+
+  function clamp(v) {
     const max = unitSel === 'hours' ? 72 : 30;
-    const min = 1;
-    const n = Math.max(min, Math.min(max, parseInt(val) || 1));
+    return Math.max(1, Math.min(max, parseInt(v) || 1));
+  }
+
+  function applyAndClose() {
+    const n = clamp(val);
     setVal(n);
-    setEditing(false);
+    setOpen(false);
     onChange(n, unitSel);
   }
 
-  function handleUnitToggle(newUnit) {
-    setUnitSel(newUnit);
-    // Reset value to sensible default when switching unit
-    if (newUnit === 'hours' && val > 72)  setVal(24);
-    if (newUnit === 'days'  && val > 30)  setVal(3);
+  function selectPreset(p) {
+    setVal(p);
+    setOpen(false);
+    onChange(p, unitSel);
   }
 
-  useEffect(() => { if (editing) ref.current?.select(); }, [editing]);
+  function switchUnit(u) {
+    setUnitSel(u);
+    // Carry over a sensible equivalent value
+    if (u === 'hours' && val > 72) setVal(24);
+    if (u === 'days'  && val > 30) setVal(3);
+  }
 
-  const displayLabel = unit === 'hours'
-    ? `Wait ${days} Hour${days !== 1 ? 's' : ''}`
-    : `Wait ${days} Day${days !== 1 ? 's' : ''}`;
+  function step(delta) {
+    setVal(v => clamp((parseInt(v) || 1) + delta));
+  }
+
+  const presets   = unitSel === 'hours' ? HOUR_PRESETS : DAY_PRESETS;
+  const unitLabel = unit === 'hours' ? (days === 1 ? 'Hour' : 'Hours') : (days === 1 ? 'Day' : 'Days');
 
   return (
-    <div className="flex flex-col items-center py-1">
+    <div className="relative flex flex-col items-center py-1" ref={popRef}>
       <div className="w-0.5 h-3 bg-slate-200 dark:bg-slate-800" />
-      {editing ? (
-        <div className="flex items-center gap-1.5 bg-white dark:bg-slate-900 border-2 border-blue-400 rounded-full px-3 py-1 shadow-md z-10">
-          <Clock size={11} className="text-blue-500" />
-          <span className="text-[10px] font-semibold text-slate-500">Wait</span>
-          <input
-            ref={ref}
-            type="number"
-            min={1}
-            max={unitSel === 'hours' ? 72 : 30}
-            value={val}
-            onChange={e => setVal(e.target.value)}
-            onBlur={commit}
-            onKeyDown={e => e.key === 'Enter' && commit()}
-            className="w-8 text-center text-xs font-black text-blue-600 dark:text-blue-400 border-none outline-none bg-transparent focus:ring-0 p-0"
-          />
-          {/* Unit toggle pills */}
-          <div className="flex items-center gap-0.5 bg-slate-100 dark:bg-slate-800 rounded-full p-0.5">
-            <button
-              type="button"
-              onClick={() => handleUnitToggle('hours')}
-              className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full transition-all ${
-                unitSel === 'hours'
-                  ? 'bg-blue-500 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-600'
-              }`}
-            >H</button>
-            <button
-              type="button"
-              onClick={() => handleUnitToggle('days')}
-              className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full transition-all ${
-                unitSel === 'days'
-                  ? 'bg-blue-500 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-600'
-              }`}
-            >D</button>
+
+      {/* Trigger button */}
+      <button
+        type="button"
+        onClick={() => { setVal(days); setUnitSel(unit); setOpen(o => !o); }}
+        className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/30 hover:bg-amber-100 dark:hover:bg-amber-900/40 border border-amber-200 dark:border-amber-800/60 hover:border-amber-400 rounded-full px-3.5 py-1.5 transition-all group z-10"
+      >
+        <Clock size={11} className="text-amber-500" />
+        <span className="text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-400">
+          Wait {days} {unitLabel}
+        </span>
+        <ChevronDown size={10} className="text-amber-400 group-hover:text-amber-600 transition-transform" style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }} />
+      </button>
+
+      {/* Popover */}
+      {open && (
+        <div className="absolute top-full mt-2 z-50 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl shadow-slate-900/20 p-4 w-64">
+          {/* Unit switcher tabs */}
+          <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-xl p-1 mb-3">
+            {[
+              { key: 'hours', label: '⏱ Hours', icon: null },
+              { key: 'days',  label: '📅 Days',  icon: null },
+            ].map(({ key, label }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => switchUnit(key)}
+                className={`flex-1 text-[11px] font-bold py-1.5 rounded-lg transition-all ${
+                  unitSel === key
+                    ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
           </div>
-          <button onClick={commit} className="text-blue-600 dark:text-blue-400 hover:text-blue-800 ml-0.5">
-            <Check size={11} strokeWidth={3} />
+
+          {/* Quick preset chips */}
+          <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-2">Quick Select</p>
+          <div className="grid grid-cols-4 gap-1.5 mb-3">
+            {presets.map(p => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => selectPreset(p)}
+                className={`text-[11px] font-bold py-1.5 rounded-lg border transition-all ${
+                  val === p && unitSel === unit
+                    ? 'bg-blue-500 border-blue-500 text-white shadow-sm'
+                    : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/20'
+                }`}
+              >
+                {p}{unitSel === 'hours' ? 'h' : 'd'}
+              </button>
+            ))}
+          </div>
+
+          {/* Custom stepper */}
+          <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-2">Custom</p>
+          <div className="flex items-center gap-2 mb-3">
+            <button
+              type="button"
+              onClick={() => step(-1)}
+              className="w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-500 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/20 font-bold text-base transition-all"
+            >−</button>
+            <div className="flex-1 flex items-center justify-center gap-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg py-1.5 px-2">
+              <input
+                type="number"
+                min={1}
+                max={unitSel === 'hours' ? 72 : 30}
+                value={val}
+                onChange={e => setVal(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && applyAndClose()}
+                className="w-10 text-center text-sm font-black text-blue-600 dark:text-blue-400 bg-transparent border-none outline-none focus:ring-0 p-0"
+              />
+              <span className="text-[11px] text-slate-400 font-medium">{unitSel === 'hours' ? 'hrs' : 'days'}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => step(1)}
+              className="w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-500 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/20 font-bold text-base transition-all"
+            >+</button>
+          </div>
+
+          {/* Apply button */}
+          <button
+            type="button"
+            onClick={applyAndClose}
+            className="w-full bg-blue-500 hover:bg-blue-600 text-white text-[12px] font-bold py-2 rounded-xl transition-all shadow-sm shadow-blue-500/30"
+          >
+            ✓ Apply — Wait {clamp(val)} {unitSel === 'hours' ? (clamp(val) === 1 ? 'Hour' : 'Hours') : (clamp(val) === 1 ? 'Day' : 'Days')}
           </button>
         </div>
-      ) : (
-        <button
-          type="button"
-          onClick={() => { setVal(days); setUnitSel(unit); setEditing(true); }}
-          className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900/60 hover:bg-blue-50/50 dark:hover:bg-blue-950/10 border border-slate-200 dark:border-slate-800/80 hover:border-blue-300 rounded-full px-3.5 py-1.5 transition-all group z-10"
-        >
-          <Clock size={11} className="text-slate-400 group-hover:text-blue-500" />
-          <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 group-hover:text-blue-600">{displayLabel}</span>
-          <span className="text-[10px] text-slate-350 group-hover:text-blue-500">✎</span>
-        </button>
       )}
+
       <div className="w-0.5 h-3 bg-slate-200 dark:bg-slate-800" />
     </div>
   );
