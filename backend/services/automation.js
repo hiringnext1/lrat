@@ -642,8 +642,12 @@ async function executeFlowNode(db, campaign, lead, node, execMap, nodeMap) {
       if (prevNode.type === 'invite' && lead.accepted_at) {
         baseTime = new Date(lead.accepted_at).getTime();
       }
-      const waitDays = node.data?.days || 1;
-      if (Date.now() - baseTime < waitDays * 24 * 60 * 60 * 1000) return;
+      const unit    = node.data?.unit || 'days';  // backward compat default
+      const amount  = node.data?.days || 1;
+      const waitMs  = unit === 'hours'
+        ? amount * 60 * 60 * 1000           // hours → ms
+        : amount * 24 * 60 * 60 * 1000;    // days  → ms
+      if (Date.now() - baseTime < waitMs) return;
       await record(); 
       break;
 

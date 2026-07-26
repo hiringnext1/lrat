@@ -324,7 +324,8 @@ function stepsToFlowJson(steps, settings) {
 
     if (step.waitAfter > 0 && step.type !== 'end') {
       const did = `delay-${step.id}`;
-      nodes.push({ id: did, type: 'delay', position: { x, y }, data: { label: 'Wait', days: step.waitAfter } });
+      // Store both days (value) and unit so automation engine can compute correctly
+      nodes.push({ id: did, type: 'delay', position: { x, y }, data: { label: 'Wait', days: step.waitAfter, unit: step.waitUnit || 'days' } });
       edges.push({ id: `e-${prev}-${did}`, source: prev, target: did, animated: true, style: { stroke: '#cbd5e1', strokeWidth: 2 } });
       prev = did;
       y += 140;
@@ -369,7 +370,11 @@ function flowJsonToSteps(flow) {
     if (!node) break;
 
     if (node.type === 'delay') {
-      if (prevStep) prevStep.waitAfter = node.data?.days || 1;
+      if (prevStep) {
+        prevStep.waitAfter = node.data?.days || 1;
+        // Preserve unit — default 'days' for backward compat with old campaigns
+        prevStep.waitUnit  = node.data?.unit || 'days';
+      }
       cur = adj[cur]?.[0];
       continue;
     }
@@ -402,51 +407,88 @@ function getStepSummary(step) {
 }
 
 // ─── ACTION COOLDOWN BUBBLE CONNECTOR ───────────────────────────────────────
-function DelayConnector({ days, onChange }) {
-  const [editing, setEditing] = useState(false);
-  const [val, setVal] = useState(days);
+function DelayConnector({ days, unit = 'days', onChange }) {
+  const [editing, setEditing]   = useState(false);
+  const [val, setVal]           = useState(days);
+  const [unitSel, setUnitSel]   = useState(unit);
   const ref = useRef();
 
+  // Sync if parent value changes (e.g. on load)
+  useEffect(() => { setVal(days); setUnitSel(unit); }, [days, unit]);
+
   function commit() {
-    const n = Math.max(1, Math.min(30, parseInt(val) || 1));
-    onChange(n);
+    const max = unitSel === 'hours' ? 72 : 30;
+    const min = 1;
+    const n = Math.max(min, Math.min(max, parseInt(val) || 1));
     setVal(n);
     setEditing(false);
+    onChange(n, unitSel);
+  }
+
+  function handleUnitToggle(newUnit) {
+    setUnitSel(newUnit);
+    // Reset value to sensible default when switching unit
+    if (newUnit === 'hours' && val > 72)  setVal(24);
+    if (newUnit === 'days'  && val > 30)  setVal(3);
   }
 
   useEffect(() => { if (editing) ref.current?.select(); }, [editing]);
+
+  const displayLabel = unit === 'hours'
+    ? `Wait ${days} Hour${days !== 1 ? 's' : ''}`
+    : `Wait ${days} Day${days !== 1 ? 's' : ''}`;
 
   return (
     <div className="flex flex-col items-center py-1">
       <div className="w-0.5 h-3 bg-slate-200 dark:bg-slate-800" />
       {editing ? (
-        <div className="flex items-center gap-1 bg-white dark:bg-slate-900 border-2 border-blue-505 rounded-full px-3 py-1 shadow-md z-10">
+        <div className="flex items-center gap-1.5 bg-white dark:bg-slate-900 border-2 border-blue-400 rounded-full px-3 py-1 shadow-md z-10">
           <Clock size={11} className="text-blue-500" />
           <span className="text-[10px] font-semibold text-slate-500">Wait</span>
-          <input 
-            ref={ref} 
-            type="number" 
-            min={1} 
-            max={30} 
+          <input
+            ref={ref}
+            type="number"
+            min={1}
+            max={unitSel === 'hours' ? 72 : 30}
             value={val}
             onChange={e => setVal(e.target.value)}
             onBlur={commit}
             onKeyDown={e => e.key === 'Enter' && commit()}
-            className="w-8 text-center text-xs font-black text-blue-600 dark:text-blue-400 border-none outline-none bg-transparent focus:ring-0 p-0" 
+            className="w-8 text-center text-xs font-black text-blue-600 dark:text-blue-400 border-none outline-none bg-transparent focus:ring-0 p-0"
           />
-          <span className="text-[10px] font-semibold text-slate-500">days</span>
-          <button onClick={commit} className="text-blue-600 dark:text-blue-400 hover:text-blue-800 ml-1">
+          {/* Unit toggle pills */}
+          <div className="flex items-center gap-0.5 bg-slate-100 dark:bg-slate-800 rounded-full p-0.5">
+            <button
+              type="button"
+              onClick={() => handleUnitToggle('hours')}
+              className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full transition-all ${
+                unitSel === 'hours'
+                  ? 'bg-blue-500 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-600'
+              }`}
+            >H</button>
+            <button
+              type="button"
+              onClick={() => handleUnitToggle('days')}
+              className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full transition-all ${
+                unitSel === 'days'
+                  ? 'bg-blue-500 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-600'
+              }`}
+            >D</button>
+          </div>
+          <button onClick={commit} className="text-blue-600 dark:text-blue-400 hover:text-blue-800 ml-0.5">
             <Check size={11} strokeWidth={3} />
           </button>
         </div>
       ) : (
-        <button 
+        <button
           type="button"
-          onClick={() => { setVal(days); setEditing(true); }}
+          onClick={() => { setVal(days); setUnitSel(unit); setEditing(true); }}
           className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900/60 hover:bg-blue-50/50 dark:hover:bg-blue-950/10 border border-slate-200 dark:border-slate-800/80 hover:border-blue-300 rounded-full px-3.5 py-1.5 transition-all group z-10"
         >
           <Clock size={11} className="text-slate-400 group-hover:text-blue-500" />
-          <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 group-hover:text-blue-600">Wait {days} day{days !== 1 ? 's' : ''}</span>
+          <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 group-hover:text-blue-600">{displayLabel}</span>
           <span className="text-[10px] text-slate-350 group-hover:text-blue-500">✎</span>
         </button>
       )}
@@ -649,7 +691,8 @@ export default function CampaignBuilder() {
   }
 
   function updateData(stepId, data) { setSteps(s => s.map(st => st.id === stepId ? { ...st, data } : st)); }
-  function updateWait(stepId, days) { setSteps(s => s.map(st => st.id === stepId ? { ...st, waitAfter: days } : st)); }
+  // unit: 'hours' | 'days' — default 'days' for backward compat
+  function updateWait(stepId, value, unit = 'days') { setSteps(s => s.map(st => st.id === stepId ? { ...st, waitAfter: value, waitUnit: unit } : st)); }
   function deleteStep(stepId) { 
     setSteps(s => s.filter(st => st.id !== stepId)); 
     if (editingId === stepId) setEditingId('trigger'); 
@@ -1095,7 +1138,11 @@ export default function CampaignBuilder() {
                   {step.type !== 'end' && (
                     <>
                       {step.waitAfter > 0 && (
-                        <DelayConnector days={step.waitAfter} onChange={d => updateWait(step.id, d)} />
+                        <DelayConnector
+                          days={step.waitAfter}
+                          unit={step.waitUnit || 'days'}
+                          onChange={(val, unit) => updateWait(step.id, val, unit)}
+                        />
                       )}
                       
                       {addMenuAfter === idx ? (
