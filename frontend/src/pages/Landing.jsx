@@ -1,102 +1,161 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Zap, Shield, Target, Users, ArrowRight, MessageSquare, 
-  Bot, Globe, LayoutGrid, CheckCircle2, TrendingUp, Sparkles, 
-  Terminal, Cpu, Database, Activity, Play, Lock, Clock, Check, 
-  Plus, Minus, Search, Mail, ShieldCheck, BarChart3, Layers,
-  ExternalLink, Share2, Network, Filter, ChevronDown, CheckCircle,
-  HelpCircle, RefreshCw, Send, AlertTriangle, Key
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence, useInView } from 'framer-motion';
+import {
+  Zap, Shield, Target, Users, ArrowRight, MessageSquare,
+  Bot, Globe, CheckCircle2, TrendingUp, Sparkles,
+  Terminal, Cpu, Database, Activity, Lock, Clock, Check,
+  Search, Mail, ShieldCheck, BarChart3, Layers,
+  Share2, Network, Filter, ChevronDown, CheckCircle,
+  RefreshCw, Send, AlertTriangle, Key, Play, Inbox,
+  LineChart, Building2, Briefcase, Star, Quote,
+  MousePointer, Rocket, Timer, Gauge, CalendarCheck,
+  PhoneCall, PieChart, Megaphone, UserCheck, Flame
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-// ─── ANIMS & SECTION CONTROLLERS ──────────────────────────────────────────
-const Section = ({ children, id, className = "" }) => (
-  <section id={id} className={`relative z-10 w-full overflow-hidden ${className}`}>
-    <div className="max-w-7xl mx-auto px-6 md:px-12">
-      {children}
-    </div>
-  </section>
-);
-
-const FadeIn = ({ children, delay = 0, y = 30 }) => (
+// ─── ANIMATION HELPERS ──────────────────────────────────────────────────────
+const FadeIn = ({ children, delay = 0, y = 40, className = "" }) => (
   <motion.div
     initial={{ opacity: 0, y }}
     whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true, margin: "-100px" }}
-    transition={{ duration: 0.8, delay, ease: [0.16, 1, 0.3, 1] }}
+    viewport={{ once: true, margin: "-80px" }}
+    transition={{ duration: 0.7, delay, ease: [0.16, 1, 0.3, 1] }}
+    className={className}
   >
     {children}
   </motion.div>
 );
 
-// ─── STUNNING BACKGROUND ELEMENTS ──────────────────────────────────────────
-function AmbientBackground() {
+const FadeInLeft = ({ children, delay = 0 }) => (
+  <motion.div
+    initial={{ opacity: 0, x: -50 }}
+    whileInView={{ opacity: 1, x: 0 }}
+    viewport={{ once: true, margin: "-80px" }}
+    transition={{ duration: 0.7, delay, ease: [0.16, 1, 0.3, 1] }}
+  >
+    {children}
+  </motion.div>
+);
+
+const FadeInRight = ({ children, delay = 0 }) => (
+  <motion.div
+    initial={{ opacity: 0, x: 50 }}
+    whileInView={{ opacity: 1, x: 0 }}
+    viewport={{ once: true, margin: "-80px" }}
+    transition={{ duration: 0.7, delay, ease: [0.16, 1, 0.3, 1] }}
+  >
+    {children}
+  </motion.div>
+);
+
+// ─── ANIMATED COUNTER ──────────────────────────────────────────────────────
+function AnimatedCounter({ end, suffix = "", prefix = "", duration = 2000 }) {
+  const [count, setCount] = useState(0);
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true });
+
+  useEffect(() => {
+    if (!inView) return;
+    let startTime;
+    const step = (timestamp) => {
+      if (!startTime) startTime = timestamp;
+      const progress = Math.min((timestamp - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.floor(eased * end));
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }, [inView, end, duration]);
+
+  return (
+    <span ref={ref}>
+      {prefix}{count.toLocaleString()}{suffix}
+    </span>
+  );
+}
+
+// ─── DARK BACKGROUND ──────────────────────────────────────────────────────
+function DarkBackground() {
   return (
     <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-      {/* Light slate background */}
-      <div className="absolute inset-0 bg-[#fbfcfd]" />
-      
-      {/* Modern Grid Overlay */}
-      <div 
-        className="absolute inset-0 opacity-[0.035]" 
+      <div className="absolute inset-0 bg-[#080C18]" />
+      {/* Radial grid */}
+      <div
+        className="absolute inset-0 opacity-[0.04]"
         style={{
-          backgroundImage: `linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)`,
-          backgroundSize: '40px 40px',
+          backgroundImage: `linear-gradient(rgba(59,130,246,0.8) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,0.8) 1px, transparent 1px)`,
+          backgroundSize: '50px 50px',
         }}
       />
-
-      {/* Floating Glowing Blobs with HSL Color Grading */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-gradient-to-tr from-indigo-300/20 to-purple-400/20 blur-[130px] rounded-full animate-pulse" style={{ animationDuration: '8s' }} />
-      <div className="absolute bottom-[20%] right-[-10%] w-[45vw] h-[45vw] bg-gradient-to-br from-blue-300/20 to-emerald-300/20 blur-[140px] rounded-full animate-pulse" style={{ animationDuration: '12s' }} />
-      <div className="absolute top-[40%] left-[30%] w-[35vw] h-[35vw] bg-indigo-500/[0.03] blur-[100px] rounded-full" />
+      {/* Glowing orbs */}
+      <div className="absolute top-[-5%] left-[-10%] w-[55vw] h-[55vw] bg-blue-600/10 blur-[160px] rounded-full" />
+      <div className="absolute top-[30%] right-[-15%] w-[45vw] h-[45vw] bg-purple-600/8 blur-[140px] rounded-full" />
+      <div className="absolute bottom-[10%] left-[20%] w-[35vw] h-[35vw] bg-indigo-500/6 blur-[120px] rounded-full" />
     </div>
   );
 }
 
-// ─── FLOATING PILL NAVIGATION ──────────────────────────────────────────────
+// ─── NAVIGATION ────────────────────────────────────────────────────────────
 function Navigation() {
   const [scrolled, setScrolled] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
+    const handleScroll = () => setScrolled(window.scrollY > 30);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const navLinks = [
+    { label: 'Features', href: '#features' },
+    { label: 'How It Works', href: '#how-it-works' },
+    { label: 'ROI Calculator', href: '#roi-calculator' },
+    { label: 'Pricing', href: '#pricing' },
+    { label: 'FAQ', href: '#faqs' },
+  ];
+
   return (
-    <nav className="fixed top-0 left-0 right-0 z-[100] px-6 pt-5 transition-all duration-300">
-      <div className={`max-w-7xl mx-auto px-6 py-3.5 flex items-center justify-between rounded-full border transition-all duration-500 ${
-        scrolled 
-          ? 'bg-white/80 backdrop-blur-xl border-slate-200/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)]' 
-          : 'bg-white/40 backdrop-blur-md border-slate-200/40 shadow-none'
+    <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 ${scrolled ? 'py-3' : 'py-5'}`}>
+      <div className={`max-w-7xl mx-auto px-6 py-3.5 flex items-center justify-between rounded-2xl border transition-all duration-500 mx-4 ${
+        scrolled
+          ? 'bg-[#0D1221]/90 backdrop-blur-xl border-white/10 shadow-[0_8px_40px_rgba(0,0,0,0.4)]'
+          : 'bg-transparent border-transparent'
       }`}>
-        <div className="flex items-center gap-3 group cursor-pointer">
-          <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:rotate-12 transition-all duration-500">
+        {/* Logo */}
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
             <Zap size={18} className="text-white fill-white" />
           </div>
-          <span className="text-lg font-extrabold tracking-tighter text-slate-900 uppercase">LRAT</span>
+          <span className="text-lg font-black tracking-tight text-white uppercase">LRAT</span>
+          <span className="hidden sm:block text-[9px] font-bold text-blue-400 border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 rounded-full uppercase tracking-wider">B2B Lead Gen</span>
         </div>
-        
-        <div className="hidden md:flex items-center gap-7">
-          {['Playgrounds', 'Playbooks', 'Security', 'ROI-Calculator', 'Pricing', 'FAQs'].map(label => (
-            <a 
-              key={label} 
-              href={`#${label.toLowerCase()}`} 
-              className="text-xs font-semibold text-slate-600 hover:text-blue-600 transition-colors uppercase tracking-wider"
-              id={`nav-link-${label.toLowerCase()}`}
+
+        {/* Desktop Nav */}
+        <div className="hidden md:flex items-center gap-8">
+          {navLinks.map(link => (
+            <a
+              key={link.label}
+              href={link.href}
+              className="text-[11px] font-semibold text-slate-400 hover:text-white transition-colors uppercase tracking-wider"
             >
-              {label}
+              {link.label}
             </a>
           ))}
         </div>
 
+        {/* CTAs */}
         <div className="flex items-center gap-3">
-          <Link to="/dashboard">
-            <button 
-              id="nav-launch-console-btn"
-              className="bg-slate-900 text-white px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-blue-600 transition-all hover:scale-105 active:scale-95 shadow-md shadow-slate-950/10"
+          <Link to="/login" className="hidden sm:block">
+            <button className="text-slate-400 hover:text-white text-xs font-semibold px-4 py-2 transition-colors">
+              Sign In
+            </button>
+          </Link>
+          <Link to="/signup">
+            <button
+              id="nav-cta-btn"
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg shadow-blue-500/25 transition-all hover:scale-105 active:scale-95"
             >
-              Launch Console
+              Start Free →
             </button>
           </Link>
         </div>
@@ -105,627 +164,951 @@ function Navigation() {
   );
 }
 
-// ─── INTERACTIVE SANDBOX PLAYGROUND ────────────────────────────────────────
-const prospects = [
-  {
-    name: "Aman Gupta",
-    role: "VP of Growth at Razorpay",
-    prevRole: "Head of Marketing at Flipkart",
-    skills: "Enterprise Sales, Account Management, Revenue Ops",
-    interests: "B2B partnerships, Fintech APIs",
-    avatar: "AG"
-  },
-  {
-    name: "Sarah Chen",
-    role: "Head of Sales at Stripe",
-    prevRole: "Sales Lead at Google Pay",
-    skills: "Merchant Acquisition, Payment Rails, API Integrations",
-    interests: "B2B SaaS growth, CRM pipelines",
-    avatar: "SC"
-  },
-  {
-    name: "Vikram Malhotra",
-    role: "CEO & Founder at stealth-startup (ex-YC)",
-    prevRole: "VP of Business Development at OpenAI",
-    skills: "Partnerships, Enterprise Deals, Strategic Alliances",
-    interests: "Seed funding, Sales tooling",
-    avatar: "VM"
-  }
-];
+// ─── HERO SECTION ──────────────────────────────────────────────────────────
+function Hero() {
+  const stats = [
+    { value: 500, suffix: "+", label: "B2B Teams Active" },
+    { value: 3, suffix: "x", prefix: "", label: "More Replies vs Manual" },
+    { value: 40, suffix: "hrs", label: "Saved Per Month" },
+    { value: 98, suffix: "%", label: "Account Safety Rate" },
+  ];
 
-const playbooks = [
-  {
-    name: "Personalized Outreach Pitch",
-    template: "Hey [Name], loved your background at [PrevRole] and now leading growth at [Company]. I saw you are deeply interested in [Interest]. We've built an outbound automation platform that matches your focus on [Skill]. Let's connect?"
-  },
-  {
-    name: "Quick Synergy Hook",
-    template: "Hi [Name] — noticed you went from [PrevRole] to [Company]. Quick question: how is your team handling [Skill] to boost your client acquisition this quarter? Cheers!"
-  }
-];
+  const liveFeeds = [
+    { icon: "🔗", text: "New connection accepted — Arjun Mehta, VP Sales @ Freshworks", delay: 0 },
+    { icon: "💬", text: "Reply received — 'Would love to explore this further!'", delay: 3000 },
+    { icon: "🔥", text: "Hot lead flagged — Priya Shah, Head of Growth @ Razorpay", delay: 6000 },
+    { icon: "📨", text: "Follow-up sent automatically — Day 3 sequence triggered", delay: 9000 },
+    { icon: "✅", text: "Meeting booked — Vikram Nair, CEO @ Series-A startup", delay: 12000 },
+  ];
 
-function InteractiveSandbox() {
-  const [selectedProspect, setSelectedProspect] = useState(prospects[0]);
-  const [selectedPlaybook, setSelectedPlaybook] = useState(playbooks[0]);
-  const [generating, setGenerating] = useState(false);
-  const [step, setStep] = useState(0);
-  const [output, setOutput] = useState("");
+  const [feedItems, setFeedItems] = useState([liveFeeds[0]]);
 
-  const simulatePersonalization = () => {
-    setGenerating(true);
-    setStep(1);
-    setOutput("");
-    
-    setTimeout(() => {
-      setStep(2);
-      setTimeout(() => {
-        setStep(3);
-        setTimeout(() => {
-          const company = selectedProspect.role.split("at ")[1] || "current company";
-          let message = selectedPlaybook.template
-            .replace("[Name]", selectedProspect.name.split(" ")[0])
-            .replace("[PrevRole]", selectedProspect.prevRole)
-            .replace("[Company]", company)
-            .replace("[Interest]", selectedProspect.interests)
-            .replace("[Skill]", selectedProspect.skills.split(",")[0]);
-
-          setOutput(message);
-          setGenerating(false);
-          setStep(4);
-        }, 1200);
-      }, 1000);
-    }, 800);
-  };
+  useEffect(() => {
+    let idx = 1;
+    const interval = setInterval(() => {
+      setFeedItems(prev => [...prev.slice(-3), liveFeeds[idx % liveFeeds.length]]);
+      idx++;
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
-    <div className="bg-white border border-slate-200/80 rounded-[40px] p-6 md:p-8 shadow-xl shadow-slate-100/50">
-      <div className="flex items-center justify-between border-b border-slate-100 pb-5 mb-6">
-        <div className="flex items-center gap-2">
-          <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">NVIDIA Llama-3.1 Playground</span>
+    <section id="hero" className="relative z-10 pt-32 pb-20 px-6 overflow-hidden">
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+
+          {/* Left: Copy */}
+          <div className="lg:col-span-6 text-left space-y-8">
+            <FadeIn delay={0}>
+              {/* Badge */}
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-[11px] font-bold uppercase tracking-wider">
+                <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+                #1 B2B LinkedIn Lead Generation Platform
+              </div>
+
+              {/* Headline */}
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-white leading-[1.0] tracking-tight mt-6">
+                Turn LinkedIn Into Your{' '}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">
+                  B2B Pipeline
+                </span>{' '}
+                Machine.
+              </h1>
+
+              {/* Subheadline */}
+              <p className="text-lg text-slate-400 leading-relaxed mt-6 max-w-lg">
+                Automate outreach across 10+ LinkedIn accounts. AI-personalized messages, anti-ban safety, unified inbox — everything your sales team needs to book more meetings, faster.
+              </p>
+
+              {/* Trust indicators */}
+              <div className="flex flex-wrap gap-4 mt-4">
+                {['No credit card required', 'Setup in 10 minutes', '98% Account Safety'].map((t, i) => (
+                  <div key={i} className="flex items-center gap-1.5 text-slate-400 text-xs font-medium">
+                    <Check size={14} className="text-emerald-400" />
+                    {t}
+                  </div>
+                ))}
+              </div>
+
+              {/* CTAs */}
+              <div className="flex flex-col sm:flex-row gap-4 mt-8">
+                <Link to="/signup">
+                  <button
+                    id="hero-primary-cta"
+                    className="w-full sm:w-auto group bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-8 py-4 rounded-xl font-bold text-sm uppercase tracking-wider shadow-xl shadow-blue-500/30 transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
+                  >
+                    Start Generating Leads Free
+                    <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                  </button>
+                </Link>
+                <a href="#how-it-works">
+                  <button
+                    id="hero-secondary-cta"
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/15 text-white px-8 py-4 rounded-xl font-bold text-sm uppercase tracking-wider transition-all"
+                  >
+                    <Play size={14} className="text-blue-400 fill-blue-400" />
+                    Watch 2-min Demo
+                  </button>
+                </a>
+              </div>
+            </FadeIn>
+          </div>
+
+          {/* Right: Live Activity Dashboard */}
+          <div className="lg:col-span-6 relative">
+            <FadeIn delay={0.2}>
+              {/* Glow */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/20 to-purple-500/10 blur-[80px] rounded-3xl" />
+
+              <div className="relative bg-[#0D1526]/80 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Live Campaign Dashboard</span>
+                  </div>
+                  <span className="text-[10px] text-slate-500 font-mono">Running: 3 campaigns</span>
+                </div>
+
+                {/* Metrics Grid */}
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  {[
+                    { label: "Connections Sent Today", value: "127", change: "+23%", color: "text-blue-400" },
+                    { label: "Replies Received", value: "41", change: "+31%", color: "text-emerald-400" },
+                    { label: "Hot Leads", value: "12", change: "🔥 Active", color: "text-orange-400" },
+                    { label: "Meetings Booked", value: "4", change: "This week", color: "text-purple-400" },
+                  ].map((m, i) => (
+                    <div key={i} className="bg-white/5 border border-white/8 rounded-2xl p-4">
+                      <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold mb-1">{m.label}</p>
+                      <p className={`text-2xl font-black ${m.color}`}>{m.value}</p>
+                      <p className="text-[10px] text-slate-500 mt-1">{m.change}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Live Feed */}
+                <div className="bg-black/30 rounded-2xl p-4 space-y-2 min-h-[130px]">
+                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-3">⚡ Live Activity Feed</p>
+                  <AnimatePresence mode="popLayout">
+                    {feedItems.slice(-3).map((item, i) => (
+                      <motion.div
+                        key={`${item.text}-${i}`}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                        transition={{ duration: 0.3 }}
+                        className="flex items-start gap-2 text-[11px] text-slate-300 font-medium"
+                      >
+                        <span className="shrink-0">{item.icon}</span>
+                        <span>{item.text}</span>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+
+                {/* Bottom accounts */}
+                <div className="mt-4 pt-4 border-t border-white/8 flex items-center justify-between">
+                  <div className="flex -space-x-2">
+                    {['RK', 'PS', 'VM', 'AS', 'JL'].map((a, i) => (
+                      <div key={i} className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 border-2 border-[#0D1526] flex items-center justify-center text-[8px] font-black text-white">
+                        {a}
+                      </div>
+                    ))}
+                    <div className="w-7 h-7 rounded-full bg-white/10 border-2 border-[#0D1526] flex items-center justify-center text-[8px] font-bold text-slate-400">
+                      +5
+                    </div>
+                  </div>
+                  <span className="text-[10px] text-slate-500 font-semibold">10 accounts running</span>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="text-[10px] text-emerald-400 font-bold">All Safe</span>
+                  </div>
+                </div>
+              </div>
+            </FadeIn>
+          </div>
         </div>
-        <div className="flex gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-slate-200" />
-          <div className="w-3 h-3 rounded-full bg-slate-200" />
-          <div className="w-3 h-3 rounded-full bg-slate-200" />
+
+        {/* Stats Bar */}
+        <FadeIn delay={0.4}>
+          <div className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-px bg-white/8 rounded-2xl overflow-hidden border border-white/8">
+            {stats.map((stat, i) => (
+              <div key={i} className="bg-[#0D1526]/60 backdrop-blur-sm px-8 py-6 text-center">
+                <p className="text-3xl md:text-4xl font-black text-white">
+                  <AnimatedCounter end={stat.value} suffix={stat.suffix} prefix={stat.prefix || ""} />
+                </p>
+                <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mt-1">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+        </FadeIn>
+      </div>
+    </section>
+  );
+}
+
+// ─── SOCIAL PROOF LOGOS ─────────────────────────────────────────────────────
+function SocialProof() {
+  const companies = [
+    "Razorpay", "Freshworks", "Zoho", "Chargebee", "LeadSquared",
+    "BrowserStack", "Unacademy", "Cred", "Clevertap", "Postman",
+    "Razorpay", "Freshworks", "Zoho", "Chargebee", "LeadSquared",
+  ];
+
+  return (
+    <section className="relative z-10 py-16 border-y border-white/8 overflow-hidden">
+      <div className="max-w-7xl mx-auto px-6 mb-10 text-center">
+        <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+          Trusted by 500+ B2B Sales Teams & Agencies
+        </p>
+      </div>
+      <div className="flex overflow-x-hidden">
+        <motion.div
+          animate={{ x: [0, -50 + "%"] }}
+          transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+          className="flex gap-8 whitespace-nowrap"
+        >
+          {companies.concat(companies).map((company, i) => (
+            <div
+              key={i}
+              className="bg-white/5 border border-white/8 px-6 py-3 rounded-xl flex items-center gap-2.5 shrink-0"
+            >
+              <div className="w-2 h-2 rounded-full bg-blue-500" />
+              <span className="text-sm font-bold text-slate-300">{company}</span>
+            </div>
+          ))}
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+// ─── PAIN → SOLUTION ────────────────────────────────────────────────────────
+function PainSolution() {
+  const pains = [
+    {
+      icon: Clock,
+      pain: "Manual LinkedIn outreach eats 40+ hours/month",
+      solution: "Full automation handles prospecting, outreach & follow-ups while you focus on closing.",
+      color: "from-red-500/20 to-orange-500/10",
+      border: "border-red-500/20",
+      solutionColor: "text-emerald-400",
+    },
+    {
+      icon: AlertTriangle,
+      pain: "Automation tools get your accounts banned",
+      solution: "Human-mimicking delays, residential proxies & warmup sequences keep accounts 98% safe.",
+      color: "from-orange-500/20 to-yellow-500/10",
+      border: "border-orange-500/20",
+      solutionColor: "text-emerald-400",
+    },
+    {
+      icon: MessageSquare,
+      pain: "Generic templates get ignored & ghosted",
+      solution: "Claude AI writes hyper-personalized messages based on each prospect's profile in <1 second.",
+      color: "from-yellow-500/20 to-amber-500/10",
+      border: "border-yellow-500/20",
+      solutionColor: "text-emerald-400",
+    },
+  ];
+
+  return (
+    <section id="pain-solution" className="relative z-10 py-24 px-6">
+      <div className="max-w-7xl mx-auto">
+        <FadeIn>
+          <div className="text-center max-w-2xl mx-auto mb-16">
+            <span className="text-[11px] font-black text-blue-400 uppercase tracking-widest">Why LRAT?</span>
+            <h2 className="text-4xl md:text-5xl font-black text-white mt-4 tracking-tight leading-[1.1]">
+              Your LinkedIn outreach is{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-400">broken.</span>
+              <br />We fix it.
+            </h2>
+          </div>
+        </FadeIn>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {pains.map((item, i) => {
+            const Icon = item.icon;
+            return (
+              <FadeIn key={i} delay={i * 0.15}>
+                <div className={`relative bg-gradient-to-br ${item.color} border ${item.border} rounded-3xl p-8 h-full`}>
+                  <div className="bg-red-500/15 w-12 h-12 rounded-2xl flex items-center justify-center mb-6 border border-red-500/20">
+                    <Icon size={20} className="text-red-400" />
+                  </div>
+
+                  {/* Pain */}
+                  <div className="mb-6">
+                    <span className="text-[10px] font-black text-red-400 uppercase tracking-widest block mb-2">❌ The Problem</span>
+                    <p className="text-base font-bold text-white leading-snug">{item.pain}</p>
+                  </div>
+
+                  <div className="h-px bg-white/10 mb-6" />
+
+                  {/* Solution */}
+                  <div>
+                    <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest block mb-2">✅ LRAT Solves This</span>
+                    <p className="text-sm text-slate-300 leading-relaxed font-medium">{item.solution}</p>
+                  </div>
+                </div>
+              </FadeIn>
+            );
+          })}
         </div>
       </div>
+    </section>
+  );
+}
 
-      <div className="space-y-6">
-        {/* Step 1: Select Candidate */}
-        <div>
-          <label className="block text-[11px] font-extrabold text-slate-400 uppercase tracking-wider mb-2.5">
-            1. Select Target Prospect
-          </label>
-          <div className="grid grid-cols-3 gap-2.5">
-            {prospects.map((c, idx) => (
+// ─── FEATURES SHOWCASE ──────────────────────────────────────────────────────
+function Features() {
+  const [activeFeature, setActiveFeature] = useState(0);
+
+  const features = [
+    {
+      id: 'multi-account',
+      icon: Users,
+      label: 'Multi-Account Management',
+      badge: 'Up to 20 accounts',
+      title: 'Run 10-20 LinkedIn accounts from one dashboard.',
+      desc: 'Assign unique residential proxies, isolated browser fingerprints, and warmup schedules to each account. Full duplication guard ensures two senders never contact the same prospect.',
+      points: ['Unique proxy per account', 'Auto warmup schedules', 'Global duplication guard', 'Stealth browser isolation'],
+      visual: <MultiAccountVisual />,
+    },
+    {
+      id: 'ai-outreach',
+      icon: Cpu,
+      label: 'AI-Personalized Outreach',
+      badge: 'Claude AI Powered',
+      title: 'Messages so personal, prospects think you wrote them.',
+      desc: 'LRAT uses Claude AI to analyze each prospect\'s LinkedIn profile — their role, skills, company, and interests — and writes a hyper-targeted connection note in under 1 second.',
+      points: ['Profile scraping & scoring', 'Sub-1s AI generation', 'Custom tone & templates', '3x higher reply rates'],
+      visual: <AIOutreachVisual />,
+    },
+    {
+      id: 'campaigns',
+      icon: Target,
+      label: 'Campaign Automation',
+      badge: 'Full sequence builder',
+      title: 'Set it. Forget it. Watch meetings roll in.',
+      desc: 'Build multi-step campaign sequences: connect → accept → send JD → follow-up day 3 → follow-up day 6. Each step is automated with human-like delays and safety gating.',
+      points: ['Visual sequence builder', 'Smart follow-up triggers', 'Acceptance detection', 'Per-campaign analytics'],
+      visual: <CampaignVisual />,
+    },
+    {
+      id: 'inbox',
+      icon: Inbox,
+      label: 'Unified Inbox',
+      badge: 'All accounts, one view',
+      title: 'Every reply. Every account. One place.',
+      desc: 'Stop juggling Chrome profiles. All replies from all LinkedIn accounts land in one inbox. AI suggests the perfect response. One-click reply across all accounts.',
+      points: ['All accounts unified', 'AI reply suggestions', 'Hot lead detection', 'Instant reply alerts'],
+      visual: <InboxVisual />,
+    },
+    {
+      id: 'safety',
+      icon: Shield,
+      label: 'Anti-Ban Safety System',
+      badge: '98% safety rate',
+      title: 'Built-in protection that LinkedIn can\'t detect.',
+      desc: 'Every action mimics human behavior: 35-second profile views, randomized cooldown timers, daily limits, and warmup ramps. LRAT keeps your accounts safe, always.',
+      points: ['35s profile view gating', '15-28 min cooldowns', 'Daily cap enforcement', 'Warmup ramp schedules'],
+      visual: <SafetyVisual />,
+    },
+    {
+      id: 'analytics',
+      icon: BarChart3,
+      label: 'Analytics & Reporting',
+      badge: 'Full pipeline visibility',
+      title: 'Know exactly what\'s working. At all times.',
+      desc: 'Track connection rates, reply rates, follow-up conversion, and account health in real-time. Export reports for your clients or leadership team in one click.',
+      points: ['Real-time dashboards', 'Per-account metrics', 'Campaign performance', 'Export CSV reports'],
+      visual: <AnalyticsVisual />,
+    },
+  ];
+
+  const active = features[activeFeature];
+
+  return (
+    <section id="features" className="relative z-10 py-24 px-6">
+      <div className="max-w-7xl mx-auto">
+        <FadeIn>
+          <div className="text-center max-w-2xl mx-auto mb-16">
+            <span className="text-[11px] font-black text-blue-400 uppercase tracking-widest">Platform Features</span>
+            <h2 className="text-4xl md:text-5xl font-black text-white mt-4 tracking-tight leading-[1.1]">
+              Everything you need to dominate{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">LinkedIn outreach.</span>
+            </h2>
+          </div>
+        </FadeIn>
+
+        {/* Feature Tabs */}
+        <div className="flex flex-wrap gap-2 justify-center mb-12">
+          {features.map((f, i) => {
+            const Icon = f.icon;
+            return (
               <button
-                key={idx}
-                id={`prospect-sandbox-${idx}`}
-                onClick={() => {
-                  setSelectedProspect(c);
-                  setStep(0);
-                  setOutput("");
-                }}
-                className={`flex flex-col p-3 rounded-2xl border text-left transition-all ${
-                  selectedProspect.name === c.name 
-                    ? 'border-blue-600 bg-blue-50/40 shadow-sm' 
-                    : 'border-slate-200 hover:border-slate-300'
+                key={f.id}
+                id={`feature-tab-${f.id}`}
+                onClick={() => setActiveFeature(i)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider border transition-all ${
+                  activeFeature === i
+                    ? 'bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-500/25'
+                    : 'bg-white/5 border-white/10 text-slate-400 hover:text-white hover:bg-white/8'
                 }`}
               >
-                <span className="text-xs font-bold text-slate-800 truncate">{c.name}</span>
-                <span className="text-[9px] text-slate-500 font-medium truncate mt-0.5">{c.role.split("at")[0]}</span>
+                <Icon size={13} />
+                {f.label}
               </button>
-            ))}
-          </div>
+            );
+          })}
         </div>
 
-        {/* Prospect Info Details Card */}
-        <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 text-left">
-          <div className="flex items-center gap-3 mb-2.5">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-100 to-blue-100 flex items-center justify-center font-bold text-indigo-700 text-xs shadow-sm">
-              {selectedProspect.avatar}
-            </div>
-            <div>
-              <h5 className="text-xs font-bold text-slate-900">{selectedProspect.name}</h5>
-              <p className="text-[10px] text-slate-500">{selectedProspect.role}</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-200/50 text-[10px] font-medium text-slate-600">
-            <div>
-              <span className="block text-[8px] text-slate-400 uppercase font-black tracking-wider">Scraped Skills</span>
-              <span className="truncate block font-semibold text-slate-800">{selectedProspect.skills}</span>
-            </div>
-            <div>
-              <span className="block text-[8px] text-slate-400 uppercase font-black tracking-wider">Interests</span>
-              <span className="truncate block font-semibold text-slate-800">{selectedProspect.interests}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Step 2: Select Template */}
-        <div>
-          <label className="block text-[11px] font-extrabold text-slate-400 uppercase tracking-wider mb-2.5">
-            2. Choose Campaign Sequence
-          </label>
-          <div className="grid grid-cols-2 gap-2.5">
-            {playbooks.map((p, idx) => (
-              <button
-                key={idx}
-                id={`playbook-sandbox-${idx}`}
-                onClick={() => {
-                  setSelectedPlaybook(p);
-                  setStep(0);
-                  setOutput("");
-                }}
-                className={`p-3 rounded-2xl border text-left text-xs font-bold transition-all ${
-                  selectedPlaybook.name === p.name 
-                    ? 'border-blue-600 bg-blue-50/40 shadow-sm' 
-                    : 'border-slate-200 hover:border-slate-300'
-                }`}
-              >
-                <div className="flex items-center gap-1.5 mb-1 text-blue-600">
-                  <Play size={10} className="fill-blue-600" />
-                  <span>{p.name.split(" ")[0]} Flow</span>
-                </div>
-                <span className="text-[10px] text-slate-500 font-medium line-clamp-1">{p.name}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Step 3: Trigger personalization */}
-        <button
-          disabled={generating}
-          onClick={simulatePersonalization}
-          id="sandbox-trigger-btn"
-          className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold uppercase text-[11px] tracking-widest hover:bg-blue-600 transition-colors shadow-lg shadow-slate-900/10 flex items-center justify-center gap-2 active:scale-98"
-        >
-          {generating ? (
-            <RefreshCw size={14} className="animate-spin" />
-          ) : (
-            <Cpu size={14} />
-          )}
-          {generating ? 'Processing NIM Pipelines...' : 'Personalize Connection Note'}
-        </button>
-
-        {/* Animated Terminal Outputs */}
-        <div className="relative">
-          <div className="bg-slate-950 rounded-2xl p-5 text-left text-xs font-mono text-slate-300 min-h-[160px] flex flex-col justify-between shadow-inner">
-            <div className="space-y-2">
-              {step >= 1 && (
-                <div className="flex items-center gap-2 text-emerald-400">
-                  <span>✔</span>
-                  <span>[STEP 1] View Prospect Profile & Scrape Metadata (35s Safe Gating)</span>
-                </div>
-              )}
-              {step >= 2 && (
-                <div className="flex items-center gap-2 text-blue-400">
-                  <RefreshCw size={10} className="animate-spin" />
-                  <span>[STEP 2] Formatting Prompt for Llama-3.1-70B-Instruct...</span>
-                </div>
-              )}
-              {step >= 3 && (
-                <div className="flex items-center gap-2 text-indigo-400">
-                  <span>✔</span>
-                  <span>[STEP 3] Executing NVIDIA NIM Personalization Call (200ms latency)</span>
-                </div>
-              )}
-              {step === 4 && (
-                <div className="pt-3 border-t border-slate-800 text-slate-100">
-                  <p className="text-[10px] font-black text-slate-500 mb-1 uppercase tracking-widest">NIM Generated outreach:</p>
-                  <p className="leading-relaxed text-xs italic bg-white/5 p-3 rounded-xl border border-white/5">"{output}"</p>
-                </div>
-              )}
-            </div>
-
-            {step === 0 && (
-              <div className="flex flex-col items-center justify-center py-8 text-slate-600">
-                <Terminal size={24} className="mb-2 opacity-50" />
-                <p className="text-[10px] text-center font-bold tracking-wider uppercase">Logs will print here...</p>
+        {/* Feature Panel */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeFeature}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+            className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center"
+          >
+            {/* Left: Text */}
+            <div className="lg:col-span-5 space-y-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-black uppercase tracking-wider">
+                <active.icon size={11} />
+                {active.badge}
               </div>
-            )}
-            
-            <div className="flex justify-between items-center text-[9px] text-slate-600 pt-3 border-t border-slate-900 mt-4">
-              <span>MODEL: Llama-3.1 70B</span>
-              <span>PROVIDER: NVIDIA NIM</span>
+
+              <h3 className="text-3xl md:text-4xl font-black text-white leading-tight tracking-tight">
+                {active.title}
+              </h3>
+
+              <p className="text-slate-400 text-sm leading-relaxed font-medium">
+                {active.desc}
+              </p>
+
+              <ul className="space-y-3">
+                {active.points.map((pt, i) => (
+                  <li key={i} className="flex items-center gap-3 text-sm font-semibold text-slate-300">
+                    <div className="w-5 h-5 rounded-full bg-blue-500/15 border border-blue-500/25 flex items-center justify-center shrink-0">
+                      <Check size={11} className="text-blue-400" />
+                    </div>
+                    {pt}
+                  </li>
+                ))}
+              </ul>
+
+              <Link to="/signup">
+                <button className="mt-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider hover:from-blue-500 hover:to-indigo-500 transition-all shadow-lg shadow-blue-500/20 flex items-center gap-2 group">
+                  Try {active.label}
+                  <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                </button>
+              </Link>
+            </div>
+
+            {/* Right: Visual */}
+            <div className="lg:col-span-7 relative">
+              <div className="absolute inset-0 bg-blue-500/5 blur-[80px] rounded-3xl" />
+              <div className="relative bg-[#0D1526]/70 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl min-h-[380px] flex items-center justify-center">
+                {active.visual}
+              </div>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </section>
+  );
+}
+
+// ─── FEATURE VISUALS ────────────────────────────────────────────────────────
+function MultiAccountVisual() {
+  const accounts = [
+    { name: "Rohit Sharma", role: "Sales Dev Rep", proxy: "Mumbai.res.proxy", status: "Active", progress: 65, color: "bg-emerald-500" },
+    { name: "Priya Singh", role: "Director, BD", proxy: "Delhi.res.proxy", status: "Cooldown", progress: 40, color: "bg-blue-500" },
+    { name: "Amit Kumar", role: "Growth Lead", proxy: "Bangalore.res.proxy", status: "Warmup", progress: 20, color: "bg-amber-500" },
+  ];
+  return (
+    <div className="w-full space-y-4">
+      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+        <Network size={12} className="text-blue-400" /> Active Account Cluster
+      </p>
+      {accounts.map((acc, i) => (
+        <div key={i} className="bg-white/5 border border-white/8 rounded-2xl p-4 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className={`w-2.5 h-2.5 rounded-full ${acc.color} ${acc.status === 'Active' ? 'animate-pulse' : ''}`} />
+            <div>
+              <p className="text-xs font-bold text-white">{acc.name}</p>
+              <p className="text-[10px] text-slate-500 font-medium">{acc.proxy}</p>
             </div>
           </div>
+          <div className="flex items-center gap-3">
+            <div className="w-20">
+              <div className="flex justify-between text-[8px] text-slate-500 mb-1 font-bold">
+                <span>DAILY</span><span>{Math.round(acc.progress * 0.25)}/25</span>
+              </div>
+              <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                <div className={`h-full ${acc.color}`} style={{ width: `${acc.progress}%` }} />
+              </div>
+            </div>
+            <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase ${
+              acc.status === 'Active' ? 'bg-emerald-500/15 text-emerald-400' :
+              acc.status === 'Cooldown' ? 'bg-blue-500/15 text-blue-400' :
+              'bg-amber-500/15 text-amber-400'
+            }`}>{acc.status}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function AIOutreachVisual() {
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setStep(s => (s + 1) % 4), 1500);
+    return () => clearInterval(t);
+  }, []);
+  const steps = [
+    { label: "Scraping LinkedIn Profile...", color: "text-blue-400", done: step >= 1 },
+    { label: "Analyzing role & interests...", color: "text-indigo-400", done: step >= 2 },
+    { label: "Claude AI generating message...", color: "text-purple-400", done: step >= 3 },
+    { label: "Personalized note ready ✓", color: "text-emerald-400", done: step >= 3 },
+  ];
+  return (
+    <div className="w-full">
+      <div className="bg-black/40 rounded-2xl p-5 font-mono text-sm mb-4">
+        {steps.map((s, i) => (
+          <div key={i} className={`flex items-center gap-2 py-1.5 text-[11px] transition-all ${i <= step ? s.color : 'text-slate-600'}`}>
+            {i < step ? <Check size={12} /> : i === step ? <RefreshCw size={12} className="animate-spin" /> : <span className="w-3" />}
+            {s.label}
+          </div>
+        ))}
+      </div>
+      {step >= 3 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4"
+        >
+          <p className="text-[9px] font-black text-blue-400 uppercase tracking-wider mb-2">✨ AI Generated Message:</p>
+          <p className="text-xs text-slate-300 italic leading-relaxed">
+            "Hey Arjun! Loved your transition from Flipkart to leading growth at Freshworks. Your focus on enterprise partnerships caught my eye — we've built something that's helped teams like yours 3x their outbound pipeline. Would love to connect?"
+          </p>
+        </motion.div>
+      )}
+    </div>
+  );
+}
+
+function CampaignVisual() {
+  const steps = [
+    { label: "1. Import ICP Leads", icon: Search, color: "blue", time: "Day 0" },
+    { label: "2. Send Connection", icon: Send, color: "indigo", time: "Day 0" },
+    { label: "3. Accept → Send JD", icon: CheckCircle, color: "emerald", time: "On Accept" },
+    { label: "4. Follow-up #1", icon: MessageSquare, color: "purple", time: "Day 3" },
+    { label: "5. Follow-up #2", icon: Megaphone, color: "orange", time: "Day 6" },
+  ];
+  return (
+    <div className="w-full">
+      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-5">Campaign Sequence Flow</p>
+      <div className="relative pl-4 border-l border-white/10 space-y-4">
+        {steps.map((s, i) => {
+          const Icon = s.icon;
+          return (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.1 }}
+              className="flex items-center gap-4 relative"
+            >
+              <div className={`absolute -left-[21px] w-3 h-3 rounded-full bg-${s.color}-500 border-2 border-[#0D1526]`} />
+              <div className={`w-8 h-8 rounded-xl bg-${s.color}-500/15 border border-${s.color}-500/25 flex items-center justify-center`}>
+                <Icon size={14} className={`text-${s.color}-400`} />
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-bold text-white">{s.label}</p>
+              </div>
+              <span className="text-[10px] font-bold text-slate-500 bg-white/5 px-2 py-0.5 rounded-full border border-white/8">{s.time}</span>
+            </motion.div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function InboxVisual() {
+  const convs = [
+    { name: "Arjun M.", msg: "Yes, would love to explore this!", tag: "🔥 Hot", tagColor: "text-orange-400 bg-orange-500/10" },
+    { name: "Priya S.", msg: "What's the pricing structure?", tag: "💬 Warm", tagColor: "text-blue-400 bg-blue-500/10" },
+    { name: "Vikram N.", msg: "Let's schedule a call Friday!", tag: "🔥 Hot", tagColor: "text-orange-400 bg-orange-500/10" },
+  ];
+  const [active, setActive] = useState(0);
+  return (
+    <div className="w-full flex gap-4 h-[300px]">
+      <div className="w-2/5 space-y-2">
+        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-3">Inbox (3 Active)</p>
+        {convs.map((c, i) => (
+          <button key={i} onClick={() => setActive(i)} className={`w-full text-left p-3 rounded-xl border transition-all ${active === i ? 'border-blue-500/40 bg-blue-500/8' : 'border-white/8 hover:bg-white/5'}`}>
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-xs font-bold text-white">{c.name}</p>
+              <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full ${c.tagColor}`}>{c.tag}</span>
+            </div>
+            <p className="text-[10px] text-slate-500 truncate">{c.msg}</p>
+          </button>
+        ))}
+      </div>
+      <div className="flex-1 flex flex-col">
+        <div className="flex-1 bg-white/5 rounded-xl p-3 mb-2">
+          <p className="text-[10px] text-slate-500 mb-2">From: {convs[active].name}</p>
+          <p className="text-xs text-slate-300 italic">"{convs[active].msg}"</p>
+          <div className="mt-3 p-2 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+            <p className="text-[9px] font-black text-purple-400 mb-1">✨ AI Suggestion:</p>
+            <p className="text-[10px] text-slate-400">Share Calendly link + deck</p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <input className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 outline-none" placeholder="Type reply..." />
+          <button className="bg-blue-600 p-2 rounded-lg"><Send size={13} className="text-white" /></button>
         </div>
       </div>
     </div>
   );
 }
 
-// ─── HERO SECTION ──────────────────────────────────────────────────────────
-function Hero() {
-  const [logs, setLogs] = useState([
-    { id: 1, text: "Proxy assigned: 185.190.140.22 (Karnataka, IN)", type: "info" },
-    { id: 2, text: "Profile view gating initialized for SC-Stripe (35s delay)", type: "success" },
-  ]);
-
-  useEffect(() => {
-    const feeds = [
-      "Simulating profile click & scroll on target profile",
-      "Running Fit Score analytics: Prospect Score 94%",
-      "Personalizing Connection invite: Llama-3.1 NIM active",
-      "Invite sent safely! Action cooldown locked: 18 minutes",
-      "Lead Webhook received: Rahul S. accepted connection",
-      "Websocket alert: Replied 'Hot Lead' status captured",
-    ];
-    let i = 0;
-    const interval = setInterval(() => {
-      setLogs(prev => [
-        ...prev.slice(-3),
-        { id: Date.now(), text: feeds[i % feeds.length], type: i % 2 === 0 ? "success" : "info" }
-      ]);
-      i++;
-    }, 2800);
-    return () => clearInterval(interval);
-  }, []);
-
+function SafetyVisual() {
   return (
-    <Section id="playgrounds" className="pt-36 md:pt-44 pb-20">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
-        {/* Left Side: Pitch and Metrics */}
-        <div className="lg:col-span-6 space-y-8 text-left">
-          <FadeIn>
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 border border-blue-200/50 text-blue-600 text-[10px] font-black uppercase tracking-wider">
-              <Sparkles size={12} className="animate-pulse" />
-              Stealth LinkedIn Outreach & Lead Gen Software
-            </div>
-            
-            {/* Primary SEO H1 Tag */}
-            <h1 className="text-4xl md:text-6xl font-extrabold text-slate-900 tracking-tighter leading-[1.05] mt-6">
-              Close Leads 10x Faster Without <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600">
-                LinkedIn Restrictions.
-              </span>
-            </h1>
-            
-            <p className="text-lg text-slate-500 font-medium leading-relaxed mt-6 max-w-xl">
-              Scale 10+ professional accounts safely. Deploy custom visual playbooks with residential proxies, human view gating, and hyper-personalized outreach generated under 200ms using NVIDIA Llama-3.1 NIM.
-            </p>
-
-            {/* Quick Metrics */}
-            <div className="grid grid-cols-3 gap-6 py-6 border-y border-slate-200/60 mt-10 text-left">
-              <div>
-                <span className="block text-3xl font-black text-slate-900 tracking-tight">25 / day</span>
-                <span className="block text-[9px] text-slate-400 font-black uppercase tracking-wider mt-1">Smart Connection Cap</span>
-              </div>
-              <div>
-                <span className="block text-3xl font-black text-blue-600 tracking-tight">98.2%</span>
-                <span className="block text-[9px] text-slate-400 font-black uppercase tracking-wider mt-1">Delivery Success</span>
-              </div>
-              <div>
-                <span className="block text-3xl font-black text-slate-900 tracking-tight">&lt; 1s</span>
-                <span className="block text-[9px] text-slate-400 font-black uppercase tracking-wider mt-1">AI Personalization</span>
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row items-center gap-4 mt-8">
-              <Link to="/dashboard" className="w-full sm:w-auto">
-                <button 
-                  id="hero-primary-cta"
-                  className="w-full bg-blue-600 text-white px-8 py-4.5 rounded-2xl font-bold uppercase text-[11px] tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 group hover:scale-103"
-                >
-                  Start Automating Free
-                  <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-                </button>
-              </Link>
-              <a href="#pricing" className="w-full sm:w-auto">
-                <button 
-                  id="hero-secondary-cta"
-                  className="w-full bg-white border border-slate-200 hover:border-slate-300 text-slate-800 px-8 py-4.5 rounded-2xl font-bold uppercase text-[11px] tracking-widest transition-all flex items-center justify-center gap-2"
-                >
-                  <Shield size={14} className="text-slate-600" />
-                  View Flexible Plans
-                </button>
-              </a>
-            </div>
-          </FadeIn>
+    <div className="w-full space-y-4">
+      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+        <Shield size={12} className="text-emerald-400" /> Safety Score: 98/100 — Stealth Safe
+      </p>
+      {[
+        { label: "35s Profile View Gating", status: "Active", color: "emerald" },
+        { label: "Residential Proxy Isolation", status: "Enabled", color: "emerald" },
+        { label: "Action Cooldown Timers", status: "15-28 min", color: "blue" },
+        { label: "Warmup Schedule Ramp", status: "Week 3/8", color: "indigo" },
+        { label: "Daily Connection Cap", status: "25 max", color: "emerald" },
+        { label: "Global Duplication Guard", status: "Protected", color: "purple" },
+      ].map((s, i) => (
+        <div key={i} className="flex items-center justify-between p-3 bg-white/5 border border-white/8 rounded-xl">
+          <p className="text-xs font-semibold text-slate-300">{s.label}</p>
+          <span className={`text-[9px] font-black px-2 py-0.5 rounded-full bg-${s.color}-500/15 text-${s.color}-400 border border-${s.color}-500/20`}>{s.status}</span>
         </div>
-
-        {/* Right Side: Interactive Sandbox Playground */}
-        <div className="lg:col-span-6 relative">
-          <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/5 to-purple-500/5 blur-[120px] rounded-[50px] -z-10" />
-          <FadeIn delay={0.2}>
-            <InteractiveSandbox />
-          </FadeIn>
-        </div>
-      </div>
-
-      {/* Brand Trust Section */}
-      <div className="mt-20 pt-10 border-t border-slate-200/50 text-center">
-        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-          Integrated seamlessly with your stack
-        </span>
-        <div className="flex flex-wrap justify-center items-center gap-12 mt-6 opacity-40 hover:opacity-60 transition-opacity duration-300">
-          <span className="text-sm font-black tracking-tight text-slate-900">Hubspot CRM</span>
-          <span className="text-sm font-black tracking-tight text-slate-900">Salesforce</span>
-          <span className="text-sm font-black tracking-tight text-slate-900">Clay.run</span>
-          <span className="text-sm font-black tracking-tight text-slate-900">Apollo.io</span>
-          <span className="text-sm font-black tracking-tight text-slate-900">Unipile API</span>
-          <span className="text-sm font-black tracking-tight text-slate-900">NVIDIA NIM AI</span>
-        </div>
-      </div>
-    </Section>
+      ))}
+    </div>
   );
 }
 
-// ─── VISUAL ACCOUNT CLUSTERING ──────────────────────────────────────────────
-function AccountCluster() {
+function AnalyticsVisual() {
+  const bars = [65, 82, 74, 91, 88, 95, 79];
+  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   return (
-    <Section className="py-24 bg-slate-50/50 border-y border-slate-200/60 relative">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-        {/* Left Visual Diagram */}
-        <div className="lg:col-span-7 relative">
-          <div className="absolute inset-0 bg-blue-400/5 blur-[100px] rounded-full" />
-          
-          <div className="bg-white border border-slate-200/80 rounded-[40px] p-8 shadow-xl shadow-slate-100/50 text-left">
-            <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
-              <Network size={14} className="text-blue-500" />
-              Active Account Clustering (Stealth Group)
-            </h4>
-            
-            {/* Senders Grid */}
-            <div className="space-y-4">
-              {[
-                { name: "Sender #1: Rohit Sharma (B2B Sales Development)", status: "Active (Gated)", proxy: "Proxy #1 (mumbai.res.proxy)", color: "bg-emerald-500", progress: 65, num: "16/25" },
-                { name: "Sender #2: Priyanka Sen (Director)", status: "Active (Cooldown)", proxy: "Proxy #2 (delhi.res.proxy)", color: "bg-blue-500", progress: 40, num: "10/25" },
-                { name: "Sender #3: John Doe (Growth Partner)", status: "Warmup (Week 2)", proxy: "Proxy #3 (bangalore.res.proxy)", color: "bg-amber-500", progress: 10, num: "3/15" },
-              ].map((s, idx) => (
-                <div key={idx} className="bg-slate-50/60 border border-slate-100 p-4.5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <div className={`w-2.5 h-2.5 rounded-full ${s.color}`} />
-                      <span className="text-xs font-extrabold text-slate-800">{s.name}</span>
+    <div className="w-full space-y-5">
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          { label: "Connection Rate", value: "68%", trend: "+12%" },
+          { label: "Reply Rate", value: "32%", trend: "+8%" },
+          { label: "Meeting Rate", value: "11%", trend: "+5%" },
+        ].map((m, i) => (
+          <div key={i} className="bg-white/5 border border-white/8 rounded-2xl p-3 text-center">
+            <p className="text-lg font-black text-white">{m.value}</p>
+            <p className="text-[9px] text-slate-500 uppercase tracking-wider">{m.label}</p>
+            <p className="text-[9px] text-emerald-400 font-bold mt-1">{m.trend}</p>
+          </div>
+        ))}
+      </div>
+      <div className="bg-white/5 border border-white/8 rounded-2xl p-4">
+        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-4">Weekly Connections Sent</p>
+        <div className="flex items-end gap-2 h-20">
+          {bars.map((h, i) => (
+            <div key={i} className="flex-1 flex flex-col items-center gap-1">
+              <motion.div
+                initial={{ height: 0 }}
+                animate={{ height: `${h}%` }}
+                transition={{ delay: i * 0.1, duration: 0.5 }}
+                className="w-full bg-gradient-to-t from-blue-600 to-indigo-500 rounded-sm"
+                style={{ height: `${h}%` }}
+              />
+              <span className="text-[8px] text-slate-600 font-medium">{days[i]}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── HOW IT WORKS ────────────────────────────────────────────────────────────
+function HowItWorks() {
+  const steps = [
+    {
+      number: "01",
+      icon: Search,
+      title: "Import Your ICP Leads",
+      desc: "Upload a CSV or paste a LinkedIn search URL. LRAT automatically extracts names, companies, roles and filters duplicates across all your accounts.",
+      time: "< 2 minutes",
+      color: "blue",
+    },
+    {
+      number: "02",
+      icon: Rocket,
+      title: "Launch AI-Powered Campaigns",
+      desc: "Set your campaign sequence. Claude AI personalizes every message. Safety protocols ensure human-like behavior on every action — zero risk of bans.",
+      time: "10 min setup",
+      color: "indigo",
+    },
+    {
+      number: "03",
+      icon: CalendarCheck,
+      title: "Close Deals from Your Inbox",
+      desc: "All replies land in your unified inbox. Hot leads are flagged automatically. AI suggests the perfect follow-up. Book meetings without switching tabs.",
+      time: "Ongoing autopilot",
+      color: "purple",
+    },
+  ];
+
+  return (
+    <section id="how-it-works" className="relative z-10 py-24 px-6">
+      <div className="max-w-7xl mx-auto">
+        <FadeIn>
+          <div className="text-center max-w-2xl mx-auto mb-20">
+            <span className="text-[11px] font-black text-blue-400 uppercase tracking-widest">How LRAT Works</span>
+            <h2 className="text-4xl md:text-5xl font-black text-white mt-4 tracking-tight leading-[1.1]">
+              From zero to booked meetings{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">in 3 simple steps.</span>
+            </h2>
+          </div>
+        </FadeIn>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+          {/* Connector line */}
+          <div className="absolute top-16 left-1/6 right-1/6 h-0.5 bg-gradient-to-r from-blue-600/0 via-blue-600/40 to-purple-600/0 hidden md:block" />
+
+          {steps.map((step, i) => {
+            const Icon = step.icon;
+            return (
+              <FadeIn key={i} delay={i * 0.2}>
+                <div className="relative bg-[#0D1526]/60 border border-white/10 rounded-3xl p-8 hover:border-blue-500/30 transition-all group hover:shadow-xl hover:shadow-blue-500/5 text-left">
+                  {/* Step Number */}
+                  <div className="flex items-center justify-between mb-6">
+                    <span className="text-5xl font-black text-white/8 group-hover:text-white/15 transition-colors leading-none">
+                      {step.number}
+                    </span>
+                    <div className={`w-12 h-12 rounded-2xl bg-${step.color}-500/15 border border-${step.color}-500/25 flex items-center justify-center group-hover:bg-${step.color}-500/25 transition-colors`}>
+                      <Icon size={22} className={`text-${step.color}-400`} />
                     </div>
-                    <span className="text-[10px] text-slate-400 block font-semibold">{s.proxy}</span>
                   </div>
 
-                  <div className="flex items-center gap-4 shrink-0">
-                    <div className="w-24 text-right">
-                      <div className="flex justify-between text-[9px] font-black text-slate-500 mb-1">
-                        <span>LIMITS</span>
-                        <span>{s.num}</span>
-                      </div>
-                      <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
-                        <div className={`h-full ${s.color}`} style={{ width: `${s.progress}%` }} />
-                      </div>
-                    </div>
-                    <span className={`px-2.5 py-1 rounded-full text-[8.5px] font-extrabold uppercase ${
-                      s.status.includes('Active') ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
-                    }`}>
-                      {s.status}
+                  <h3 className="text-xl font-black text-white mb-3 leading-tight">{step.title}</h3>
+                  <p className="text-sm text-slate-400 leading-relaxed font-medium mb-6">{step.desc}</p>
+
+                  <div className="flex items-center gap-2">
+                    <Timer size={12} className="text-blue-400" />
+                    <span className="text-[11px] font-black text-blue-400 uppercase tracking-wider">{step.time}</span>
+                  </div>
+                </div>
+              </FadeIn>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── ROI CALCULATOR ──────────────────────────────────────────────────────────
+function ROICalculator() {
+  const [accounts, setAccounts] = useState(5);
+  const [dailyInvites, setDailyInvites] = useState(15);
+  const [avgDealSize, setAvgDealSize] = useState(5000);
+
+  const monthlyOutreach = accounts * dailyInvites * 20;
+  const connectionRate = 0.35;
+  const replyRate = 0.32;
+  const meetingRate = 0.15;
+
+  const connections = Math.round(monthlyOutreach * connectionRate);
+  const replies = Math.round(monthlyOutreach * replyRate);
+  const meetings = Math.round(monthlyOutreach * meetingRate);
+  const pipeline = meetings * avgDealSize;
+  const hoursSaved = Math.round((monthlyOutreach * 4.5) / 60);
+
+  return (
+    <section id="roi-calculator" className="relative z-10 py-24 px-6">
+      <div className="max-w-7xl mx-auto">
+        <FadeIn>
+          <div className="text-center max-w-2xl mx-auto mb-16">
+            <span className="text-[11px] font-black text-blue-400 uppercase tracking-widest">ROI Calculator</span>
+            <h2 className="text-4xl md:text-5xl font-black text-white mt-4 tracking-tight leading-[1.1]">
+              Calculate your pipeline potential.
+            </h2>
+            <p className="text-slate-400 mt-4 text-sm font-medium">
+              Adjust the sliders to see how LRAT impacts your B2B sales numbers.
+            </p>
+          </div>
+        </FadeIn>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+          {/* Inputs */}
+          <FadeInLeft>
+            <div className="bg-[#0D1526]/70 border border-white/10 rounded-3xl p-8 space-y-8">
+              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Your Outreach Setup</h3>
+
+              {[
+                { label: "LinkedIn Accounts", value: accounts, setter: setAccounts, min: 1, max: 20, suffix: " accounts", id: "roi-accounts" },
+                { label: "Daily Invites per Account", value: dailyInvites, setter: setDailyInvites, min: 5, max: 25, suffix: " invites/day", id: "roi-invites" },
+                { label: "Average Deal Size", value: avgDealSize, setter: setAvgDealSize, min: 1000, max: 50000, step: 1000, suffix: " USD", id: "roi-deal-size" },
+              ].map((slider) => (
+                <div key={slider.id} className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">{slider.label}</label>
+                    <span className="text-sm font-black text-blue-400">
+                      {slider.id === 'roi-deal-size' ? `$${slider.value.toLocaleString()}` : slider.value}{slider.id !== 'roi-deal-size' ? slider.suffix : ''}
                     </span>
+                  </div>
+                  <input
+                    type="range"
+                    id={slider.id}
+                    min={slider.min}
+                    max={slider.max}
+                    step={slider.step || 1}
+                    value={slider.value}
+                    onChange={e => slider.setter(Number(e.target.value))}
+                    className="w-full h-2 bg-white/10 rounded-full appearance-none cursor-pointer accent-blue-500"
+                  />
+                  <div className="flex justify-between text-[9px] text-slate-600 font-bold">
+                    <span>{slider.min}{slider.id === 'roi-deal-size' ? ' USD' : ''}</span>
+                    <span>{slider.max}{slider.id === 'roi-deal-size' ? ' USD' : ''}</span>
                   </div>
                 </div>
               ))}
             </div>
+          </FadeInLeft>
 
-            <div className="mt-6 pt-5 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider flex items-center gap-1.5">
-                <CheckCircle size={12} className="text-emerald-500" />
-                IP Leak Guard & Cookie Rotation Enabled
-              </span>
-              <span className="text-[9px] bg-slate-100 text-slate-700 font-bold px-3 py-1 rounded-full uppercase">
-                Stealth Protocol active
-              </span>
+          {/* Results */}
+          <FadeInRight>
+            <div className="space-y-4">
+              {/* Monthly Outreach */}
+              <div className="bg-gradient-to-br from-blue-600/15 to-indigo-600/10 border border-blue-500/20 rounded-3xl p-6">
+                <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1">Monthly Outreach Volume</p>
+                <p className="text-5xl font-black text-white">{monthlyOutreach.toLocaleString()}</p>
+                <p className="text-slate-400 text-xs mt-1">connection requests per month</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  { label: "Connections Made", value: connections.toLocaleString(), color: "blue" },
+                  { label: "Warm Replies", value: replies.toLocaleString(), color: "indigo" },
+                  { label: "Meetings Booked", value: meetings.toLocaleString(), color: "purple" },
+                  { label: "Hours Saved", value: `${hoursSaved}h`, color: "emerald" },
+                ].map((m, i) => (
+                  <div key={i} className={`bg-${m.color}-500/10 border border-${m.color}-500/20 rounded-2xl p-5`}>
+                    <p className={`text-2xl font-black text-${m.color}-400`}>{m.value}</p>
+                    <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mt-1">{m.label}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Pipeline */}
+              <div className="bg-gradient-to-br from-emerald-600/15 to-green-600/10 border border-emerald-500/25 rounded-3xl p-6">
+                <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-1">💰 Monthly Pipeline Generated</p>
+                <p className="text-4xl font-black text-white">${pipeline.toLocaleString()}</p>
+                <p className="text-slate-400 text-xs mt-1">Based on {meetings} meetings × ${avgDealSize.toLocaleString()} avg deal</p>
+              </div>
             </div>
-          </div>
+          </FadeInRight>
         </div>
+      </div>
+    </section>
+  );
+}
 
-        {/* Right Info pitch */}
-        <div className="lg:col-span-5 text-left space-y-6">
-          <FadeIn>
-            <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">
-              Multi-Account Cluster
-            </span>
-            <h2 className="text-3xl md:text-5xl font-extrabold text-slate-900 tracking-tight leading-[1.1] mt-3">
-              Manage multiple profiles without risk.
+// ─── TESTIMONIALS ────────────────────────────────────────────────────────────
+function Testimonials() {
+  const testimonials = [
+    {
+      name: "Rahul Verma",
+      role: "Head of Sales, Series-B SaaS",
+      company: "TechFlow India",
+      avatar: "RV",
+      quote: "LRAT completely transformed our outbound. We went from 20 manual messages a day to 500+ automated ones across 10 accounts — with a 3x higher reply rate. Closed 8 deals in first month.",
+      metrics: { value: "3x", label: "Reply Rate Increase" },
+      color: "blue",
+    },
+    {
+      name: "Priya Krishnaswamy",
+      role: "Founder, B2B Lead Gen Agency",
+      company: "GrowthLabs",
+      avatar: "PK",
+      quote: "My clients pay ₹2L/month for LinkedIn outreach services. LRAT automates 80% of the work. The anti-ban system is bulletproof — not a single account restricted in 6 months.",
+      metrics: { value: "₹2L", label: "Monthly Client Revenue" },
+      color: "indigo",
+    },
+    {
+      name: "Arjun Malhotra",
+      role: "VP Business Development",
+      company: "Enterprise Ventures",
+      avatar: "AM",
+      quote: "The unified inbox is a game-changer. I manage 15 LinkedIn accounts from one screen. AI reply suggestions save me 2 hours a day. ROI within the first week.",
+      metrics: { value: "15", label: "Accounts Managed" },
+      color: "purple",
+    },
+  ];
+
+  return (
+    <section id="testimonials" className="relative z-10 py-24 px-6">
+      <div className="max-w-7xl mx-auto">
+        <FadeIn>
+          <div className="text-center max-w-2xl mx-auto mb-16">
+            <span className="text-[11px] font-black text-blue-400 uppercase tracking-widest">Customer Stories</span>
+            <h2 className="text-4xl md:text-5xl font-black text-white mt-4 tracking-tight leading-[1.1]">
+              Real results from real{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">B2B teams.</span>
             </h2>
-            <p className="text-slate-500 font-medium text-sm leading-relaxed mt-4">
-              LRAT assigns distinct Residential Proxies, isolated fingerprint configurations, and safety timers to each professional profile. This prevents accounts from linking to each other and shields them from LinkedIn limits.
-            </p>
-            
-            <div className="space-y-4 pt-4">
-              <div className="flex gap-3">
-                <div className="w-5 h-5 rounded-full bg-blue-50 flex items-center justify-center shrink-0 mt-0.5 border border-blue-200">
-                  <Check size={10} className="text-blue-600" />
-                </div>
-                <div>
-                  <h5 className="text-xs font-bold text-slate-800">Warmup schedules automatically enforced</h5>
-                  <p className="text-[11px] text-slate-500 mt-0.5">Slowly scales connection caps week-by-week so accounts don't trigger red flags.</p>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <div className="w-5 h-5 rounded-full bg-blue-50 flex items-center justify-center shrink-0 mt-0.5 border border-blue-200">
-                  <Check size={10} className="text-blue-600" />
-                </div>
-                <div>
-                  <h5 className="text-xs font-bold text-slate-800">Global Duplication Guard</h5>
-                  <p className="text-[11px] text-slate-500 mt-0.5">Two senders will never contact the same prospect, avoiding double outreach embarrassment.</p>
-                </div>
-              </div>
-            </div>
-          </FadeIn>
-        </div>
-      </div>
-    </Section>
-  );
-}
-
-// ─── INTERACTIVE PLAYBOOK BUILDER FLOW SHOWCASE ───────────────────────────
-function VisualPlaybookShowcase() {
-  const [activeNode, setActiveNode] = useState('invite');
-
-  const nodes = [
-    {
-      id: 'import',
-      title: '1. Ingest Leads',
-      subtitle: 'CSV or Search URL',
-      icon: Search,
-      desc: 'Upload prospect spreadsheets or paste raw search URLs. LRAT automatically extracts titles, companies, locations, and LinkedIn member IDs. It filters them against the Duplication Guard database.',
-      technical: 'Native SQLite bulk transaction blocks eliminate table locks and scale speed 100x.'
-    },
-    {
-      id: 'gate',
-      title: '2. Profile Gating',
-      subtitle: '35s Human Mimicry',
-      icon: Shield,
-      desc: 'Before sending any outreach, LRAT initiates a mandatory 35-second profile view. It simulates mouse movements, clicks, and page scrolls to ensure LinkedIn registration filters register standard human actions.',
-      technical: 'Enforced safety gating delays avoid browser-native API triggers.'
-    },
-    {
-      id: 'ai',
-      title: '3. NIM AI scoring',
-      subtitle: 'NVIDIA Llama-3.1 70B',
-      icon: Cpu,
-      desc: 'The backend parses prospect experience data against your campaign\'s offer summary. It assigns a prospect Fit Score (0-100) and writes a hyper-targeted personal icebreaker note.',
-      technical: 'Sub-second server-less generation using NVIDIA NIM Llama endpoints.'
-    },
-    {
-      id: 'invite',
-      title: '4. Dispatch Outreach',
-      subtitle: 'Proxy Cooldown Delays',
-      icon: Send,
-      desc: 'The invite is sent using designated local proxies. An action-locked timer (15-28 mins cooldown) triggers immediately upon a successful outreach, securing the daily limits.',
-      technical: 'Warmup logic starts with 5 connections/day, scaling safely to 25/day.'
-    },
-    {
-      id: 'sync',
-      title: '5. Webhook Reply Sync',
-      subtitle: 'Unified Inbox Console',
-      icon: MessageSquare,
-      desc: 'When a prospect accepts or replies, Unipile webhooks intercept the message. Active campaign sequences automatically pause. Senders view the prospect under "Hot Leads" in the inbox.',
-      technical: 'HMAC-SHA256 signature verification blocks spoofed incoming request payloads.'
-    }
-  ];
-
-  const currentNode = nodes.find(n => n.id === activeNode) || nodes[0];
-
-  return (
-    <Section id="playbooks" className="py-24 bg-white border-b border-slate-200/60 text-left">
-      <div className="max-w-3xl mx-auto text-center space-y-4 mb-16">
-        <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Visual Campaign Engine</span>
-        <h2 className="text-3xl md:text-5xl font-extrabold text-slate-900 tracking-tight">The Automated Outreach Pipeline.</h2>
-        <p className="text-slate-500 font-medium text-sm leading-relaxed">
-          See how LRAT's playbook builder maps out actions in visual flowchart steps, executing outreach cleanly, safely, and dynamically.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-        {/* Left Side: Pipeline Steps map */}
-        <div className="lg:col-span-5 space-y-3">
-          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Campaign Flow Nodes</span>
-          
-          <div className="relative pl-6 border-l-2 border-slate-100 space-y-4">
-            {nodes.map((node) => {
-              const Icon = node.icon;
-              const isSelected = activeNode === node.id;
-              return (
-                <button
-                  key={node.id}
-                  id={`playbook-node-${node.id}`}
-                  onClick={() => setActiveNode(node.id)}
-                  className={`w-full text-left p-4.5 rounded-2xl border transition-all flex items-start gap-4 relative ${
-                    isSelected 
-                      ? 'border-blue-600 bg-blue-50/30 shadow-sm' 
-                      : 'border-slate-200/60 bg-slate-50 hover:bg-slate-100/50'
-                  }`}
-                >
-                  {isSelected && (
-                    <div className="absolute left-[-27px] top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-blue-600 border-4 border-white shadow-sm" />
-                  )}
-                  <div className={`p-2.5 rounded-xl border ${
-                    isSelected ? 'bg-blue-600 border-blue-500 text-white' : 'bg-white border-slate-200 text-slate-500'
-                  }`}>
-                    <Icon size={16} />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">{node.title}</h4>
-                    <span className="text-[10px] text-slate-500 font-medium block mt-0.5">{node.subtitle}</span>
-                  </div>
-                </button>
-              );
-            })}
           </div>
-        </div>
+        </FadeIn>
 
-        {/* Right Side: Visual Flowchart Detailed Cards */}
-        <div className="lg:col-span-7">
-          <div className="bg-slate-950 rounded-[40px] p-8 text-white relative overflow-hidden shadow-2xl">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(37,99,235,0.08),transparent_50%)]" />
-            
-            <div className="relative z-10 space-y-6">
-              <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                <span className="text-[10px] font-black text-blue-400 uppercase tracking-wider">Node Status Inspection</span>
-                <span className="text-[9px] bg-white/10 text-slate-300 px-3 py-1 rounded-full uppercase font-bold">Stealth active</span>
-              </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {testimonials.map((t, i) => (
+            <FadeIn key={i} delay={i * 0.15}>
+              <div className={`bg-[#0D1526]/60 border border-white/10 rounded-3xl p-8 hover:border-${t.color}-500/30 transition-all group h-full flex flex-col justify-between`}>
+                <div>
+                  {/* Stars */}
+                  <div className="flex gap-1 mb-5">
+                    {[...Array(5)].map((_, si) => (
+                      <Star key={si} size={14} className="text-yellow-400 fill-yellow-400" />
+                    ))}
+                  </div>
 
-              <div className="space-y-4">
-                <span className="text-xs font-black text-blue-500 uppercase tracking-widest">Active Step Description</span>
-                <h3 className="text-2xl font-extrabold tracking-tight text-white uppercase">{currentNode.title}</h3>
-                <p className="text-xs font-medium text-slate-400 leading-relaxed">
-                  {currentNode.desc}
-                </p>
-              </div>
-
-              <div className="p-5 bg-white/5 border border-white/5 rounded-2xl space-y-3">
-                <div className="flex items-center gap-2 text-indigo-400 font-bold text-[10px] uppercase tracking-wider">
-                  <Terminal size={14} />
-                  <span>Technical Execution Parameter</span>
+                  {/* Quote */}
+                  <Quote size={24} className={`text-${t.color}-500/40 mb-3`} />
+                  <p className="text-sm text-slate-300 leading-relaxed font-medium italic mb-6">
+                    "{t.quote}"
+                  </p>
                 </div>
-                <p className="text-[11px] font-mono text-slate-300 leading-relaxed">
-                  {currentNode.technical}
-                </p>
-              </div>
 
-              <div className="flex justify-between items-center text-[9px] text-slate-500 pt-4 border-t border-white/10">
-                <span>Playbook Engine v6.0</span>
-                <span>Active Campaign Guard</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Section>
-  );
-}
+                <div>
+                  {/* Metric highlight */}
+                  <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-${t.color}-500/10 border border-${t.color}-500/20 mb-5`}>
+                    <span className={`text-2xl font-black text-${t.color}-400`}>{t.metrics.value}</span>
+                    <span className="text-xs text-slate-400 font-semibold">{t.metrics.label}</span>
+                  </div>
 
-// ─── INTEGRATION MARQUEE ────────────────────────────────────────────────────
-function Ecosystem() {
-  const platforms = [
-    { n: "Clay.run", t: "Ingestion Source" },
-    { n: "Salesforce", t: "CRM sync" },
-    { n: "Hubspot", t: "Deals pipelines" },
-    { n: "Apollo.io", t: "Lead database" },
-    { n: "Instantly.ai", t: "Multi-channel" },
-    { n: "Unipile API", t: "LinkedIn Provider" },
-    { n: "Nvidia NIM", t: "LLM Server" },
-  ];
-  return (
-    <section id="ecosystem" className="py-20 bg-white border-b border-slate-200/50 overflow-hidden relative">
-      <div className="max-w-7xl mx-auto px-6 mb-12 text-center">
-        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">GTM Stack Integrations</span>
-        <h3 className="text-2xl font-extrabold text-slate-900 mt-3 tracking-tight">Syncs seamlessly with your workspace</h3>
-      </div>
-      
-      <div className="relative w-full flex overflow-x-hidden">
-        {/* Marquee Body */}
-        <div className="flex animate-marquee gap-8 whitespace-nowrap">
-          {platforms.concat(platforms).map((p, i) => (
-            <div 
-              key={i} 
-              className="bg-slate-50 border border-slate-200/50 px-6 py-3.5 rounded-2xl flex items-center gap-3 shadow-sm shrink-0"
-            >
-              <div className="w-2.5 h-2.5 rounded-full bg-blue-600" />
-              <span className="text-xs font-extrabold text-slate-900">{p.n}</span>
-              <span className="text-[9px] bg-slate-200/80 text-slate-500 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
-                {p.t}
-              </span>
-            </div>
+                  {/* Author */}
+                  <div className="flex items-center gap-3 pt-5 border-t border-white/8">
+                    <div className={`w-10 h-10 rounded-full bg-gradient-to-br from-${t.color}-500 to-${t.color}-700 flex items-center justify-center text-xs font-black text-white`}>
+                      {t.avatar}
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-white">{t.name}</p>
+                      <p className="text-[10px] text-slate-500 font-medium">{t.role} · {t.company}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </FadeIn>
           ))}
         </div>
       </div>
@@ -733,827 +1116,503 @@ function Ecosystem() {
   );
 }
 
-// ─── STEALTH TIMELINE OUTREACH ──────────────────────────────────────────────
-function StealthTimeline() {
-  const steps = [
+// ─── PRICING ─────────────────────────────────────────────────────────────────
+function Pricing() {
+  const [billing, setBilling] = useState('monthly');
+
+  const plans = [
     {
-      title: "1. Profile Scan & Scrape",
-      desc: "System performs a simulated profile view with click gestures, parsing skills & experiences.",
-      wait: "35 Seconds mandatory delay",
-      icon: Search
+      name: "Starter",
+      price: { monthly: 39, yearly: 31 },
+      desc: "Perfect for solo salespeople & SDRs",
+      accounts: "1 LinkedIn Account",
+      btn: "Start Free Trial",
+      pop: false,
+      features: [
+        "1 Connected LinkedIn Account",
+        "25 Daily Connection Cap",
+        "AI-Personalized Messages (Claude)",
+        "Campaign Sequence Builder",
+        "Basic Analytics Dashboard",
+        "Email Support",
+      ],
     },
     {
-      title: "2. Personalization Scoring",
-      desc: "Nvidia Llama-3.1 grades prospect match (0-100) and drafts hyper-targeted connection messages.",
-      wait: "Sub-second generation",
-      icon: Cpu
+      name: "Professional",
+      price: { monthly: 119, yearly: 95 },
+      desc: "For growing sales teams & agencies",
+      accounts: "3 LinkedIn Accounts",
+      btn: "Start 7-Day Free Trial",
+      pop: true,
+      features: [
+        "3 Connected LinkedIn Accounts",
+        "Warmup Schedules (auto-enforced)",
+        "35s Human Profile View Gating",
+        "Residential Proxy Integration",
+        "Unified Multi-Account Inbox",
+        "Hot Lead Detection & Alerts",
+        "AI Reply Suggestions",
+        "Priority Slack Support",
+      ],
     },
     {
-      title: "3. Safe Invitation Delivery",
-      desc: "Invitation delivered via Unipile proxy. An action-locked timer cooldown starts immediately.",
-      wait: "15 to 28 Minutes wait",
-      icon: Lock
+      name: "Enterprise",
+      price: { monthly: 349, yearly: 279 },
+      desc: "For high-volume agencies & enterprises",
+      accounts: "10+ LinkedIn Accounts",
+      btn: "Book Demo Call",
+      pop: false,
+      features: [
+        "10+ Connected LinkedIn Accounts",
+        "Dedicated Residential Proxy Pool",
+        "Custom AI Prompt Models",
+        "REST API Access & Webhooks",
+        "White-label Ready",
+        "Custom Campaign Automation",
+        "Advanced Analytics & Reports",
+        "24/7 SLA Support",
+      ],
     },
-    {
-      title: "4. Instant Conversion Check",
-      desc: "Webhooks verify acceptances every 5 minutes and follow-up templates are prepared.",
-      wait: "24/7 sync logs",
-      icon: RefreshCw
-    }
   ];
 
   return (
-    <Section id="security" className="py-28 bg-[#fbfcfd]">
-      <div className="text-center max-w-2xl mx-auto space-y-4 mb-20">
-        <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Outreach Life-Cycle</span>
-        <h2 className="text-3xl md:text-5xl font-extrabold text-slate-900 tracking-tight">The Safe Outreach Sequence.</h2>
-        <p className="text-slate-500 font-medium text-sm leading-relaxed">
-          LinkedIn restrictions occur when systems perform fast actions. LRAT uses an advanced pipeline that waits between actions just like a human.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-8 relative">
-        {/* Connection Line */}
-        <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-slate-200/50 hidden md:block -translate-y-12 -z-10" />
-        
-        {steps.map((s, idx) => (
-          <FadeIn key={idx} delay={idx * 0.15}>
-            <div className="bg-white border border-slate-200/60 p-6.5 rounded-3xl text-left relative hover:shadow-lg hover:shadow-slate-100/50 transition-all group shadow-sm">
-              <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center mb-6 group-hover:bg-blue-600 group-hover:text-white transition-colors shadow-sm">
-                <s.icon size={20} className="text-slate-600 group-hover:text-white" />
-              </div>
-              
-              <h4 className="text-xs font-extrabold text-slate-950 mb-2">{s.title}</h4>
-              <p className="text-[11px] text-slate-500 leading-relaxed font-medium mb-4">{s.desc}</p>
-              
-              <span className="inline-block text-[9px] bg-blue-50 text-blue-600 font-extrabold uppercase px-2.5 py-1 rounded-full tracking-wider border border-blue-200/30">
-                {s.wait}
-              </span>
-            </div>
-          </FadeIn>
-        ))}
-      </div>
-    </Section>
-  );
-}
-
-// ─── INTERACTIVE ROI & SAFETY CALCULATOR ────────────────────────────────────
-function InteractiveCalculator() {
-  // ROI Slider state
-  const [accounts, setAccounts] = useState(5);
-  const [dailyInvites, setDailyInvites] = useState(15);
-  
-  // Safety Toggle state
-  const [warmupEnabled, setWarmupEnabled] = useState(true);
-  const [residentialProxy, setResidentialProxy] = useState(true);
-  const [smartGating, setSmartGating] = useState(true);
-  const [aiPersonalized, setAiPersonalized] = useState(true);
-
-  // Calculations
-  const monthlyOutreach = accounts * dailyInvites * 20; // 20 working days in a month
-  const responseRate = 0.32; // 32% response rate with AI personalization
-  const warmReplies = Math.round(monthlyOutreach * responseRate);
-  const hoursSaved = Math.round((monthlyOutreach * 4.5) / 60);
-
-  // Safety Score calculation
-  let safetyScore = 20;
-  if (warmupEnabled) safetyScore += 20;
-  if (residentialProxy) safetyScore += 30;
-  if (smartGating) safetyScore += 15;
-  if (aiPersonalized) safetyScore += 15;
-  if (dailyInvites > 20) safetyScore -= 10;
-  if (!residentialProxy && accounts > 2) safetyScore -= 20;
-  safetyScore = Math.max(10, Math.min(100, safetyScore));
-
-  const getSafetyStatus = (score) => {
-    if (score >= 80) return { text: "STEALTH SAFE (No Ban Risk)", color: "text-emerald-700 bg-emerald-50 border-emerald-200", barColor: "bg-emerald-500" };
-    if (score >= 60) return { text: "MODERATE RISK (Caution)", color: "text-amber-700 bg-amber-50 border-amber-200", barColor: "bg-amber-500" };
-    return { text: "CRITICAL DANGER (Account Ban likely)", color: "text-rose-700 bg-rose-50 border-rose-200", barColor: "bg-rose-500" };
-  };
-
-  const status = getSafetyStatus(safetyScore);
-
-  return (
-    <Section id="roi-calculator" className="py-24 bg-white border-t border-slate-200/60 text-left">
-      <div className="max-w-3xl mx-auto text-center space-y-4 mb-16">
-        <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">ROI & Security Estimator</span>
-        <h2 className="text-3xl md:text-5xl font-extrabold text-slate-900 tracking-tight">Grade Your Outreach Metrics.</h2>
-        <p className="text-slate-500 font-medium text-sm leading-relaxed">
-          Test your outreach goals. Calculate the hours saved, warm replies generated, and check if your setup meets LinkedIn account safety guidelines.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-        {/* Left Side: ROI Sliders */}
-        <div className="lg:col-span-6 bg-slate-50 border border-slate-200/60 rounded-[40px] p-6 md:p-8 flex flex-col justify-between shadow-sm">
-          <div>
-            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">1. Outreach ROI Estimator</h3>
-            
-            <div className="space-y-6">
-              {/* Accounts Slider */}
-              <div className="space-y-2.5">
-                <div className="flex justify-between items-center text-xs font-bold text-slate-700 uppercase">
-                  <span>Connected LinkedIn Profiles</span>
-                  <span className="text-blue-600 text-sm font-black">{accounts} Accounts</span>
-                </div>
-                <input 
-                  type="range" 
-                  min="1" 
-                  max="20" 
-                  value={accounts}
-                  onChange={(e) => setAccounts(parseInt(e.target.value))}
-                  id="slider-accounts"
-                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                />
-              </div>
-
-              {/* Invites Slider */}
-              <div className="space-y-2.5">
-                <div className="flex justify-between items-center text-xs font-bold text-slate-700 uppercase">
-                  <span>Invites per account / day</span>
-                  <span className="text-blue-600 text-sm font-black">{dailyInvites} Connection requests</span>
-                </div>
-                <input 
-                  type="range" 
-                  min="5" 
-                  max="25" 
-                  value={dailyInvites}
-                  onChange={(e) => setDailyInvites(parseInt(e.target.value))}
-                  id="slider-invites"
-                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* ROI Outputs */}
-          <div className="grid grid-cols-3 gap-4 pt-8 border-t border-slate-200/60 mt-8">
-            <div>
-              <span className="block text-2xl font-black text-slate-900">{monthlyOutreach}</span>
-              <span className="block text-[8px] text-slate-400 font-extrabold uppercase mt-1">Invites / Mo</span>
-            </div>
-            <div>
-              <span className="block text-2xl font-black text-blue-600">{warmReplies}</span>
-              <span className="block text-[8px] text-slate-400 font-extrabold uppercase mt-1">Warm Replies / Mo</span>
-            </div>
-            <div>
-              <span className="block text-2xl font-black text-slate-900">{hoursSaved} Hrs</span>
-              <span className="block text-[8px] text-slate-400 font-extrabold uppercase mt-1">Time Saved / Mo</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Side: Safety Switchboard */}
-        <div className="lg:col-span-6 bg-slate-50 border border-slate-200/60 rounded-[40px] p-6 md:p-8 flex flex-col justify-between shadow-sm">
-          <div>
-            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">2. Safety Health Estimator</h3>
-            
-            <div className="space-y-4">
-              {/* Warmup Switch */}
-              <div className="flex justify-between items-center p-3 rounded-2xl bg-white border border-slate-150">
-                <div>
-                  <span className="block text-xs font-extrabold text-slate-800">Enforce Warmup Schedules</span>
-                  <span className="block text-[9px] text-slate-400 font-medium">Auto-scales new profiles slowly</span>
-                </div>
-                <input 
-                  type="checkbox" 
-                  checked={warmupEnabled}
-                  onChange={(e) => setWarmupEnabled(e.target.checked)}
-                  id="checkbox-warmup"
-                  className="w-5 h-5 rounded border-slate-350 text-blue-600 focus:ring-blue-500"
-                />
-              </div>
-
-              {/* Residential Proxy Switch */}
-              <div className="flex justify-between items-center p-3 rounded-2xl bg-white border border-slate-150">
-                <div>
-                  <span className="block text-xs font-extrabold text-slate-800">Isolated Residential Proxies</span>
-                  <span className="block text-[9px] text-slate-400 font-medium">Strictly assigns unique IP per account</span>
-                </div>
-                <input 
-                  type="checkbox" 
-                  checked={residentialProxy}
-                  onChange={(e) => setResidentialProxy(e.target.checked)}
-                  id="checkbox-proxy"
-                  className="w-5 h-5 rounded border-slate-350 text-blue-600 focus:ring-blue-500"
-                />
-              </div>
-
-              {/* Gating Switch */}
-              <div className="flex justify-between items-center p-3 rounded-2xl bg-white border border-slate-150">
-                <div>
-                  <span className="block text-xs font-extrabold text-slate-800">35s Gated Profile Views</span>
-                  <span className="block text-[9px] text-slate-400 font-medium">Enforces mouse click view delay</span>
-                </div>
-                <input 
-                  type="checkbox" 
-                  checked={smartGating}
-                  onChange={(e) => setSmartGating(e.target.checked)}
-                  id="checkbox-gating"
-                  className="w-5 h-5 rounded border-slate-350 text-blue-600 focus:ring-blue-500"
-                />
-              </div>
-
-              {/* AI Switch */}
-              <div className="flex justify-between items-center p-3 rounded-2xl bg-white border border-slate-150">
-                <div>
-                  <span className="block text-xs font-extrabold text-slate-800">NVIDIA NIM AI Personalization</span>
-                  <span className="block text-[9px] text-slate-400 font-medium">Avoids repetitive template warnings</span>
-                </div>
-                <input 
-                  type="checkbox" 
-                  checked={aiPersonalized}
-                  onChange={(e) => setAiPersonalized(e.target.checked)}
-                  id="checkbox-ai"
-                  className="w-5 h-5 rounded border-slate-350 text-blue-600 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Safety Gauge */}
-          <div className="pt-6 border-t border-slate-200/60 mt-6 text-left">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Safety Score</span>
-              <span className="text-slate-900 font-black text-sm">{safetyScore} / 100</span>
-            </div>
-            
-            <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden mb-3">
-              <div className={`h-full ${status.barColor}`} style={{ width: `${safetyScore}%` }} />
-            </div>
-
-            <span className={`block px-3 py-1.5 rounded-xl border text-[9px] font-black uppercase text-center tracking-wider ${status.color}`}>
-              {status.text}
-            </span>
-          </div>
-        </div>
-      </div>
-    </Section>
-  );
-}
-
-// ─── UNIFIED INBOX VISUAL ───────────────────────────────────────────────────
-function UnifiedInboxVisual() {
-  const [messages, setMessages] = useState([
-    { name: "Rahul Saxena", msg: "Hey! Yes, I am actively looking for a new tool. Can we connect tomorrow?", time: "2 min ago", type: "hot" },
-    { name: "Jessica Lim", msg: "Hi, thanks for reaching out. What is the pricing structure?", time: "15 min ago", type: "warm" },
-    { name: "Kunal Shah", msg: "Let's schedule a call this Friday at 4 PM IST to discuss integration.", time: "1 hour ago", type: "hot" },
-  ]);
-
-  const [activeChat, setActiveChat] = useState(messages[0]);
-  const [suggestions, setSuggestions] = useState([
-    "Suggest Calendly link for tomorrow afternoon",
-    "Share pitch deck with pricing model details",
-    "Request work email and contact information"
-  ]);
-
-  return (
-    <Section className="py-24 bg-slate-50/50 border-t border-slate-200/60 relative text-left">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
-        {/* Left Side: Pitch */}
-        <div className="lg:col-span-5 text-left space-y-6">
-          <FadeIn>
-            <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">
-              Unified Outreach Inbox
-            </span>
-            <h2 className="text-3xl md:text-5xl font-extrabold text-slate-900 tracking-tight leading-[1.1] mt-3">
-              One Unified Console. Every Conversation.
+    <section id="pricing" className="relative z-10 py-24 px-6">
+      <div className="max-w-7xl mx-auto">
+        <FadeIn>
+          <div className="text-center max-w-2xl mx-auto mb-16">
+            <span className="text-[11px] font-black text-blue-400 uppercase tracking-widest">Pricing Plans</span>
+            <h2 className="text-4xl md:text-5xl font-black text-white mt-4 tracking-tight leading-[1.1]">
+              Simple pricing.{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">Massive ROI.</span>
             </h2>
-            <p className="text-slate-500 font-medium text-sm leading-relaxed mt-4">
-              Stop switching Chrome profiles or logging in and out. Manage incoming B2B leads from all active campaigns inside one interface. Use AI suggestion prompts to respond within seconds.
+            <p className="text-slate-400 mt-4 text-sm font-medium">
+              Start free. Upgrade when you're ready. Cancel anytime.
             </p>
 
-            <div className="grid grid-cols-2 gap-6 pt-4 text-left">
-              <div className="space-y-1">
-                <span className="text-3xl font-black text-slate-900 tracking-tight">85%</span>
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Faster Response Latency</p>
-              </div>
-              <div className="space-y-1">
-                <span className="text-3xl font-black text-indigo-600 tracking-tight">AI Agent</span>
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Sentiment Analysis</p>
-              </div>
-            </div>
-          </FadeIn>
-        </div>
-
-        {/* Right Side: Mock Inbox Interface */}
-        <div className="lg:col-span-7 relative">
-          <div className="absolute inset-0 bg-blue-600/5 blur-[120px] rounded-full" />
-          
-          <div className="bg-white border border-slate-200/80 rounded-[40px] shadow-xl shadow-slate-100/50 overflow-hidden text-left flex flex-col md:flex-row min-h-[460px]">
-            {/* Conversations list sidebar */}
-            <div className="w-full md:w-5/12 border-r border-slate-150 p-4 space-y-3 bg-slate-50/50">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-200/80 mb-2">
-                <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Inbox (3 Active)</span>
-                <span className="text-[8px] bg-slate-200 text-slate-700 font-extrabold px-2.5 py-0.5 rounded-full uppercase">8 Senders</span>
-              </div>
-
-              {messages.map((m, idx) => (
-                <div 
-                  key={idx}
-                  id={`inbox-chat-preview-${idx}`}
-                  onClick={() => setActiveChat(m)}
-                  className={`p-3 rounded-2xl border text-left cursor-pointer transition-all ${
-                    activeChat.name === m.name 
-                      ? 'border-blue-600 bg-white shadow-sm' 
-                      : 'border-transparent hover:bg-slate-100'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-bold text-slate-800">{m.name}</span>
-                    <span className="text-[8px] text-slate-400 font-semibold">{m.time}</span>
-                  </div>
-                  <p className="text-[10px] text-slate-500 truncate italic">"{m.msg}"</p>
-                  
-                  <div className="mt-2.5 flex items-center justify-between">
-                    <span className={`px-2 py-0.5 rounded-full text-[7.5px] font-extrabold uppercase ${
-                      m.type === 'hot' ? 'bg-rose-100 text-rose-700' : 'bg-blue-100 text-blue-700'
-                    }`}>
-                      {m.type === 'hot' ? '🔥 Hot Lead' : 'Interested'}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Conversation Window */}
-            <div className="w-full md:w-7/12 p-6 flex flex-col justify-between">
-              {/* Chat Header */}
-              <div className="border-b border-slate-100 pb-3 mb-4">
-                <h5 className="text-xs font-extrabold text-slate-900">{activeChat.name}</h5>
-                <span className="text-[9px] text-slate-400 block mt-0.5">LinkedIn Chat Sync: Secured Connection</span>
-              </div>
-
-              {/* Chat message bubbles */}
-              <div className="flex-1 space-y-4 text-xs">
-                <div className="bg-slate-50 p-3.5 rounded-2xl rounded-tl-none text-slate-700 border border-slate-100 max-w-[85%]">
-                  <p className="font-semibold text-[10px] text-slate-400 uppercase tracking-wide mb-1">Prospect:</p>
-                  {activeChat.msg}
-                </div>
-                
-                {/* Simulated AI suggestion box */}
-                <div className="bg-gradient-to-br from-indigo-50 to-blue-50/50 p-4 rounded-2xl border border-indigo-100 mt-4 text-left">
-                  <div className="flex items-center gap-1.5 mb-2.5 text-indigo-700 font-bold text-[9px] uppercase tracking-wider">
-                    <Sparkles size={12} className="animate-bounce" />
-                    <span>Llama-3.1 Suggests Reply:</span>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    {suggestions.map((s, i) => (
-                      <button 
-                        key={i} 
-                        id={`inbox-suggestion-btn-${i}`}
-                        className="w-full text-left bg-white hover:bg-indigo-100/30 border border-slate-200/60 p-2.5 rounded-xl text-[10.5px] font-bold text-slate-700 transition-colors line-clamp-1 block shadow-sm"
-                      >
-                        {s}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Reply message bar */}
-              <div className="pt-4 border-t border-slate-150 flex items-center gap-2 mt-4">
-                <input 
-                  type="text" 
-                  placeholder={`Send reply to ${activeChat.name.split(" ")[0]}...`}
-                  className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-600"
-                />
-                <button className="bg-slate-900 hover:bg-blue-600 text-white p-2.5 rounded-xl transition-colors">
-                  <Send size={14} />
-                </button>
-              </div>
+            {/* Toggle */}
+            <div className="flex items-center justify-center gap-3 mt-8">
+              <button
+                id="pricing-monthly-btn"
+                onClick={() => setBilling('monthly')}
+                className={`px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${billing === 'monthly' ? 'bg-blue-600 text-white' : 'bg-white/5 text-slate-400 hover:text-white'}`}
+              >
+                Monthly
+              </button>
+              <button
+                id="pricing-yearly-btn"
+                onClick={() => setBilling('yearly')}
+                className={`px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${billing === 'yearly' ? 'bg-blue-600 text-white' : 'bg-white/5 text-slate-400 hover:text-white'}`}
+              >
+                Annual
+                <span className="bg-emerald-500 text-white text-[8px] font-black px-2 py-0.5 rounded-full">Save 20%</span>
+              </button>
             </div>
           </div>
-        </div>
-      </div>
-    </Section>
-  );
-}
+        </FadeIn>
 
-// ─── PRICING SECTIONS WITH ANNUAL TOGGLE ───────────────────────────────────
-function Pricing() {
-  const [billingCycle, setBillingCycle] = useState('monthly');
-  const [region, setRegion] = useState('us'); // 'in', 'us'
-
-  const regionalPlans = {
-    us: {
-      currency: '$',
-      plans: [
-        {
-          name: "Starter Playbook",
-          price: 39,
-          accountLabel: "1 LinkedIn Account",
-          sub: "For sales & B2B teams",
-          btn: "Access Console Free",
-          features: [
-            "1 Connected Sender Profile",
-            "25 Daily Connections Cap",
-            "Residential Proxy Setup Support",
-            "Nvidia NIM Llama-3.1 Base AI",
-            "Local SQLite Analytics Sync",
-          ],
-          pop: false,
-        },
-        {
-          name: "Professional Engine",
-          price: 119,
-          accountLabel: "3 LinkedIn Accounts",
-          sub: "For high-growth agencies",
-          btn: "Start 7-Day Free Trial",
-          features: [
-            "3 Connected Sender Profiles",
-            "Warmup schedules week-by-week",
-            "100% Gated Profile Views",
-            "Automatic IP proxy rotation",
-            "Multi-Account Campaign Inbox",
-            "Priority Email & Slack Support",
-          ],
-          pop: true,
-        },
-        {
-          name: "Enterprise Cluster",
-          price: 349,
-          accountLabel: "10 LinkedIn Accounts",
-          sub: "For volume sales agencies",
-          btn: "Schedule Architect Demo",
-          features: [
-            "10 Connected Sender Profiles",
-            "Dedicated residential proxy pool",
-            "Fully managed AI prompt models",
-            "Direct REST API export sync",
-            "Custom Playbook automation builder",
-            "24/7 SLA uptime guarantee",
-          ],
-          pop: false,
-        }
-      ]
-    }
-  };
-
-  const activeRegion = regionalPlans[region] || regionalPlans.us;
-  const currencySymbol = activeRegion.currency;
-
-  const getDisplayPrice = (basePrice) => {
-    if (billingCycle === 'yearly') {
-      const discounted = Math.round(basePrice * 0.8);
-      return `${currencySymbol}${discounted.toLocaleString('en-IN')}`;
-    }
-    return `${currencySymbol}${basePrice.toLocaleString('en-IN')}`;
-  };
-
-  return (
-    <Section id="pricing" className="py-28 bg-white border-t border-slate-200/60 text-left">
-      <div className="text-center space-y-4 mb-16">
-        <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Flexible Scale Plans</span>
-        <h2 className="text-3xl md:text-5xl font-extrabold text-slate-900 tracking-tight">Flexible plans for high-growth teams.</h2>
-        
-        {/* Toggle selectors container */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-6">
-          {/* Monthly/Yearly toggle */}
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={() => setBillingCycle('monthly')}
-              id="pricing-billing-monthly-btn"
-              className={`px-5 py-2.5 rounded-full text-xs font-bold uppercase transition-all ${
-                billingCycle === 'monthly' 
-                  ? 'bg-slate-950 text-white shadow-md' 
-                  : 'bg-slate-100 text-slate-650 hover:bg-slate-200'
-              }`}
-            >
-              Monthly
-            </button>
-            
-            <button 
-              onClick={() => setBillingCycle('yearly')}
-              id="pricing-billing-yearly-btn"
-              className={`px-5 py-2.5 rounded-full text-xs font-bold uppercase transition-all flex items-center gap-1.5 ${
-                billingCycle === 'yearly' 
-                  ? 'bg-slate-950 text-white shadow-md' 
-                  : 'bg-slate-105 text-slate-650 hover:bg-slate-200'
-              }`}
-            >
-              <span>Annually</span>
-              <span className="bg-emerald-500 text-white text-[8px] font-black px-2 py-0.5 rounded-full">
-                Save 20%
-              </span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
-        {activeRegion.plans.map((p, idx) => (
-          <FadeIn key={idx} delay={idx * 0.1}>
-            <div className={`p-1 rounded-[40px] h-full flex flex-col justify-between ${
-              p.pop 
-                ? 'bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 shadow-2xl shadow-blue-500/20 scale-[1.02]' 
-                : 'bg-slate-200/60'
-            }`}>
-              <div className="bg-white rounded-[36px] p-8 md:p-10 flex flex-col justify-between h-full text-left">
-                <div className="space-y-8">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h4 className="text-sm font-extrabold text-blue-600 uppercase tracking-wider">{p.name}</h4>
-                      <p className="text-[10px] text-slate-400 font-extrabold uppercase mt-1 tracking-wider">{p.sub}</p>
-                    </div>
-                    {p.pop && (
-                      <span className="bg-slate-950 text-white text-[8px] font-black px-3.5 py-1.5 rounded-full uppercase tracking-wider">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+          {plans.map((plan, i) => (
+            <FadeIn key={i} delay={i * 0.1}>
+              <div className={`relative rounded-3xl h-full flex flex-col ${plan.pop ? 'p-px bg-gradient-to-b from-blue-500 via-indigo-500 to-purple-600' : ''}`}>
+                <div className={`${plan.pop ? 'bg-[#0A0F1E] rounded-3xl' : 'bg-[#0D1526]/60 border border-white/10 rounded-3xl'} p-8 h-full flex flex-col`}>
+                  {plan.pop && (
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                      <span className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-[9px] font-black px-4 py-1.5 rounded-full uppercase tracking-wider shadow-lg">
                         Most Popular
                       </span>
+                    </div>
+                  )}
+
+                  <div className="mb-6">
+                    <h3 className="text-sm font-black text-blue-400 uppercase tracking-wider">{plan.name}</h3>
+                    <p className="text-[11px] text-slate-500 font-semibold mt-1">{plan.desc}</p>
+                  </div>
+
+                  <div className="mb-6">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-5xl font-black text-white">${billing === 'monthly' ? plan.price.monthly : plan.price.yearly}</span>
+                      <span className="text-slate-400 text-sm font-medium">/mo</span>
+                    </div>
+                    <p className="text-[11px] text-blue-400 font-bold mt-1">{plan.accounts}</p>
+                    {billing === 'yearly' && (
+                      <p className="text-[10px] text-emerald-400 font-bold mt-1">Save ${(plan.price.monthly - plan.price.yearly) * 12}/year</p>
                     )}
                   </div>
 
-                  <div className="flex items-baseline gap-1 flex-wrap">
-                    <span className="text-5xl font-black text-slate-950 tracking-tighter">
-                      {getDisplayPrice(p.price)}
-                    </span>
-                    <span className="text-xs text-slate-400 font-bold">
-                      /month <span className="text-blue-600 font-extrabold ml-1">/ {p.accountLabel}</span>
-                    </span>
-                  </div>
-
-                  <ul className="space-y-4 pt-4 border-t border-slate-100">
-                    {p.features.map((f, fIdx) => (
-                      <li key={fIdx} className="flex items-center gap-3 text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                        <Check size={14} className="text-blue-600 shrink-0" />
-                        <span>{f}</span>
+                  <ul className="space-y-3 flex-1 mb-8">
+                    {plan.features.map((f, fi) => (
+                      <li key={fi} className="flex items-start gap-3 text-xs font-medium text-slate-300">
+                        <Check size={14} className="text-blue-400 shrink-0 mt-0.5" />
+                        {f}
                       </li>
                     ))}
                   </ul>
-                </div>
 
-                <Link to="/dashboard" className="block mt-12">
-                  <button 
-                    id={`pricing-card-btn-${idx}`}
-                    className={`w-full py-4.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                      p.pop 
-                        ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-500/10 hover:scale-103' 
-                        : 'bg-slate-950 text-white hover:bg-slate-800'
-                    }`}
-                  >
-                    {p.btn}
-                  </button>
-                </Link>
+                  <Link to="/signup" className="block">
+                    <button
+                      id={`pricing-btn-${i}`}
+                      className={`w-full py-4 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
+                        plan.pop
+                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg shadow-blue-500/20 hover:scale-105'
+                          : 'bg-white/8 hover:bg-white/12 border border-white/12 text-white hover:border-blue-500/30'
+                      }`}
+                    >
+                      {plan.btn}
+                    </button>
+                  </Link>
+                </div>
               </div>
-            </div>
-          </FadeIn>
-        ))}
+            </FadeIn>
+          ))}
+        </div>
+
+        {/* Money-back guarantee */}
+        <FadeIn delay={0.3}>
+          <div className="mt-10 text-center flex items-center justify-center gap-2 text-slate-400 text-xs font-semibold">
+            <Shield size={14} className="text-emerald-400" />
+            30-day money-back guarantee · No contracts · Cancel anytime
+          </div>
+        </FadeIn>
       </div>
-    </Section>
+    </section>
   );
 }
 
-// ─── FAQ ACCORDIONS ────────────────────────────────────────────────────────
-const faqsList = [
-  {
-    q: "How does LRAT ensure my LinkedIn accounts don't get banned?",
-    a: "LRAT does three main things to ensure safety: 1) Individual residential proxies are assigned so accounts never share IPs. 2) The system forces a 35s profile scan delay (visiting details page, looking at skills) before sending invitations to mimic human actions. 3) Random action cooldowns (15 to 28 mins) are enforced between outreach tasks, keeping connections strictly under 25 per day."
-  },
-  {
-    q: "What API keys are required for setup?",
-    a: "To run LRAT, you need a Unipile API Key & API URL (for LinkedIn message sync and outreach delivery) and an NVIDIA API Key (for sub-second Llama-3.1 prospect fit-scoring and icebreaker drafting). You can input both easily inside the Settings dashboard console."
-  },
-  {
-    q: "Can I use custom templates or only AI personalizations?",
-    a: "You have complete control! You can design custom plain text templates, use tags (like [Name], [Company], [Role]), or enable NVIDIA NIM AI parameters inside the Campaign sequence builder. You can also mix both styles."
-  },
-  {
-    q: "How does the webhook system handle prospect replies?",
-    a: "Whenever a prospect replies on LinkedIn, Unipile pushes a webhook event (`message.received`) to LRAT. The system automatically shifts the prospect status to 'replied', suspends further automated follow-up messages in that campaign, and marks them as a 'Hot Lead' with alerts on your CRM inbox."
-  }
-];
-
+// ─── FAQ ─────────────────────────────────────────────────────────────────────
 function FAQs() {
   const [openIdx, setOpenIdx] = useState(0);
 
-  return (
-    <Section id="faqs" className="py-24 bg-slate-50/50 border-t border-slate-200/60 text-left">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 text-left">
-        {/* Left pitch */}
-        <div className="lg:col-span-5 space-y-4">
-          <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Common Enquiries</span>
-          <h2 className="text-3xl md:text-5xl font-extrabold text-slate-900 tracking-tight leading-[1.1]">
-            Everything you need to know.
-          </h2>
-          <p className="text-slate-500 font-medium text-sm leading-relaxed">
-            Have questions about system proxies, API access, or limits? Here are answers to the most frequently asked questions.
-          </p>
-        </div>
+  const faqs = [
+    {
+      q: "Will my LinkedIn accounts get banned using LRAT?",
+      a: "LRAT is engineered from the ground up with account safety as the #1 priority. Every action uses human-mimicking delays (35-second profile views, 15-28 minute cooldowns between invites), residential proxies per account, warmup schedules for new accounts, and a hard 25 connections/day cap. Our customers report a 98%+ account safety rate over 6+ months of use.",
+    },
+    {
+      q: "How does the AI personalization work?",
+      a: "LRAT uses Claude AI (Anthropic) to analyze each prospect's LinkedIn profile — their current role, previous companies, skills, and interests. It then writes a hyper-targeted connection message tailored to each individual in under 1 second. Messages are so personalized that prospects rarely suspect automation.",
+    },
+    {
+      q: "How many LinkedIn accounts can I manage?",
+      a: "Our Starter plan supports 1 account, Professional supports 3, and Enterprise supports 10+ accounts. Each account gets its own dedicated residential proxy, isolated browser fingerprint, and independent warmup schedule to prevent any cross-account linkage.",
+    },
+    {
+      q: "What integrations does LRAT support?",
+      a: "LRAT integrates with Unipile for LinkedIn message syncing, Claude AI for personalization, and webhooks for real-time reply detection. You can export leads to CSV for CRM import (Salesforce, HubSpot, etc.) and our REST API is available on the Enterprise plan for custom integrations.",
+    },
+    {
+      q: "Do I need technical knowledge to use LRAT?",
+      a: "No coding required. The onboarding wizard walks you through connecting your LinkedIn accounts, setting up your first campaign, and configuring safety settings in under 15 minutes. Our support team is available to help with any setup questions.",
+    },
+    {
+      q: "Is there a free trial?",
+      a: "Yes! You can start with a 7-day free trial on the Professional plan — no credit card required. You'll have full access to all features so you can see real results before committing.",
+    },
+  ];
 
-        {/* Accordions */}
-        <div className="lg:col-span-7 space-y-4">
-          {faqsList.map((faq, idx) => (
-            <div 
-              key={idx} 
-              className="bg-white border border-slate-200/80 rounded-3xl p-5 md:p-6 transition-all"
-            >
-              <button 
-                onClick={() => setOpenIdx(openIdx === idx ? -1 : idx)}
-                id={`faq-accordion-btn-${idx}`}
-                className="w-full flex items-center justify-between text-left font-bold text-slate-900 text-xs md:text-sm uppercase tracking-wider"
-              >
-                <span>{faq.q}</span>
-                <ChevronDown 
-                  size={16} 
-                  className={`text-slate-500 transition-transform ${openIdx === idx ? 'rotate-180' : ''}`} 
-                />
-              </button>
-              
-              <AnimatePresence initial={false}>
-                {openIdx === idx && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0, marginTop: 0 }}
-                    animate={{ height: "auto", opacity: 1, marginTop: 16 }}
-                    exit={{ height: 0, opacity: 0, marginTop: 0 }}
-                    className="overflow-hidden text-xs md:text-sm leading-relaxed text-slate-500 font-medium border-t border-slate-100 pt-4"
-                  >
-                    {faq.a}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          ))}
-        </div>
-      </div>
-    </Section>
-  );
-}
-
-// ─── FINAL CTA ──────────────────────────────────────────────────────────────
-function FinalCTA() {
   return (
-    <Section className="py-24 bg-white">
-      <FadeIn>
-        <div className="bg-slate-900 rounded-[50px] p-12 md:p-24 text-center text-white relative overflow-hidden shadow-2xl">
-          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-[60%] bg-blue-500/20 blur-[130px] rounded-full -z-10" />
-          
-          <div className="relative z-10 space-y-8 max-w-2xl mx-auto">
-            <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Instant Launch</span>
-            <h2 className="text-4xl md:text-6xl font-extrabold tracking-tighter leading-[1.05] uppercase">
-              Ready to automate your B2B outreach pipeline?
-            </h2>
-            <p className="text-sm text-slate-400 leading-relaxed font-semibold uppercase tracking-wider">
-              Start sourcing leads safely in minutes. Zero upfront credit cards required.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-              <Link to="/dashboard" className="w-full sm:w-auto">
-                <button 
-                  id="final-cta-btn"
-                  className="w-full bg-white hover:bg-slate-100 text-slate-900 px-10 py-5 rounded-2xl font-bold uppercase text-[11px] tracking-widest shadow-xl transition-all hover:scale-105 active:scale-95"
-                >
-                  Launch Command Center Free
+    <section id="faqs" className="relative z-10 py-24 px-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
+          <div className="lg:col-span-4">
+            <FadeInLeft>
+              <span className="text-[11px] font-black text-blue-400 uppercase tracking-widest">FAQ</span>
+              <h2 className="text-4xl font-black text-white mt-4 tracking-tight leading-[1.1]">
+                Common questions answered.
+              </h2>
+              <p className="text-slate-400 text-sm mt-4 font-medium leading-relaxed">
+                Have more questions? Reach out to our team and we'll get back to you within 2 hours.
+              </p>
+              <Link to="/signup">
+                <button className="mt-8 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider hover:from-blue-500 hover:to-indigo-500 transition-all shadow-lg shadow-blue-500/20 flex items-center gap-2 group">
+                  Talk to Sales
+                  <PhoneCall size={13} className="group-hover:scale-110 transition-transform" />
                 </button>
               </Link>
-            </div>
+            </FadeInLeft>
+          </div>
+
+          <div className="lg:col-span-8 space-y-3">
+            {faqs.map((faq, i) => (
+              <FadeIn key={i} delay={i * 0.05}>
+                <div className={`border rounded-2xl transition-all ${openIdx === i ? 'border-blue-500/30 bg-blue-500/5' : 'border-white/8 bg-[#0D1526]/40 hover:border-white/15'}`}>
+                  <button
+                    id={`faq-btn-${i}`}
+                    onClick={() => setOpenIdx(openIdx === i ? -1 : i)}
+                    className="w-full flex items-center justify-between px-6 py-5 text-left gap-4"
+                  >
+                    <span className="text-sm font-bold text-white">{faq.q}</span>
+                    <ChevronDown
+                      size={16}
+                      className={`text-blue-400 shrink-0 transition-transform ${openIdx === i ? 'rotate-180' : ''}`}
+                    />
+                  </button>
+                  <AnimatePresence>
+                    {openIdx === i && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="overflow-hidden"
+                      >
+                        <p className="px-6 pb-5 text-sm text-slate-400 leading-relaxed font-medium border-t border-white/8 pt-4">
+                          {faq.a}
+                        </p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </FadeIn>
+            ))}
           </div>
         </div>
-      </FadeIn>
-    </Section>
+      </div>
+    </section>
   );
 }
 
-// ─── FOOTER ─────────────────────────────────────────────────────────────────
+// ─── FINAL CTA ────────────────────────────────────────────────────────────────
+function FinalCTA() {
+  return (
+    <section className="relative z-10 py-24 px-6">
+      <div className="max-w-5xl mx-auto">
+        <FadeIn>
+          <div className="relative bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 rounded-[40px] p-16 md:p-24 text-center overflow-hidden shadow-2xl shadow-blue-500/20">
+            {/* Decoration */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.08),transparent_60%)]" />
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl" />
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full blur-2xl" />
+
+            <div className="relative z-10 space-y-6">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/15 border border-white/20 text-white text-[11px] font-black uppercase tracking-wider">
+                <Rocket size={12} />
+                Start in 10 minutes
+              </div>
+
+              <h2 className="text-4xl md:text-6xl font-black text-white leading-tight tracking-tight">
+                Ready to turn LinkedIn into your{' '}
+                <span className="text-yellow-300">lead machine?</span>
+              </h2>
+
+              <p className="text-white/70 text-lg font-medium max-w-xl mx-auto">
+                Join 500+ B2B teams already generating pipeline on autopilot with LRAT.
+              </p>
+
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+                <Link to="/signup">
+                  <button
+                    id="final-cta-primary-btn"
+                    className="w-full sm:w-auto bg-white hover:bg-slate-100 text-blue-700 px-10 py-4 rounded-xl font-black text-sm uppercase tracking-wider shadow-xl transition-all hover:scale-105 active:scale-95 flex items-center gap-2 group"
+                  >
+                    Start Generating Leads Free
+                    <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                  </button>
+                </Link>
+                <Link to="/login">
+                  <button
+                    id="final-cta-secondary-btn"
+                    className="w-full sm:w-auto bg-white/10 hover:bg-white/20 border border-white/30 text-white px-10 py-4 rounded-xl font-bold text-sm uppercase tracking-wider transition-all"
+                  >
+                    Sign In
+                  </button>
+                </Link>
+              </div>
+
+              <div className="flex items-center justify-center gap-6 pt-2 flex-wrap">
+                {['No credit card', '7-day free trial', '30-day guarantee', 'Cancel anytime'].map((t, i) => (
+                  <div key={i} className="flex items-center gap-1.5 text-white/60 text-xs font-medium">
+                    <Check size={12} className="text-white/80" />
+                    {t}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </FadeIn>
+      </div>
+    </section>
+  );
+}
+
+// ─── FOOTER ──────────────────────────────────────────────────────────────────
 function Footer() {
   return (
-    <footer className="bg-white border-t border-slate-200 py-16 relative z-10 text-left">
-      <div className="max-w-7xl mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-4 gap-12">
-        <div className="md:col-span-2 space-y-6">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-slate-900 rounded-xl flex items-center justify-center shadow-lg shadow-slate-900/10">
-              <Zap size={16} className="text-white fill-white" />
+    <footer className="relative z-10 border-t border-white/8 py-16 px-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+          <div className="md:col-span-2 space-y-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
+                <Zap size={15} className="text-white fill-white" />
+              </div>
+              <span className="text-lg font-black tracking-tight text-white uppercase">LRAT</span>
             </div>
-            <span className="text-lg font-black tracking-tighter text-slate-900 uppercase">LRAT</span>
+            <p className="text-slate-500 text-xs font-medium leading-relaxed max-w-sm">
+              The #1 B2B LinkedIn Lead Generation platform for sales teams and agencies. Automate outreach safely. Close more deals.
+            </p>
+            <div className="flex items-center gap-2 text-[11px] text-emerald-400 font-bold">
+              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              All systems operational
+            </div>
           </div>
-          <p className="text-slate-500 text-xs font-semibold uppercase tracking-wider leading-relaxed max-w-sm">
-            Architecting high-conversion, proxy-gated LinkedIn outreach workflows. Made for professional growth teams.
+
+          <div>
+            <h4 className="text-[10px] font-black text-white uppercase tracking-widest mb-5">Product</h4>
+            <ul className="space-y-3">
+              {['Features', 'How It Works', 'Pricing', 'ROI Calculator', 'Integrations'].map(item => (
+                <li key={item}>
+                  <a href={`#${item.toLowerCase().replace(' ', '-')}`} className="text-[11px] text-slate-500 hover:text-white transition-colors font-medium uppercase tracking-wider">
+                    {item}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="text-[10px] font-black text-white uppercase tracking-widest mb-5">Company</h4>
+            <ul className="space-y-3">
+              {['About', 'Blog', 'Careers', 'Privacy Policy', 'Terms of Service'].map(item => (
+                <li key={item}>
+                  <a href="#" className="text-[11px] text-slate-500 hover:text-white transition-colors font-medium uppercase tracking-wider">
+                    {item}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        <div className="border-t border-white/8 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">
+            © 2026 LRAT · LinkedIn Recruiter Automation Tool · All Rights Reserved
           </p>
-        </div>
-
-        <div>
-          <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest mb-4">Core Engine</h4>
-          <ul className="space-y-3 text-[10px] font-semibold text-slate-500 uppercase tracking-widest">
-            <li><a href="#playgrounds" className="hover:text-blue-600 transition-colors">NIM Playground</a></li>
-            <li><a href="#ecosystem" className="hover:text-blue-600 transition-colors">Integrations</a></li>
-            <li><a href="#pricing" className="hover:text-blue-600 transition-colors">Licensing plans</a></li>
-          </ul>
-        </div>
-
-        <div>
-          <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-widest mb-4">System Security</h4>
-          <ul className="space-y-3 text-[10px] font-semibold text-slate-500 uppercase tracking-widest">
-            <li><a href="#security" className="hover:text-blue-600 transition-colors">Safety Gating</a></li>
-            <li><a href="#" className="hover:text-blue-600 transition-colors">Proxy configuration</a></li>
-            <li><a href="#" className="hover:text-blue-600 transition-colors">Compliance Audit</a></li>
-          </ul>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-6 md:px-12 mt-16 pt-8 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4 text-[10px] font-black text-slate-400 uppercase tracking-wider">
-        <span>© 2026 LRAT AUTOMATION SYSTEMS. ALL RIGHTS RESERVED.</span>
-        <div className="flex gap-6">
-          <a href="#" className="hover:text-slate-800 transition-colors">Privacy Policy</a>
-          <a href="#" className="hover:text-slate-800 transition-colors">Terms of service</a>
+          <div className="flex items-center gap-2 text-[10px] text-slate-600 font-semibold">
+            <Shield size={12} className="text-blue-500" />
+            SOC2 Ready · GDPR Compliant · 98% Uptime SLA
+          </div>
         </div>
       </div>
     </footer>
   );
 }
 
-// ─── MAIN LANDING PAGE COMPONENT ───────────────────────────────────────────
+// ─── INTEGRATION MARQUEE ─────────────────────────────────────────────────────
+function IntegrationMarquee() {
+  const integrations = [
+    { name: "HubSpot CRM", type: "CRM Sync" },
+    { name: "Salesforce", type: "Pipeline" },
+    { name: "Clay.run", type: "Enrichment" },
+    { name: "Apollo.io", type: "Lead DB" },
+    { name: "Unipile API", type: "LinkedIn" },
+    { name: "Claude AI", type: "Personalization" },
+    { name: "Slack", type: "Alerts" },
+    { name: "Zapier", type: "Automation" },
+    { name: "HubSpot CRM", type: "CRM Sync" },
+    { name: "Salesforce", type: "Pipeline" },
+    { name: "Clay.run", type: "Enrichment" },
+    { name: "Apollo.io", type: "Lead DB" },
+  ];
+
+  return (
+    <section className="relative z-10 py-20 border-y border-white/8 overflow-hidden">
+      <div className="max-w-7xl mx-auto px-6 mb-10 text-center">
+        <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Integrates with your existing stack</span>
+      </div>
+      <div className="flex overflow-hidden">
+        <motion.div
+          animate={{ x: [0, '-50%'] }}
+          transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
+          className="flex gap-6 whitespace-nowrap"
+        >
+          {integrations.concat(integrations).map((item, i) => (
+            <div
+              key={i}
+              className="flex items-center gap-2.5 bg-white/5 border border-white/8 px-5 py-3 rounded-xl shrink-0"
+            >
+              <div className="w-2 h-2 rounded-full bg-blue-500" />
+              <span className="text-sm font-bold text-slate-300">{item.name}</span>
+              <span className="text-[9px] bg-white/8 text-slate-500 px-2 py-0.5 rounded-full font-bold uppercase">{item.type}</span>
+            </div>
+          ))}
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+// ─── MAIN LANDING PAGE ────────────────────────────────────────────────────────
 export default function Landing() {
-  useEffect(() => { 
-    window.scrollTo(0, 0); 
-    
-    // 1. Dynamically Inject SEO Titles and Meta Descriptions
-    document.title = "LRAT — Safe LinkedIn Outreach Automation & B2B AI Tool";
-    
+  useEffect(() => {
+    window.scrollTo(0, 0);
+
+    document.title = "LRAT — B2B LinkedIn Lead Generation Platform | Automate Outreach Safely";
+
     let metaDesc = document.querySelector('meta[name="description"]');
     if (!metaDesc) {
       metaDesc = document.createElement('meta');
       metaDesc.name = 'description';
       document.head.appendChild(metaDesc);
     }
-    metaDesc.content = "Automate LinkedIn outreach safely with LRAT. Powered by NVIDIA Llama-3.1 NIM AI personalized messages, smart human-mimicking delays, and residential proxy integration. Start converting prospects on autopilot today.";
+    metaDesc.content = "LRAT is the #1 B2B LinkedIn Lead Generation platform. Automate outreach across 10+ accounts with AI personalization, anti-ban safety, and a unified inbox. Book more meetings, faster.";
 
-    // 2. Inject structured schema markup JSON-LD for rich snippets in Google search results
-    const schemaId = 'lrat-structured-data';
-    let schemaScript = document.getElementById(schemaId);
-    if (!schemaScript) {
-      schemaScript = document.createElement('script');
-      schemaScript.id = schemaId;
-      schemaScript.type = 'application/ld+json';
-      schemaScript.innerHTML = JSON.stringify({
+    const schemaId = 'lrat-b2b-schema';
+    if (!document.getElementById(schemaId)) {
+      const s = document.createElement('script');
+      s.id = schemaId;
+      s.type = 'application/ld+json';
+      s.innerHTML = JSON.stringify({
         "@context": "https://schema.org",
         "@type": "SoftwareApplication",
-        "name": "LRAT",
+        "name": "LRAT - B2B LinkedIn Lead Generation",
         "operatingSystem": "All",
         "applicationCategory": "BusinessApplication",
-        "offers": {
-          "@type": "Offer",
-          "price": "49.00",
-          "priceCurrency": "USD"
-        },
-        "description": "Automate LinkedIn outreach safely with Llama-3.1 AI personalizations, residential proxies, and human-like safety gating delays.",
-        "aggregateRating": {
-          "@type": "AggregateRating",
-          "ratingValue": "4.9",
-          "ratingCount": "124"
-        }
+        "offers": { "@type": "Offer", "price": "39.00", "priceCurrency": "USD" },
+        "description": "Automate LinkedIn outreach across 10+ accounts with AI personalization, anti-ban safety, and unified inbox.",
+        "aggregateRating": { "@type": "AggregateRating", "ratingValue": "4.9", "ratingCount": "342" }
       });
-      document.head.appendChild(schemaScript);
+      document.head.appendChild(s);
     }
 
     return () => {
-      // Clean up the dynamically added script on unmount
-      const existingScript = document.getElementById(schemaId);
-      if (existingScript) {
-        existingScript.remove();
-      }
+      const s = document.getElementById(schemaId);
+      if (s) s.remove();
     };
   }, []);
-  
+
   return (
-    <div className="bg-[#fbfcfd] min-h-screen text-slate-900 font-sans selection:bg-blue-600 selection:text-white antialiased overflow-x-hidden">
-      <AmbientBackground />
+    <div className="min-h-screen text-white font-sans selection:bg-blue-500 selection:text-white antialiased overflow-x-hidden">
+      <DarkBackground />
       <Navigation />
-      
+
       <main>
         <Hero />
-        <AccountCluster />
-        <VisualPlaybookShowcase />
-        <StealthTimeline />
-        <InteractiveCalculator />
-        <UnifiedInboxVisual />
-        <Ecosystem />
+        <SocialProof />
+        <PainSolution />
+        <Features />
+        <HowItWorks />
+        <ROICalculator />
+        <Testimonials />
+        <IntegrationMarquee />
         <Pricing />
         <FAQs />
         <FinalCTA />
       </main>
-      
+
       <Footer />
 
-      {/* Styled inject to use Plus Jakarta Sans & Outfit for premium font scaling */}
+      {/* Google Fonts */}
       <style dangerouslySetInnerHTML={{ __html: `
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@500;700;800;900&display=swap');
-        
-        body { 
-          font-family: 'Plus Jakarta Sans', sans-serif; 
-          scroll-behavior: smooth; 
-        }
-        
-        h1, h2, h3, h4, h5, h6 {
-          font-family: 'Outfit', sans-serif;
-        }
-
-        @keyframes marquee {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-        .animate-marquee { 
-          animation: marquee 30s linear infinite; 
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; background: #080C18; }
+        h1, h2, h3, h4, h5 { font-family: 'Inter', sans-serif; }
+        input[type="range"]::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          width: 18px; height: 18px;
+          border-radius: 50%;
+          background: #3b82f6;
+          cursor: pointer;
+          box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
         }
       `}} />
     </div>
