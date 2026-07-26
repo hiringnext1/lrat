@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Send, Sparkles, CheckCheck, Loader2, Megaphone, Check, FolderClosed, Info, Paperclip, FileText, UserCheck, Flame } from 'lucide-react';
+import { Send, Sparkles, CheckCheck, Loader2, Megaphone, Check, FolderClosed, Info, Calendar, Star, PhoneCall, Ban, Zap } from 'lucide-react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import socket from '../socket';
@@ -9,7 +9,6 @@ function timeStr(dateStr) {
   return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-// Extract first name for variable parsing
 function getFirstName(fullName) {
   if (!fullName) return 'there';
   return fullName.trim().split(' ')[0];
@@ -26,7 +25,7 @@ export default function ChatWindow({ conversation, onMarkedReplied, cannedMessag
   const [searchTermCanned, setSearchTermCanned] = useState('');
   const [draftReply, setDraftReply] = useState('');
   const [draftStatus, setDraftStatus] = useState('none');
-  const [selectedTone, setSelectedTone] = useState('professional');
+  const [leadStatus, setLeadStatus] = useState(conversation?.lead?.status || '');
   const bottomRef = useRef(null);
 
   const lead = conversation?.lead;
@@ -37,6 +36,8 @@ export default function ChatWindow({ conversation, onMarkedReplied, cannedMessag
     setMessages([]);
     setSuggestions([]);
     setLoadingMessages(true);
+    setLeadStatus(conversation.lead?.status || '');
+
     axios.get(`/api/inbox/conversations/${conversation.id}/messages`)
       .then((r) => {
         const msgs = r.data.data || [];
@@ -86,12 +87,20 @@ export default function ChatWindow({ conversation, onMarkedReplied, cannedMessag
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Insert canned template with {{name}} parsed into first name
   function insertCanned(templateContent) {
     const parsedText = templateContent.replace(/\{\{\s*name\s*\}\}/gi, firstName);
     setInput(parsedText);
     setShowCanned(false);
     setSearchTermCanned('');
+  }
+
+  async function updateLeadPipelineStatus(newStatus) {
+    if (!lead?.id) return;
+    setLeadStatus(newStatus);
+    try {
+      await axios.put(`/api/leads/${lead.id}/status`, { status: newStatus });
+      onMarkedReplied?.();
+    } catch (e) { console.error(e); }
   }
 
   async function approveDraft() {
@@ -125,9 +134,7 @@ export default function ChatWindow({ conversation, onMarkedReplied, cannedMessag
       await axios.post(`/api/inbox/leads/${conversation.lead.id}/reject-draft`);
       setDraftReply('');
       setDraftStatus('rejected');
-    } catch (e) {
-      console.error(e);
-    }
+    } catch (e) { console.error(e); }
   }
 
   function editDraft() {
@@ -141,7 +148,6 @@ export default function ChatWindow({ conversation, onMarkedReplied, cannedMessag
     const textToSend = input;
     setInput('');
     
-    // Optimistic UI push
     const optimisticMsg = {
       id: 'opt-' + Date.now(),
       text: textToSend,
@@ -165,7 +171,7 @@ export default function ChatWindow({ conversation, onMarkedReplied, cannedMessag
     }
   }
 
-  async function getAISuggestions(toneOverride = selectedTone) {
+  async function getAISuggestions() {
     if (!conversation?.lead?.id) return;
     const lastFromThem = [...messages].reverse().find((m) => !m.is_from_me);
     if (!lastFromThem) return;
@@ -175,23 +181,19 @@ export default function ChatWindow({ conversation, onMarkedReplied, cannedMessag
         lead_id: conversation.lead.id,
         last_message: lastFromThem.text || '',
         conversation_history: messages.slice(-10),
-        tone: toneOverride
       });
       setSuggestions(res.data.data || []);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoadingSuggestions(false);
-    }
+    } catch (e) { console.error(e); }
+    finally { setLoadingSuggestions(false); }
   }
 
-  async function markReplied() {
-    if (!conversation?.lead?.id) return;
-    await axios.post(`/api/leads/${conversation.lead.id}/mark-replied`);
-    onMarkedReplied?.();
-  }
+  // Quick Smart Response Chips (1-Click Templates)
+  const smartChips = [
+    { label: '📅 Send Calendar', text: `Hi ${firstName}, here is my booking link to pick a convenient slot: https://calendly.com/your-team` },
+    { label: '📄 Send Info Brief', text: `Hi ${firstName}, I've attached our overview details. Let me know if you have any questions!` },
+    { label: '📞 Request Phone', text: `Hi ${firstName}, thanks for connecting! What is the best phone number or email to reach you?` },
+  ];
 
-  // Filter canned responses
   const filteredCanned = (cannedMessages || []).filter(cm => 
     cm.title.toLowerCase().includes(searchTermCanned.toLowerCase()) || 
     cm.content.toLowerCase().includes(searchTermCanned.toLowerCase())
@@ -214,17 +216,16 @@ export default function ChatWindow({ conversation, onMarkedReplied, cannedMessag
   return (
     <div className="flex-1 flex flex-col overflow-hidden relative text-left" style={{ background: '#080C18' }}>
 
-      {/* ─── HEADER PANEL ────────────────────────────────────────────────────── */}
-      <div className="px-6 py-3.5 border-b border-white/8 flex items-center justify-between shrink-0" style={{ background: 'rgba(13,18,33,0.8)', backdropFilter: 'blur(12px)' }}>
+      {/* ─── HEADER PANEL WITH QUICK PIPELINE ACTION PILLS ──────────────────── */}
+      <div className="px-6 py-3 border-b border-white/8 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0" style={{ background: 'rgba(13,18,33,0.9)', backdropFilter: 'blur(12px)' }}>
         <div className="min-w-0">
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             <h3 className="font-black text-white text-sm tracking-tight truncate">
               {lead?.full_name || conversation.attendee_name || 'Prospect'}
             </h3>
             {lead?.campaign_id && (
               <span className="flex items-center gap-1 bg-blue-500/10 border border-blue-500/20 text-blue-400 px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider">
-                <Megaphone size={9} />
-                Campaign Lead
+                <Megaphone size={9} /> Campaign
               </span>
             )}
           </div>
@@ -233,38 +234,60 @@ export default function ChatWindow({ conversation, onMarkedReplied, cannedMessag
           </p>
         </div>
         
-        <div className="flex items-center gap-2 shrink-0">
-          {lead?.reply_received ? (
-            <span className="text-[9px] font-black uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-xl flex items-center gap-1.5">
-              <CheckCheck size={11} strokeWidth={2.5} />
-              Converted Lead
-            </span>
-          ) : (
-            <button 
-              onClick={markReplied} 
-              className="text-[9px] font-black uppercase tracking-wider text-blue-400 border border-blue-500/30 hover:bg-blue-500/10 px-3 py-1.5 rounded-xl transition-all cursor-pointer"
-            >
-              Mark Replied
-            </button>
-          )}
+        {/* 1-Click Pipeline Status Pill Bar */}
+        <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+          <button
+            onClick={() => updateLeadPipelineStatus('replied')}
+            className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider border transition-all flex items-center gap-1 ${
+              leadStatus === 'replied'
+                ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'
+                : 'border-white/8 bg-white/4 text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10'
+            }`}
+            title="Mark as Replied"
+          >
+            <Zap size={10} /> Replied
+          </button>
+
+          <button
+            onClick={() => updateLeadPipelineStatus('shortlisted')}
+            className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider border transition-all flex items-center gap-1 ${
+              leadStatus === 'shortlisted'
+                ? 'bg-purple-500/20 border-purple-500/40 text-purple-400'
+                : 'border-white/8 bg-white/4 text-slate-400 hover:text-purple-400 hover:bg-purple-500/10'
+            }`}
+            title="Shortlist Lead"
+          >
+            <Star size={10} /> Shortlist
+          </button>
+
+          <button
+            onClick={() => updateLeadPipelineStatus('not_interested')}
+            className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider border transition-all flex items-center gap-1 ${
+              leadStatus === 'not_interested'
+                ? 'bg-red-500/20 border-red-500/40 text-red-400'
+                : 'border-white/8 bg-white/4 text-slate-400 hover:text-red-400 hover:bg-red-500/10'
+            }`}
+            title="Exclude Lead"
+          >
+            <Ban size={10} /> Exclude
+          </button>
         </div>
       </div>
 
       {/* ─── MESSAGES TIMELINE STREAM ────────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
-        
         {loadingMessages && (
           <div className="flex flex-col items-center justify-center py-20 gap-2">
             <Loader2 size={18} className="animate-spin text-blue-400" />
-            <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Loading messages...</p>
+            <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Loading timeline...</p>
           </div>
         )}
         
         {!loadingMessages && messages.length === 0 && (
           <div className="text-center py-20 border border-white/6 rounded-2xl p-6 max-w-sm mx-auto" style={{ background: 'rgba(255,255,255,0.02)' }}>
             <Info size={18} className="mx-auto text-slate-600 mb-2" />
-            <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">No Messages Yet</p>
-            <p className="text-[9px] text-slate-600 mt-1 uppercase font-semibold">Messages will display once outreach sequence starts or response arrives</p>
+            <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">No Messages Logged</p>
+            <p className="text-[9px] text-slate-600 mt-1 uppercase font-semibold">Messages show once sequence starts or response arrives</p>
           </div>
         )}
         
@@ -348,58 +371,55 @@ export default function ChatWindow({ conversation, onMarkedReplied, cannedMessag
         )}
       </AnimatePresence>
 
-      {/* ─── AI REPLY SUGGESTIONS BAR ────────────────────────────────────────── */}
-      <AnimatePresence>
-        {suggestions.length > 0 && draftStatus !== 'pending_review' && (
-          <motion.div 
-            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 12 }}
-            className="px-6 py-2.5 border-t border-white/8 flex gap-2 flex-wrap items-center z-10"
-            style={{ background: 'rgba(13,18,33,0.9)' }}
-          >
-            <span className="text-[9px] font-black text-purple-400 uppercase tracking-widest flex items-center gap-1.5 shrink-0">
-              <Sparkles size={11} className="animate-pulse" /> AI Replies:
-            </span>
-            
-            {suggestions.map((s) => {
-              // Parse {{name}} in suggestion text
-              const parsedText = s.text.replace(/\{\{\s*name\s*\}\}/gi, firstName);
-              return (
-                <button 
-                  key={s.type} 
-                  onClick={() => { setInput(parsedText); setSuggestions([]); }}
-                  className="text-[9px] font-black uppercase tracking-wider bg-purple-500/10 text-purple-400 border border-purple-500/20 px-3 py-1.5 rounded-xl hover:bg-purple-500/20 transition-all cursor-pointer"
-                >
-                  {s.type.replace(/_/g, ' ')}
-                </button>
-              );
-            })}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* ─── AI INTENT CHIPS & SUGGESTIONS BAR ───────────────────────────── */}
+      <div className="px-6 py-2 border-t border-white/8 flex gap-2 flex-wrap items-center z-10" style={{ background: '#0D1221' }}>
+        <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-1 shrink-0">
+          <Zap size={10} /> Quick Actions:
+        </span>
 
-      {/* ─── INPUT PANEL & TOOLBARS ──────────────────────────────────────────── */}
+        {smartChips.map(chip => (
+          <button
+            key={chip.label}
+            onClick={() => setInput(chip.text)}
+            className="text-[9px] font-black uppercase tracking-wider bg-white/5 hover:bg-white/10 text-slate-300 border border-white/8 px-2.5 py-1 rounded-lg transition-all cursor-pointer"
+          >
+            {chip.label}
+          </button>
+        ))}
+
+        {suggestions.map((s) => {
+          const parsedText = s.text.replace(/\{\{\s*name\s*\}\}/gi, firstName);
+          return (
+            <button 
+              key={s.type} 
+              onClick={() => { setInput(parsedText); setSuggestions([]); }}
+              className="text-[9px] font-black uppercase tracking-wider bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2.5 py-1 rounded-lg hover:bg-purple-500/20 transition-all cursor-pointer"
+            >
+              {s.type.replace(/_/g, ' ')}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ─── INPUT PANEL ──────────────────────────────────────────── */}
       <div className="px-6 py-3.5 border-t border-white/8 shrink-0" style={{ background: '#0D1221' }}>
         <div className="flex items-end gap-3">
-          
           <div className="flex-1 relative">
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
+              onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey || !e.shiftKey)) { e.preventDefault(); send(); } }}
               placeholder="Type message... (Enter to send, Shift+Enter for newline)"
               rows={2}
               className="w-full text-xs font-medium leading-relaxed border border-white/8 rounded-2xl pl-4 pr-20 py-2.5 bg-white/5 focus:outline-none focus:border-blue-500/50 text-white placeholder-slate-600 transition-all resize-none"
             />
             
-            {/* Action icons in input */}
             <div className="absolute bottom-2.5 right-3 flex items-center gap-1">
-              
-              {/* Canned Templates Dropdown */}
               <div className="relative">
                 <button 
                   onClick={() => setShowCanned(!showCanned)}
                   className="p-1.5 text-slate-500 hover:text-slate-300 rounded-lg hover:bg-white/8 transition-colors"
-                  title="Canned templates (auto-parses {{name}})"
+                  title="Canned templates"
                 >
                   <FolderClosed size={14} />
                 </button>
@@ -441,7 +461,6 @@ export default function ChatWindow({ conversation, onMarkedReplied, cannedMessag
                 </AnimatePresence>
               </div>
 
-              {/* AI reply suggestion trigger */}
               <button 
                 onClick={() => getAISuggestions()} 
                 disabled={loadingSuggestions}
@@ -453,7 +472,6 @@ export default function ChatWindow({ conversation, onMarkedReplied, cannedMessag
             </div>
           </div>
 
-          {/* Send Button */}
           <button 
             onClick={send} 
             disabled={sending || !input.trim()}

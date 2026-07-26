@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { Search, Megaphone, Users, Sparkles, Inbox, CheckCircle2, Flame, RefreshCw } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Search, Megaphone, Users, Sparkles, Inbox, Flame, Pin, PinOff } from 'lucide-react';
 
 function initials(name) {
   return (name || '?').split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
@@ -16,13 +15,12 @@ function timeAgo(dateStr) {
   return `${Math.floor(mins / 1440)}d ago`;
 }
 
-export default function ConversationList({ conversations, activeId, onSelect, accounts, campaigns, sortBy, onSortChange }) {
+export default function ConversationList({ conversations, activeId, onSelect, accounts, campaigns, sortBy, onSortChange, pinnedIds = [], onTogglePin }) {
   const [search, setSearch] = useState('');
   const [tab, setTab] = useState('all');
   const [filterAccount, setFilterAccount] = useState('');
   const [filterCampaign, setFilterCampaign] = useState('');
 
-  // Calculate counts for each tab
   const allCount = conversations.length;
   const unreadCount = conversations.filter(c => !c.lead?.is_read && c.last_message_from !== 'me').length;
   const repliedCount = conversations.filter(c => c.lead?.reply_received).length;
@@ -41,6 +39,15 @@ export default function ConversationList({ conversations, activeId, onSelect, ac
     if (filterAccount && String(conv.account_id) !== String(filterAccount)) return false;
     if (filterCampaign && lead && String(lead.campaign_id) !== String(filterCampaign)) return false;
     return true;
+  });
+
+  // Sort pinned items to the very top
+  const sortedFiltered = [...filtered].sort((a, b) => {
+    const isAPinned = pinnedIds.includes(a.id);
+    const isBPinned = pinnedIds.includes(b.id);
+    if (isAPinned && !isBPinned) return -1;
+    if (!isAPinned && isBPinned) return 1;
+    return 0;
   });
 
   return (
@@ -126,7 +133,6 @@ export default function ConversationList({ conversations, activeId, onSelect, ac
 
         {/* Dropdown Filters Row */}
         <div className="grid grid-cols-2 gap-2">
-          {/* Account Filter */}
           <div className="bg-white/5 px-2.5 py-1.5 rounded-xl border border-white/8 flex items-center gap-1">
             <Users size={11} className="text-slate-500 shrink-0" />
             <select 
@@ -142,7 +148,6 @@ export default function ConversationList({ conversations, activeId, onSelect, ac
             </select>
           </div>
 
-          {/* Campaign Filter */}
           <div className="bg-white/5 px-2.5 py-1.5 rounded-xl border border-white/8 flex items-center gap-1">
             <Megaphone size={11} className="text-slate-500 shrink-0" />
             <select 
@@ -162,14 +167,14 @@ export default function ConversationList({ conversations, activeId, onSelect, ac
 
       {/* ─── CHAT STREAM CONTAINER ───────────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto divide-y divide-white/4">
-        {filtered.length === 0 ? (
+        {sortedFiltered.length === 0 ? (
           <div className="p-8 text-center flex flex-col items-center justify-center h-48">
             <Users className="text-slate-600 mb-2" size={24} />
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">No Conversations Found</p>
             <p className="text-[9px] text-slate-600 mt-1 uppercase">Try adjusting your filters</p>
           </div>
         ) : (
-          filtered.map((conv) => {
+          sortedFiltered.map((conv) => {
             const lead = conv.lead;
             const name = lead?.full_name || conv.attendee_name || 'LinkedIn Prospect';
             const preview = (conv.last_message_text || '').slice(0, 40);
@@ -177,12 +182,13 @@ export default function ConversationList({ conversations, activeId, onSelect, ac
             const isActive = conv.id === activeId;
             const isUnread = !lead?.is_read && conv.last_message_from !== 'me';
             const isAccountActive = accounts.find(a => String(a.id) === String(conv.account_id))?.status === 'active';
+            const isPinned = pinnedIds.includes(conv.id);
 
             return (
-              <button
+              <div
                 key={conv.id}
                 onClick={() => onSelect(conv)}
-                className={`w-full text-left px-4 py-3.5 transition-all flex items-start gap-3 relative outline-none cursor-pointer border-l-2 ${
+                className={`w-full text-left px-4 py-3.5 transition-all flex items-start gap-3 relative outline-none cursor-pointer border-l-2 group ${
                   isActive 
                     ? 'bg-blue-600/10 border-l-blue-500' 
                     : 'hover:bg-white/4 border-l-transparent'
@@ -201,12 +207,24 @@ export default function ConversationList({ conversations, activeId, onSelect, ac
                 {/* Text Details */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-1">
-                    <p className={`text-[11px] truncate ${isUnread ? 'font-black text-white' : 'font-extrabold text-slate-300'}`}>
-                      {name}
-                    </p>
-                    <span className="text-[8px] text-slate-500 font-bold shrink-0 uppercase">
-                      {timeAgo(time)}
-                    </span>
+                    <div className="flex items-center gap-1.5 truncate">
+                      {isPinned && <Pin size={10} className="text-amber-400 fill-amber-400 shrink-0" />}
+                      <p className={`text-[11px] truncate ${isUnread ? 'font-black text-white' : 'font-extrabold text-slate-300'}`}>
+                        {name}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <span className="text-[8px] text-slate-500 font-bold uppercase">
+                        {timeAgo(time)}
+                      </span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onTogglePin?.(conv.id); }}
+                        className="p-1 text-slate-600 hover:text-amber-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                        title={isPinned ? 'Unpin' : 'Pin to top'}
+                      >
+                        {isPinned ? <PinOff size={10} /> : <Pin size={10} />}
+                      </button>
+                    </div>
                   </div>
 
                   <p className="text-[9px] font-semibold text-slate-500 truncate mt-0.5">
@@ -249,7 +267,7 @@ export default function ConversationList({ conversations, activeId, onSelect, ac
                     </div>
                   )}
                 </div>
-              </button>
+              </div>
             );
           })
         )}
