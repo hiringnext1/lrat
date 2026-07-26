@@ -96,9 +96,11 @@ router.post('/signup', validate(signupSchema), async (req, res) => {
     // Auto-verify admin email (bypass email for admin@lrat.com / admin@growleadz.co)
     const isAdminEmail = email === 'admin@lrat.com' || email === 'admin@growleadz.co';
 
+    const trialEndsAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
     // Insert user
     db.prepare(
-      'INSERT INTO users (email, password_hash, name, company_name, company_website, designation, is_verified, verification_code, verification_expires_at, role, trial_ends_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now", "+30 days"))'
+      'INSERT INTO users (email, password_hash, name, company_name, company_website, designation, is_verified, verification_code, verification_expires_at, role, trial_ends_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     ).run(
       email,
       passwordHash,
@@ -109,7 +111,8 @@ router.post('/signup', validate(signupSchema), async (req, res) => {
       isAdminEmail ? 1 : 0,
       verificationCode,
       verificationExpiresAt,
-      isAdminEmail ? 'admin' : 'user'
+      isAdminEmail ? 'admin' : 'user',
+      trialEndsAt
     );
 
     if (isAdminEmail) {
