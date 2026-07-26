@@ -1,5 +1,9 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Megaphone, UserCheck, Inbox, ShieldCheck, Moon, Sun, Settings, FileText, LogOut, CreditCard, TrendingUp, Ban } from 'lucide-react';
+import {
+  LayoutDashboard, Users, Megaphone, UserCheck, Inbox,
+  ShieldCheck, Settings, FileText, LogOut, CreditCard,
+  Ban, Zap, TrendingUp, ChevronRight
+} from 'lucide-react';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import socket from '../socket';
@@ -7,26 +11,21 @@ import SourcingTracker from './SourcingTracker';
 
 export default function Sidebar() {
   const navigate = useNavigate();
-  const [dark, setDark] = useState(() => localStorage.getItem('theme') === 'dark');
   const [unreadCount, setUnreadCount] = useState(0);
   const [connected, setConnected] = useState(socket.connected);
 
   let user = {};
   try {
     const raw = localStorage.getItem('lrat_user');
-    if (raw && raw !== 'undefined') {
-      user = JSON.parse(raw);
-    }
-  } catch (e) {
-    console.error('Failed to parse user in Sidebar:', e);
-  }
+    if (raw && raw !== 'undefined') user = JSON.parse(raw);
+  } catch (e) {}
 
   const navItems = [
     { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', exact: true },
     { to: '/dashboard/accounts', icon: Users, label: 'Accounts' },
     { to: '/dashboard/campaigns', icon: Megaphone, label: 'Campaigns' },
     { to: '/dashboard/leads', icon: UserCheck, label: 'Leads' },
-    { to: '/dashboard/inbox', icon: Inbox, label: 'Inbox' },
+    { to: '/dashboard/inbox', icon: Inbox, label: 'Inbox', badge: true },
     { to: '/dashboard/templates', icon: FileText, label: 'Templates' },
     { to: '/dashboard/blacklist', icon: Ban, label: 'Blacklist' },
     { to: '/dashboard/safety', icon: ShieldCheck, label: 'Safety' },
@@ -34,7 +33,7 @@ export default function Sidebar() {
     { to: '/dashboard/billing', icon: CreditCard, label: 'Billing' },
   ];
 
-  if (user && user.role === 'admin') {
+  if (user?.role === 'admin') {
     navItems.push({ to: '/dashboard/admin', icon: ShieldCheck, label: 'Admin Panel' });
   }
 
@@ -47,34 +46,19 @@ export default function Sidebar() {
   async function fetchUnreadCount() {
     try {
       const res = await axios.get('/api/inbox/unread-count');
-      if (res.data?.success) {
-        setUnreadCount(res.data.count);
-      }
-    } catch (e) {
-      console.error('Failed to fetch unread count:', e);
-    }
+      if (res.data?.success) setUnreadCount(res.data.count);
+    } catch (e) {}
   }
 
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', dark);
-    localStorage.setItem('theme', dark ? 'dark' : 'light');
-  }, [dark]);
-
-  useEffect(() => {
     fetchUnreadCount();
-
     window.addEventListener('inbox_updated', fetchUnreadCount);
-
     const onConnect = () => setConnected(true);
     const onDisconnect = () => setConnected(false);
-    const onReply = () => {
-      fetchUnreadCount();
-    };
-
+    const onReply = () => fetchUnreadCount();
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
     socket.on('new_reply', onReply);
-
     return () => {
       window.removeEventListener('inbox_updated', fetchUnreadCount);
       socket.off('connect', onConnect);
@@ -83,76 +67,94 @@ export default function Sidebar() {
     };
   }, []);
 
+  const userInitials = user?.name
+    ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+    : 'U';
+
   return (
-    <aside className="w-56 flex-shrink-0 bg-gray-900 dark:bg-gray-950 flex flex-col h-screen sticky top-0 text-left">
-      <div className="px-4 py-5 border-b border-gray-800">
+    <aside className="w-[220px] flex-shrink-0 flex flex-col h-screen sticky top-0 text-left overflow-hidden" style={{ background: '#0D1221', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
+
+      {/* Logo */}
+      <div className="px-5 py-5 border-b border-white/6">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
-            <span className="text-white font-bold text-xs">LR</span>
+          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/25 shrink-0">
+            <Zap size={15} className="text-white fill-white" />
           </div>
           <div>
-            <span className="text-white font-bold text-sm tracking-wide">LRAT</span>
+            <span className="text-sm font-black text-white tracking-tight uppercase">LRAT</span>
             <div className="flex items-center gap-1.5 mt-0.5">
-              <span className={`w-1.5 h-1.5 rounded-full ${connected ? 'bg-green-400 animate-pulse' : 'bg-gray-500'}`} />
-              <span className="text-xs text-gray-500">{connected ? 'Live' : 'Offline'}</span>
+              <span className={`w-1.5 h-1.5 rounded-full ${connected ? 'bg-emerald-400 animate-pulse' : 'bg-slate-600'}`} />
+              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{connected ? 'Live' : 'Offline'}</span>
             </div>
           </div>
         </div>
       </div>
 
-      <nav className="flex-1 px-3 py-4 space-y-1">
-        {navItems.map(({ to, icon: Icon, label, exact }) => (
+      {/* Nav Section Label */}
+      <div className="px-5 pt-5 pb-2">
+        <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Navigation</span>
+      </div>
+
+      {/* Nav Items */}
+      <nav className="flex-1 px-3 space-y-0.5 overflow-y-auto scrollbar-hide">
+        {navItems.map(({ to, icon: Icon, label, exact, badge }) => (
           <NavLink
             key={to}
             to={to}
             end={exact}
+            onClick={() => label === 'Inbox' && setUnreadCount(0)}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors relative ${
+              `flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all relative group ${
                 isActive
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                  ? 'bg-blue-600/20 text-blue-400 border border-blue-500/25'
+                  : 'text-slate-500 hover:text-slate-200 hover:bg-white/5'
               }`
             }
-            onClick={() => label === 'Inbox' && setUnreadCount(0)}
           >
-            <Icon size={17} />
-            <span>{label}</span>
-            {label === 'Inbox' && unreadCount > 0 && (
-              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 min-w-[18px] h-[18px] bg-red-500 text-white text-xs rounded-full flex items-center justify-center px-1">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
+            {({ isActive }) => (
+              <>
+                <Icon size={15} className={isActive ? 'text-blue-400' : 'text-slate-500 group-hover:text-slate-300'} />
+                <span className="flex-1">{label}</span>
+                {badge && unreadCount > 0 && (
+                  <span className="min-w-[18px] h-[18px] bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center px-1">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+                {isActive && (
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-blue-500 rounded-full" />
+                )}
+              </>
             )}
           </NavLink>
         ))}
       </nav>
 
-      {/* Persistent Sourcing Progress Tracker */}
+      {/* Sourcing Tracker */}
       <SourcingTracker />
 
-      {/* User profile & Logout */}
-      <div className="px-3 py-4 border-t border-gray-800">
-        <div className="flex items-center justify-between gap-2 px-1 mb-3">
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-bold text-gray-200 truncate">{user.name || 'User Account'}</p>
-            <p className="text-[10px] text-gray-500 truncate">{user.email || ''}</p>
+      {/* User + Logout */}
+      <div className="px-3 py-4 border-t border-white/6">
+        <div className="flex items-center gap-3 p-3 rounded-xl bg-white/3 border border-white/6 hover:bg-white/6 transition-colors group">
+          {/* Avatar */}
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-[10px] font-black text-white shrink-0">
+            {userInitials}
           </div>
+          {/* Info */}
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-bold text-slate-200 truncate">{user?.name || 'User'}</p>
+            <p className="text-[9px] text-slate-600 truncate font-medium">{user?.email || ''}</p>
+          </div>
+          {/* Logout */}
           <button
             onClick={handleLogout}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-gray-800 transition-colors"
-            title="Log Out"
+            title="Sign Out"
+            className="p-1.5 rounded-lg text-slate-600 hover:text-red-400 hover:bg-red-500/10 transition-all shrink-0"
           >
-            <LogOut size={15} />
+            <LogOut size={13} />
           </button>
         </div>
-        <div className="flex items-center justify-between pt-3 border-t border-gray-800/40">
-          <span className="text-[10px] text-gray-600 font-semibold tracking-wider uppercase">v1.1.0 (SaaS)</span>
-          <button
-            onClick={() => setDark(!dark)}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"
-            title="Toggle dark mode"
-          >
-            {dark ? <Sun size={14} /> : <Moon size={14} />}
-          </button>
+        <div className="mt-2 text-center">
+          <span className="text-[9px] text-slate-700 font-semibold tracking-wider uppercase">v1.1.0 · B2B Lead Gen</span>
         </div>
       </div>
     </aside>

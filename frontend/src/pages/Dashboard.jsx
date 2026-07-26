@@ -546,10 +546,10 @@ export default function Dashboard() {
 
   if (loading && stats.connections_total === 0) {
     return (
-      <div className="p-8 space-y-8 animate-pulse bg-[#fbfcfd] dark:bg-slate-900 min-h-screen">
-        <div className="h-10 w-72 bg-slate-200 dark:bg-slate-800 rounded-xl" />
+      <div className="p-8 space-y-8 animate-pulse min-h-screen" style={{ background: '#080C18' }}>
+        <div className="h-10 w-72 bg-white/8 rounded-xl" />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-          {[1,2,3,4,5].map(i => <div key={i} className="h-40 bg-white dark:bg-slate-800 rounded-[32px] border border-slate-100 dark:border-slate-800/80 shadow-sm" />)}
+          {[1,2,3,4,5].map(i => <div key={i} className="h-40 bg-white/5 rounded-[32px] border border-white/8" />)}
         </div>
       </div>
     );
@@ -564,12 +564,12 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="p-6 md:p-8 space-y-8 bg-[#fbfcfd] dark:bg-slate-950 min-h-screen pb-24 text-left">
+    <div className="p-6 md:p-8 space-y-8 min-h-screen pb-24 text-left" style={{ background: '#080C18' }}>
       {/* ─── HEADER ENGINE BANNER ───────────────────────────────────────────── */}
-      <div className="bg-white dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80 rounded-[32px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.01)] flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+      <div className="rounded-[28px] p-6 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6" style={{ background: 'rgba(13,18,33,0.8)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)' }}>
         <div>
-          <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight flex items-center gap-2.5">
-            <LayoutDashboard className="text-blue-600" size={28} strokeWidth={2.5} />
+          <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight flex items-center gap-2.5">
+            <LayoutDashboard className="text-blue-400" size={26} strokeWidth={2.5} />
             Command Center
           </h1>
           <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mt-1">{getGreeting()}</p>

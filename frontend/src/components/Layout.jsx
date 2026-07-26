@@ -194,7 +194,8 @@ export default function Layout() {
   }, [navigate]);
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900 overflow-hidden">
+    <div className="flex h-screen overflow-hidden" style={{ background: '#080C18', fontFamily: 'Inter, sans-serif' }}>
+      <style dangerouslySetInnerHTML={{ __html: `@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');` }} />
       <Sidebar />
       <main className="flex-1 overflow-y-auto relative flex flex-col">
         <PlanBanner />

@@ -1,7 +1,139 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Lock, Mail, Megaphone, AlertCircle, KeyRound, ChevronLeft } from 'lucide-react';
+import { Lock, Mail, AlertCircle, KeyRound, ChevronLeft, Zap, ArrowRight, Check, Shield, Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
+import { motion, AnimatePresence } from 'framer-motion';
+
+// ─── DARK BACKGROUND ────────────────────────────────────────────────────────
+function Background() {
+  return (
+    <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden bg-[#080C18]">
+      <div className="absolute inset-0 opacity-[0.04]" style={{
+        backgroundImage: `linear-gradient(rgba(59,130,246,0.8) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,0.8) 1px, transparent 1px)`,
+        backgroundSize: '50px 50px',
+      }} />
+      <div className="absolute top-[-10%] left-[-10%] w-[55vw] h-[55vw] bg-blue-600/10 blur-[160px] rounded-full" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[45vw] h-[45vw] bg-purple-600/8 blur-[140px] rounded-full" />
+    </div>
+  );
+}
+
+// ─── INPUT FIELD ────────────────────────────────────────────────────────────
+function InputField({ id, label, type = 'text', value, onChange, placeholder, icon: Icon, rightElement }) {
+  const [showPw, setShowPw] = useState(false);
+  const isPassword = type === 'password';
+  return (
+    <div>
+      <label htmlFor={id} className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
+        {label}
+      </label>
+      <div className="relative">
+        {Icon && (
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <Icon size={15} className="text-slate-500" />
+          </div>
+        )}
+        <input
+          id={id}
+          type={isPassword && showPw ? 'text' : type}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          className="w-full bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder-slate-600 focus:outline-none focus:border-blue-500/60 focus:bg-white/8 transition-all py-3.5 pl-11 pr-11"
+        />
+        {isPassword && (
+          <button
+            type="button"
+            onClick={() => setShowPw(!showPw)}
+            className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-500 hover:text-slate-300 transition-colors"
+          >
+            {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
+          </button>
+        )}
+        {rightElement && (
+          <div className="absolute inset-y-0 right-0 pr-4 flex items-center">
+            {rightElement}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── SOCIAL PROOF SIDEBAR ───────────────────────────────────────────────────
+function SocialProofPanel({ title, subtitle }) {
+  const stats = [
+    { value: "500+", label: "B2B Teams" },
+    { value: "3x", label: "More Replies" },
+    { value: "98%", label: "Safety Rate" },
+    { value: "40hrs", label: "Saved/Month" },
+  ];
+  const testimonials = [
+    { text: "Went from 20 manual messages/day to 500+ automated. Closed 8 deals in first month.", name: "Rahul V.", role: "Head of Sales" },
+    { text: "My agency earns ₹2L/month from LinkedIn outreach. LRAT automates 80% of the work.", name: "Priya K.", role: "Agency Founder" },
+  ];
+
+  return (
+    <div className="hidden lg:flex lg:w-[45%] bg-gradient-to-br from-blue-600/20 via-indigo-600/10 to-purple-600/15 border-r border-white/8 flex-col justify-between p-12 relative overflow-hidden">
+      {/* Background glow */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(59,130,246,0.15),transparent_60%)]" />
+      <div className="absolute bottom-0 right-0 w-64 h-64 bg-purple-500/10 blur-3xl rounded-full" />
+
+      {/* Logo */}
+      <div className="relative z-10">
+        <Link to="/" className="flex items-center gap-2.5 group">
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform">
+            <Zap size={20} className="text-white fill-white" />
+          </div>
+          <span className="text-xl font-black text-white tracking-tight uppercase">LRAT</span>
+        </Link>
+        <p className="text-slate-400 text-xs font-medium mt-2 ml-1">B2B LinkedIn Lead Generation Platform</p>
+      </div>
+
+      {/* Heading */}
+      <div className="relative z-10 space-y-6">
+        <div>
+          <h2 className="text-3xl font-black text-white leading-tight">{title}</h2>
+          <p className="text-slate-400 text-sm font-medium mt-3 leading-relaxed">{subtitle}</p>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 gap-3">
+          {stats.map((s, i) => (
+            <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-4">
+              <p className="text-2xl font-black text-white">{s.value}</p>
+              <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mt-0.5">{s.label}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Testimonial */}
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-3">
+          <p className="text-sm text-slate-300 italic leading-relaxed">"{testimonials[0].text}"</p>
+          <div className="flex items-center gap-2 pt-2 border-t border-white/8">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-[10px] font-black text-white">
+              {testimonials[0].name.charAt(0)}
+            </div>
+            <div>
+              <p className="text-xs font-bold text-white">{testimonials[0].name}</p>
+              <p className="text-[10px] text-slate-500">{testimonials[0].role}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Trust badges */}
+      <div className="relative z-10 flex flex-wrap gap-2">
+        {['No Credit Card', '7-Day Free Trial', '30-Day Guarantee'].map((t, i) => (
+          <div key={i} className="flex items-center gap-1.5 text-[10px] text-slate-400 font-medium bg-white/5 border border-white/8 px-3 py-1.5 rounded-full">
+            <Check size={11} className="text-emerald-400" />
+            {t}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function Login() {
   const navigate = useNavigate();
@@ -9,9 +141,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
-  // Password recovery flow states
-  const [mode, setMode] = useState('login'); // 'login' | 'forgot' | 'reset'
+  const [mode, setMode] = useState('login');
   const [resetEmail, setResetEmail] = useState('');
   const [resetCode, setResetCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -19,16 +149,10 @@ export default function Login() {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!email || !password) {
-      setError('Please fill in all fields.');
-      return;
-    }
-
+    if (!email || !password) { setError('Please fill in all fields.'); return; }
     try {
-      setError('');
-      setLoading(true);
+      setError(''); setLoading(true);
       const res = await axios.post('/api/auth/login', { email, password });
-      
       if (res.data?.success) {
         localStorage.setItem('lrat_token', res.data.token);
         localStorage.setItem('lrat_user', JSON.stringify(res.data.user));
@@ -39,379 +163,173 @@ export default function Login() {
     } catch (err) {
       const errorData = err.response?.data;
       if (errorData?.requiresVerification) {
-        // Redirect to signup page in verification step with email
         navigate('/signup', { state: { step: 'verification', email: errorData.email } });
       } else {
         setError(errorData?.error || 'Invalid credentials or server offline.');
       }
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   }
 
   async function handleForgotPassword(e) {
     e.preventDefault();
-    if (!resetEmail) {
-      setError('Please enter your email address.');
-      return;
-    }
+    if (!resetEmail) { setError('Please enter your email address.'); return; }
     try {
-      setError('');
-      setLoading(true);
+      setError(''); setLoading(true);
       const res = await axios.post('/api/auth/forgot-password', { email: resetEmail });
-      if (res.data?.success) {
-        setMode('reset');
-      } else {
-        setError(res.data?.error || 'Failed to send recovery code');
-      }
+      if (res.data?.success) { setMode('reset'); }
+      else { setError(res.data?.error || 'Failed to send recovery code'); }
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to send recovery code');
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   }
 
   async function handleResetPassword(e) {
     e.preventDefault();
-    if (!resetCode || !newPassword || !confirmNewPassword) {
-      setError('Please fill in all fields.');
-      return;
-    }
-    if (newPassword !== confirmNewPassword) {
-      setError('Passwords do not match.');
-      return;
-    }
-    if (newPassword.length < 6) {
-      setError('Password must be at least 6 characters long.');
-      return;
-    }
+    if (!resetCode || !newPassword || !confirmNewPassword) { setError('Please fill in all fields.'); return; }
+    if (newPassword !== confirmNewPassword) { setError('Passwords do not match.'); return; }
+    if (newPassword.length < 6) { setError('Password must be at least 6 characters.'); return; }
     try {
-      setError('');
-      setLoading(true);
-      const res = await axios.post('/api/auth/reset-password', {
-        email: resetEmail,
-        code: resetCode,
-        new_password: newPassword
-      });
+      setError(''); setLoading(true);
+      const res = await axios.post('/api/auth/reset-password', { email: resetEmail, code: resetCode, new_password: newPassword });
       if (res.data?.success) {
         setError('');
-        alert('Password reset successful! Please log in with your new password.');
-        setMode('login');
-        setPassword('');
-        setEmail(resetEmail);
-      } else {
-        setError(res.data?.error || 'Failed to reset password');
-      }
+        alert('Password reset successful! Please log in.');
+        setMode('login'); setPassword(''); setEmail(resetEmail);
+      } else { setError(res.data?.error || 'Failed to reset password'); }
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to reset password');
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   }
 
+  const ErrorBox = () => error ? (
+    <div className="flex items-start gap-3 p-4 bg-red-500/10 border border-red-500/25 rounded-xl">
+      <AlertCircle size={15} className="text-red-400 shrink-0 mt-0.5" />
+      <p className="text-xs text-red-400 font-semibold leading-relaxed">{error}</p>
+    </div>
+  ) : null;
+
   return (
-    <div className="min-h-screen bg-[#f8fafc] dark:bg-slate-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden text-left font-sans">
-      {/* Ambient backgrounds */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+    <div className="min-h-screen flex text-left font-sans overflow-hidden" style={{ fontFamily: 'Inter, sans-serif' }}>
+      <Background />
 
-      {mode === 'login' && (
-        <>
-          <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10 text-center animate-fade-in">
-            <div className="flex justify-center items-center gap-3">
-              <div className="p-3 bg-blue-600 rounded-2xl text-white shadow-lg shadow-blue-500/30">
-                <Megaphone size={28} strokeWidth={2.5} />
-              </div>
-              <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">LRAT SaaS</span>
-            </div>
-            <h2 className="mt-6 text-center text-3xl font-black tracking-tight text-slate-850 dark:text-slate-100 uppercase">
-              Welcome Back
-            </h2>
-            <p className="mt-2 text-center text-xs text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider">
-              Log in to manage your automated campaigns
-            </p>
+      {/* Left: Social Proof */}
+      <SocialProofPanel
+        title="Turn LinkedIn into your #1 B2B pipeline machine."
+        subtitle="Join 500+ sales teams automating outreach, booking meetings, and closing deals — on autopilot."
+      />
+
+      {/* Right: Form */}
+      <div className="flex-1 flex flex-col justify-center items-center px-6 py-12 relative z-10 min-h-screen">
+        {/* Mobile Logo */}
+        <div className="lg:hidden mb-8 flex items-center gap-2">
+          <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
+            <Zap size={18} className="text-white fill-white" />
           </div>
+          <span className="text-lg font-black text-white uppercase">LRAT</span>
+        </div>
 
-          <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10 animate-fade-in">
-            <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl py-8 px-4 shadow-[0_8px_30px_rgb(0,0,0,0.02)] sm:rounded-[32px] sm:px-10 border border-slate-100 dark:border-slate-800/80">
-              <form className="space-y-6" onSubmit={handleSubmit}>
-                {error && (
-                  <div className="p-4 bg-rose-50 dark:bg-rose-950/20 rounded-2xl border border-rose-100/50 dark:border-rose-900/30 flex items-start gap-3">
-                    <AlertCircle className="text-rose-500 shrink-0 mt-0.5" size={16} />
-                    <p className="text-[11px] text-rose-600 dark:text-rose-450 font-bold uppercase tracking-wider leading-relaxed">{error}</p>
-                  </div>
-                )}
-
-                <div>
-                  <label htmlFor="email" className="block text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest mb-2">
-                    Email Address
-                  </label>
-                  <div className="relative rounded-2xl shadow-sm">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                      <Mail size={16} />
-                    </div>
-                    <input
-                      id="email"
-                      name="email"
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="block w-full pl-10 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/55 rounded-2xl text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      placeholder="name@company.com"
-                    />
-                  </div>
+        <div className="w-full max-w-sm">
+          <AnimatePresence mode="wait">
+            {mode === 'login' && (
+              <motion.div key="login" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}>
+                <div className="mb-8">
+                  <h1 className="text-3xl font-black text-white tracking-tight">Welcome back</h1>
+                  <p className="text-slate-400 text-sm mt-2 font-medium">Sign in to your LRAT dashboard</p>
                 </div>
 
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <label htmlFor="password" className="block text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest">
-                      Password
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setError('');
-                        setResetEmail(email);
-                        setMode('forgot');
-                      }}
-                      className="text-[10px] font-black uppercase text-blue-600 dark:text-blue-450 tracking-wider hover:underline"
-                    >
-                      Forgot Password?
-                    </button>
-                  </div>
-                  <div className="relative rounded-2xl shadow-sm">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                      <Lock size={16} />
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <ErrorBox />
+                  <InputField id="email" label="Email Address" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="name@company.com" icon={Mail} />
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <label htmlFor="password" className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Password</label>
+                      <button type="button" onClick={() => { setError(''); setResetEmail(email); setMode('forgot'); }} className="text-[10px] font-bold text-blue-400 hover:text-blue-300 transition-colors uppercase tracking-wider">
+                        Forgot?
+                      </button>
                     </div>
-                    <input
-                      id="password"
-                      name="password"
-                      type="password"
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="block w-full pl-10 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/55 rounded-2xl text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      placeholder="••••••••"
-                    />
+                    <InputField id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" icon={Lock} />
                   </div>
-                </div>
 
-                <div>
                   <button
                     type="submit"
+                    id="login-submit-btn"
                     disabled={loading}
-                    className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-2xl shadow-lg shadow-blue-500/20 text-xs font-black uppercase tracking-widest text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 active:scale-95 transition-all disabled:opacity-50"
+                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white py-3.5 rounded-xl font-bold text-sm uppercase tracking-wider shadow-lg shadow-blue-500/25 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 group mt-2"
                   >
-                    {loading ? 'Logging in...' : 'Sign In'}
+                    {loading ? 'Signing In...' : (
+                      <>Sign In <ArrowRight size={15} className="group-hover:translate-x-1 transition-transform" /></>
+                    )}
                   </button>
+                </form>
+
+                <div className="mt-6 pt-6 border-t border-white/8 text-center">
+                  <p className="text-sm text-slate-500 font-medium">
+                    New to LRAT?{' '}
+                    <Link to="/signup" className="text-blue-400 hover:text-blue-300 font-bold transition-colors">
+                      Create free account →
+                    </Link>
+                  </p>
                 </div>
-              </form>
+              </motion.div>
+            )}
 
-              <div className="mt-6 border-t border-slate-100 dark:border-slate-800/80 pt-6 text-center">
-                <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">
-                  New to LRAT?{' '}
-                  <Link to="/signup" className="text-blue-600 dark:text-blue-450 hover:underline">
-                    Create an Account
-                  </Link>
-                </p>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-
-      {mode === 'forgot' && (
-        <>
-          <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10 text-center animate-fade-in">
-            <div className="flex justify-center items-center gap-3">
-              <div className="p-3 bg-blue-600 rounded-2xl text-white shadow-lg shadow-blue-500/30">
-                <KeyRound size={28} />
-              </div>
-              <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Recover Password</span>
-            </div>
-            <h2 className="mt-6 text-center text-3xl font-black tracking-tight text-slate-850 dark:text-slate-100 uppercase">
-              Forgot Password
-            </h2>
-            <p className="mt-2 text-center text-xs text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider">
-              Enter your email to receive a recovery code
-            </p>
-          </div>
-
-          <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10 animate-fade-in">
-            <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl py-8 px-4 shadow-[0_8px_30px_rgb(0,0,0,0.02)] sm:rounded-[32px] sm:px-10 border border-slate-100 dark:border-slate-800/80">
-              <form className="space-y-6" onSubmit={handleForgotPassword}>
-                {error && (
-                  <div className="p-4 bg-rose-50 dark:bg-rose-950/20 rounded-2xl border border-rose-100/50 dark:border-rose-900/30 flex items-start gap-3">
-                    <AlertCircle className="text-rose-500 shrink-0 mt-0.5" size={16} />
-                    <p className="text-[11px] text-rose-600 dark:text-rose-450 font-bold uppercase tracking-wider leading-relaxed">{error}</p>
-                  </div>
-                )}
-
-                <div>
-                  <label htmlFor="resetEmail" className="block text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest mb-2">
-                    Email Address
-                  </label>
-                  <div className="relative rounded-2xl shadow-sm">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                      <Mail size={16} />
-                    </div>
-                    <input
-                      id="resetEmail"
-                      name="resetEmail"
-                      type="email"
-                      required
-                      value={resetEmail}
-                      onChange={(e) => setResetEmail(e.target.value)}
-                      className="block w-full pl-10 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/55 rounded-2xl text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      placeholder="name@company.com"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-2xl shadow-lg shadow-blue-500/20 text-xs font-black uppercase tracking-widest text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 active:scale-95 transition-all disabled:opacity-50"
-                  >
-                    {loading ? 'Sending Code...' : 'Send Recovery Code'}
+            {mode === 'forgot' && (
+              <motion.div key="forgot" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}>
+                <div className="mb-8">
+                  <button onClick={() => { setError(''); setMode('login'); }} className="flex items-center gap-1.5 text-slate-400 hover:text-white text-xs font-bold uppercase tracking-wider mb-4 transition-colors">
+                    <ChevronLeft size={14} /> Back to Sign In
                   </button>
+                  <h1 className="text-3xl font-black text-white tracking-tight">Forgot password?</h1>
+                  <p className="text-slate-400 text-sm mt-2 font-medium">Enter your email to receive a recovery code</p>
                 </div>
-              </form>
 
-              <div className="mt-6 border-t border-slate-100 dark:border-slate-800/80 pt-6 text-center">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setError('');
-                    setMode('login');
-                  }}
-                  className="inline-flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider hover:text-slate-600 dark:hover:text-slate-400 transition-colors"
-                >
-                  <ChevronLeft size={14} /> Back to Sign In
-                </button>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
+                <form onSubmit={handleForgotPassword} className="space-y-4">
+                  <ErrorBox />
+                  <InputField id="resetEmail" label="Email Address" type="email" value={resetEmail} onChange={e => setResetEmail(e.target.value)} placeholder="name@company.com" icon={Mail} />
+                  <button type="submit" id="forgot-submit-btn" disabled={loading} className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white py-3.5 rounded-xl font-bold text-sm uppercase tracking-wider transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 mt-2">
+                    {loading ? 'Sending...' : 'Send Recovery Code'}
+                  </button>
+                </form>
+              </motion.div>
+            )}
 
-      {mode === 'reset' && (
-        <>
-          <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10 text-center animate-fade-in">
-            <div className="flex justify-center items-center gap-3">
-              <div className="p-3 bg-blue-600 rounded-2xl text-white shadow-lg shadow-blue-500/30">
-                <Lock size={28} />
-              </div>
-              <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Reset Password</span>
-            </div>
-            <h2 className="mt-6 text-center text-3xl font-black tracking-tight text-slate-850 dark:text-slate-100 uppercase">
-              Set New Password
-            </h2>
-            <p className="mt-2 text-center text-xs text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider">
-              Enter the recovery code sent to {resetEmail}
-            </p>
-          </div>
+            {mode === 'reset' && (
+              <motion.div key="reset" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}>
+                <div className="mb-8">
+                  <button onClick={() => { setError(''); setMode('forgot'); }} className="flex items-center gap-1.5 text-slate-400 hover:text-white text-xs font-bold uppercase tracking-wider mb-4 transition-colors">
+                    <ChevronLeft size={14} /> Back
+                  </button>
+                  <h1 className="text-3xl font-black text-white tracking-tight">Reset password</h1>
+                  <p className="text-slate-400 text-sm mt-2">Code sent to <span className="text-blue-400 font-semibold">{resetEmail}</span></p>
+                </div>
 
-          <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10 animate-fade-in">
-            <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl py-8 px-4 shadow-[0_8px_30px_rgb(0,0,0,0.02)] sm:rounded-[32px] sm:px-10 border border-slate-100 dark:border-slate-800/80">
-              <form className="space-y-5" onSubmit={handleResetPassword}>
-                {error && (
-                  <div className="p-4 bg-rose-50 dark:bg-rose-950/20 rounded-2xl border border-rose-100/50 dark:border-rose-900/30 flex items-start gap-3">
-                    <AlertCircle className="text-rose-500 shrink-0 mt-0.5" size={16} />
-                    <p className="text-[11px] text-rose-600 dark:text-rose-450 font-bold uppercase tracking-wider leading-relaxed">{error}</p>
-                  </div>
-                )}
-
-                <div>
-                  <label htmlFor="resetCode" className="block text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest mb-2">
-                    6-Digit Recovery Code
-                  </label>
-                  <div className="relative rounded-2xl shadow-sm">
+                <form onSubmit={handleResetPassword} className="space-y-4">
+                  <ErrorBox />
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">6-Digit Recovery Code</label>
                     <input
                       id="resetCode"
-                      name="resetCode"
                       type="text"
-                      required
                       maxLength={6}
                       value={resetCode}
-                      onChange={(e) => setResetCode(e.target.value.replace(/\D/g, ''))}
-                      className="block w-full text-center tracking-[0.4em] font-mono text-xl py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/55 rounded-2xl text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      onChange={e => setResetCode(e.target.value.replace(/\D/g, ''))}
                       placeholder="000000"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl text-white text-2xl font-mono text-center tracking-[0.5em] placeholder-slate-700 focus:outline-none focus:border-blue-500/60 transition-all py-3.5"
                     />
                   </div>
-                </div>
-
-                <div>
-                  <label htmlFor="newPassword" className="block text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest mb-2">
-                    New Password
-                  </label>
-                  <div className="relative rounded-2xl shadow-sm">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                      <Lock size={16} />
-                    </div>
-                    <input
-                      id="newPassword"
-                      name="newPassword"
-                      type="password"
-                      required
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      className="block w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/55 rounded-2xl text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      placeholder="•••••••• (Min 6 chars)"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="confirmNewPassword" className="block text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest mb-2">
-                    Confirm New Password
-                  </label>
-                  <div className="relative rounded-2xl shadow-sm">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                      <Lock size={16} />
-                    </div>
-                    <input
-                      id="confirmNewPassword"
-                      name="confirmNewPassword"
-                      type="password"
-                      required
-                      value={confirmNewPassword}
-                      onChange={(e) => setConfirmNewPassword(e.target.value)}
-                      className="block w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/55 rounded-2xl text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      placeholder="••••••••"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-2xl shadow-lg shadow-blue-500/20 text-xs font-black uppercase tracking-widest text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 active:scale-95 transition-all disabled:opacity-50"
-                  >
-                    {loading ? 'Resetting Password...' : 'Reset Password'}
+                  <InputField id="newPassword" label="New Password" type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Min 6 characters" icon={Lock} />
+                  <InputField id="confirmNewPassword" label="Confirm Password" type="password" value={confirmNewPassword} onChange={e => setConfirmNewPassword(e.target.value)} placeholder="••••••••" icon={Lock} />
+                  <button type="submit" id="reset-submit-btn" disabled={loading} className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white py-3.5 rounded-xl font-bold text-sm uppercase tracking-wider transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 mt-2">
+                    {loading ? 'Resetting...' : 'Reset Password'}
                   </button>
-                </div>
-              </form>
+                </form>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
 
-              <div className="mt-6 border-t border-slate-100 dark:border-slate-800/80 pt-6 text-center">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setError('');
-                    setMode('forgot');
-                  }}
-                  className="inline-flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider hover:text-slate-600 dark:hover:text-slate-400 transition-colors"
-                >
-                  <ChevronLeft size={14} /> Back to Recovery Code
-                </button>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
+      <style dangerouslySetInnerHTML={{ __html: `@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap'); body { background: #080C18; }` }} />
     </div>
   );
 }
