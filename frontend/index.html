@@ -95,6 +95,19 @@
     }
     </script>
 
+    <!-- ═══ GOOGLE ANALYTICS 4 ════════════════════════════════════════════ -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EF4GY3H0G9"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-EF4GY3H0G9', {
+        page_title: document.title,
+        page_location: window.location.href,
+        send_page_view: true
+      });
+    </script>
+
   </head>
   <body class="bg-[#080C18] text-slate-100 antialiased selection:bg-blue-500 selection:text-white">
     <div id="root"></div>
