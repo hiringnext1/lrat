@@ -1655,7 +1655,8 @@ export default function Landing() {
   useEffect(() => {
     window.scrollTo(0, 0);
 
-    document.title = "GrowLeadz — B2B LinkedIn Lead Generation Platform | Automate Outreach Safely";
+    // Keep page title & meta description in sync for SPA navigation
+    document.title = "GrowLeadz — B2B LinkedIn Lead Generation & AI Outreach Automation";
 
     let metaDesc = document.querySelector('meta[name="description"]');
     if (!metaDesc) {
@@ -1663,30 +1664,7 @@ export default function Landing() {
       metaDesc.name = 'description';
       document.head.appendChild(metaDesc);
     }
-    metaDesc.content = "GrowLeadz is the #1 B2B LinkedIn Lead Generation platform. Automate outreach across 10+ accounts with AI personalization, anti-ban safety, and a unified inbox. Book more meetings, faster.";
-
-    const schemaId = 'lrat-b2b-schema';
-    if (!document.getElementById(schemaId)) {
-      const s = document.createElement('script');
-      s.id = schemaId;
-      s.type = 'application/ld+json';
-      s.innerHTML = JSON.stringify({
-        "@context": "https://schema.org",
-        "@type": "SoftwareApplication",
-        "name": "GrowLeadz - B2B LinkedIn Lead Generation",
-        "operatingSystem": "All",
-        "applicationCategory": "BusinessApplication",
-        "offers": { "@type": "Offer", "price": "39.00", "priceCurrency": "USD" },
-        "description": "Automate LinkedIn outreach across 10+ accounts with AI personalization, anti-ban safety, and unified inbox.",
-        "aggregateRating": { "@type": "AggregateRating", "ratingValue": "4.9", "ratingCount": "342" }
-      });
-      document.head.appendChild(s);
-    }
-
-    return () => {
-      const s = document.getElementById(schemaId);
-      if (s) s.remove();
-    };
+    metaDesc.content = "Automate LinkedIn lead generation safely with GrowLeadz. AI-personalized messages, anti-ban safety, residential proxies & unified inbox. Get your 1st month for $5. Book more B2B meetings, faster.";
   }, []);
 
   return (

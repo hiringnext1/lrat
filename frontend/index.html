@@ -2,27 +2,99 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <title>GrowLeadz — B2B LinkedIn Lead Generation Engine & AI Outreach Platform</title>
-    <meta name="description" content="Automate LinkedIn lead generation safely with GrowLeadz. Powered by AI personalized messaging, smart delays, residential proxies, and a unified inbox. Turn prospecting into predictable revenue." />
-    <meta name="keywords" content="LinkedIn automation, lead generation, B2B sales outreach, AI messaging, Unipile, recruiter tool, cold outreach" />
-    <meta name="author" content="GrowLeadz Systems" />
-    
-    <!-- Open Graph / Facebook -->
+
+    <!-- ═══ FAVICON & THEME ═══════════════════════════════════════════════ -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="theme-color" content="#2563eb" />
+    <meta name="msapplication-TileColor" content="#2563eb" />
+
+    <!-- ═══ PRIMARY SEO ═══════════════════════════════════════════════════ -->
+    <title>GrowLeadz — B2B LinkedIn Lead Generation & AI Outreach Automation</title>
+    <meta name="description" content="Automate LinkedIn lead generation safely with GrowLeadz. AI-personalized messages, anti-ban safety, residential proxies & unified inbox. Get your 1st month for $5. Book more B2B meetings, faster." />
+    <meta name="keywords" content="LinkedIn automation, B2B lead generation, LinkedIn outreach tool, AI personalized messaging, LinkedIn sales automation, cold outreach automation, B2B SaaS, GrowLeadz" />
+    <meta name="author" content="GrowLeadz" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <link rel="canonical" href="https://growleadz.co/" />
+
+    <!-- ═══ FONTS (Preconnect first for speed) ════════════════════════════ -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+    <!-- ═══ OPEN GRAPH (Facebook / LinkedIn) ═════════════════════════════ -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://lrat-production.up.railway.app/" />
-    <meta property="og:title" content="GrowLeadz — B2B LinkedIn Lead Generation Engine & AI Outreach Platform" />
-    <meta property="og:description" content="Automate LinkedIn lead generation safely with GrowLeadz. Powered by AI personalized messaging, smart delays, and unified inbox." />
-    
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://lrat-production.up.railway.app/" />
-    <meta property="twitter:title" content="GrowLeadz — B2B LinkedIn Lead Generation Engine & AI Outreach Platform" />
-    <meta property="twitter:description" content="Automate LinkedIn lead generation safely with GrowLeadz. Powered by AI personalized messaging, smart delays, and unified inbox." />
+    <meta property="og:site_name" content="GrowLeadz" />
+    <meta property="og:url" content="https://growleadz.co/" />
+    <meta property="og:title" content="GrowLeadz — B2B LinkedIn Lead Generation & AI Outreach Automation" />
+    <meta property="og:description" content="Automate LinkedIn outreach across 10+ accounts. AI-personalized messages, anti-ban safety & unified inbox. First month only $5. Book more meetings, faster." />
+    <meta property="og:image" content="https://growleadz.co/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="GrowLeadz — B2B LinkedIn Lead Generation Platform" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- ═══ TWITTER / X CARD ══════════════════════════════════════════════ -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@growleadz" />
+    <meta name="twitter:url" content="https://growleadz.co/" />
+    <meta name="twitter:title" content="GrowLeadz — B2B LinkedIn Lead Generation & AI Outreach" />
+    <meta name="twitter:description" content="Automate LinkedIn outreach safely. AI-personalized messages, anti-ban safety, unified inbox. First month only $5." />
+    <meta name="twitter:image" content="https://growleadz.co/og-image.png" />
+    <meta name="twitter:image:alt" content="GrowLeadz — B2B LinkedIn Lead Generation Platform" />
+
+    <!-- ═══ STRUCTURED DATA (Organization + SoftwareApp) ════════════════ -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://growleadz.co/#organization",
+          "name": "GrowLeadz",
+          "url": "https://growleadz.co",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://growleadz.co/og-image.png"
+          },
+          "sameAs": []
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://growleadz.co/#website",
+          "url": "https://growleadz.co",
+          "name": "GrowLeadz",
+          "publisher": { "@id": "https://growleadz.co/#organization" }
+        },
+        {
+          "@type": "SoftwareApplication",
+          "@id": "https://growleadz.co/#software",
+          "name": "GrowLeadz",
+          "applicationCategory": "BusinessApplication",
+          "operatingSystem": "All",
+          "url": "https://growleadz.co",
+          "description": "AI-powered LinkedIn outreach automation platform for B2B sales teams. Automate connection requests, follow-ups, and inbox management across multiple accounts safely.",
+          "offers": {
+            "@type": "Offer",
+            "price": "5.00",
+            "priceCurrency": "USD",
+            "description": "First month introductory offer",
+            "priceValidUntil": "2026-12-31"
+          },
+          "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.9",
+            "ratingCount": "342",
+            "bestRating": "5"
+          },
+          "publisher": { "@id": "https://growleadz.co/#organization" }
+        }
+      ]
+    }
+    </script>
+
   </head>
   <body class="bg-[#080C18] text-slate-100 antialiased selection:bg-blue-500 selection:text-white">
     <div id="root"></div>
