@@ -203,11 +203,6 @@ function calcHealthScore(acc, acceptanceRate) {
 router.get('/', (req, res) => {
   try {
     const db = getDb();
-    // Auto-claim any unassigned accounts for active user
-    try {
-      db.prepare('UPDATE accounts SET user_id = ? WHERE user_id IS NULL').run(req.userId);
-    } catch (_) {}
-
     const accounts = db.prepare(`
       SELECT a.*,
         COUNT(CASE WHEN l.connection_sent_at IS NOT NULL THEN 1 END) as total_sent,
@@ -215,7 +210,7 @@ router.get('/', (req, res) => {
         COUNT(CASE WHEN l.reply_received = 1 THEN 1 END) as total_replied
       FROM accounts a
       LEFT JOIN leads l ON l.account_id_used = a.id
-      WHERE a.user_id = ? OR a.user_id IS NULL
+      WHERE a.user_id = ?
       GROUP BY a.id
       ORDER BY a.created_at DESC
     `).all(req.userId);
@@ -265,7 +260,7 @@ router.post('/sync', async (req, res) => {
         email = excluded.email,
         photo_url = excluded.photo_url,
         linkedin_url = excluded.linkedin_url,
-        user_id = excluded.user_id
+        user_id = COALESCE(accounts.user_id, excluded.user_id)
     `);
 
     for (const acc of result.data) {
