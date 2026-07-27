@@ -24,6 +24,7 @@ async function getAccounts() {
   try {
     const client = getClient();
     const res = await client.get('/api/v1/accounts');
+    unipileBreaker.reset();
     const items = res.data?.items || res.data?.accounts || res.data || [];
     const linkedin = Array.isArray(items)
       ? items.filter((a) => a.type === 'LINKEDIN' || a.provider === 'LINKEDIN')

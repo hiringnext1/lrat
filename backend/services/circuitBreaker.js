@@ -135,12 +135,12 @@ class CircuitBreaker {
 // Singleton breakers for external services
 const unipileBreaker = new CircuitBreaker('unipile', {
   failureThreshold: 5,
-  cooldownMs: 15 * 60 * 1000, // 15 minutes
+  cooldownMs: 15 * 1000, // 15 seconds fast recovery
 });
 
 const nvidiaBreaker = new CircuitBreaker('nvidia', {
   failureThreshold: 5,
-  cooldownMs: 10 * 60 * 1000, // 10 minutes
+  cooldownMs: 10 * 1000, // 10 seconds fast recovery
 });
 
 module.exports = { CircuitBreaker, unipileBreaker, nvidiaBreaker };
