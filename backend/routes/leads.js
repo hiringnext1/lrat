@@ -123,35 +123,12 @@ router.post('/sync-connections', requireActiveSubscription, async (req, res) => 
         if (lead) {
           if (lead.status !== 'connected') {
             db.prepare("UPDATE leads SET status = 'connected', accepted_at = ?, updated_at = ? WHERE id = ?").run(now, now, lead.id);
+            if (lead.campaign_id) {
+              const actualAccepted = db.prepare("SELECT COUNT(*) as c FROM leads WHERE campaign_id = ? AND user_id = ? AND status IN ('connected', 'jd_sent', 'follow_up_sent')").get(lead.campaign_id, req.userId).c;
+              db.prepare('UPDATE campaigns SET accepted = ?, updated_at = ? WHERE id = ?').run(actualAccepted, now, lead.campaign_id);
+            }
             updatedCount++;
           }
-        } else {
-          // Find or assign to default active campaign
-          let campaign = db.prepare("SELECT id FROM campaigns WHERE user_id = ? AND status = 'active' ORDER BY updated_at DESC LIMIT 1").get(req.userId);
-          if (!campaign) {
-            campaign = db.prepare("SELECT id FROM campaigns WHERE user_id = ? ORDER BY id DESC LIMIT 1").get(req.userId);
-          }
-          const campaignId = campaign ? campaign.id : null;
-
-          db.prepare(`
-            INSERT INTO leads (
-              user_id, campaign_id, account_id_used, full_name, linkedin_member_id, 
-              linkedin_url, company, designation, status, accepted_at, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'connected', ?, ?, ?)
-          `).run(
-            req.userId,
-            campaignId,
-            account.id,
-            fullName,
-            memberId || publicId,
-            url || (publicId ? `https://www.linkedin.com/in/${publicId}` : ''),
-            item.company || '',
-            item.headline || item.designation || '',
-            now,
-            now,
-            now
-          );
-          syncedCount++;
         }
       }
     }
