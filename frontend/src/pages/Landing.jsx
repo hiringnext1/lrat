@@ -1694,7 +1694,7 @@ export default function Landing() {
       <style dangerouslySetInnerHTML={{ __html: `
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
         body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; background: #080C18; }
-        h1, h2, h3, h4, h5 { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, h4, h5 { font-family: 'Sora', sans-serif; }
         input[type="range"]::-webkit-slider-thumb {
           -webkit-appearance: none;
           width: 18px; height: 18px;
