@@ -251,11 +251,17 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
           billing.logBillingEvent(userId, 'checkout.session.completed', 'stripe', event.id, session);
           console.log(`[Billing Webhook] ✅ User ${userId} subscribed — plan upgraded`);
 
-          // Send welcome email
+          // Send welcome email + Admin sale alert
           try {
-            const user = db.prepare('SELECT email, name FROM users WHERE id = ?').get(userId);
-            if (user) await emailService.sendSubscriptionWelcomeEmail(user.email, user.name, planType);
-          } catch (_) {}
+            const user = db.prepare('SELECT id, email, name, company_name, designation FROM users WHERE id = ?').get(userId);
+            if (user) {
+              await emailService.sendSubscriptionWelcomeEmail(user.email, user.name, planType);
+              const amountPaid = session.amount_total ? (session.amount_total / 100).toFixed(2) : (planType === 'starter' ? '5.00' : '39.00');
+              await emailService.sendAdminNewSubscriptionAlert(user, planType, amountPaid);
+            }
+          } catch (err) {
+            console.error('[Billing Alert] Failed to send subscription emails:', err.message);
+          }
         }
         break;
       }

@@ -333,6 +333,133 @@ async function sendSubscriptionCanceledEmail(email, name) {
   });
 }
 
+/**
+ * Admin Alert: Sends email to admin whenever a new user registers.
+ */
+async function sendAdminNewSignupAlert(user) {
+  const adminEmail = process.env.ADMIN_EMAIL || getSetting('ADMIN_EMAIL') || 'freelance.vishal22@gmail.com';
+  const registrationTime = new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
+
+  const htmlContent = `
+    <div style="font-family: sans-serif; max-width: 550px; margin: 0 auto; border: 1px solid #3b82f6; padding: 25px; border-radius: 16px; background-color: #ffffff; color: #1e293b;">
+      <div style="background: linear-gradient(135deg, #2563eb, #4f46e5); color: white; padding: 16px; border-radius: 12px; text-align: center; margin-bottom: 20px;">
+        <h2 style="margin: 0; font-size: 20px; font-weight: 800;">👤 New User Registered!</h2>
+        <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.9;">GrowLeadz Real-time Admin Alert</p>
+      </div>
+
+      <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; margin-bottom: 20px;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+          <tr>
+            <td style="padding: 6px 0; color: #64748b; font-weight: 600; width: 120px;">Full Name:</td>
+            <td style="padding: 6px 0; color: #0f172a; font-weight: 700;">${user.name || 'Not Provided'}</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Email Address:</td>
+            <td style="padding: 6px 0; color: #2563eb; font-weight: 700;">${user.email}</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Company:</td>
+            <td style="padding: 6px 0; color: #0f172a;">${user.company_name || 'N/A'}</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Designation:</td>
+            <td style="padding: 6px 0; color: #0f172a;">${user.designation || 'N/A'}</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Registration Time:</td>
+            <td style="padding: 6px 0; color: #0f172a;">${registrationTime} (IST)</td>
+          </tr>
+        </table>
+      </div>
+
+      <div style="text-align: center; margin-top: 20px;">
+        <a href="${process.env.FRONTEND_URL || 'https://growleadz.co'}/admin" style="background-color: #0f172a; color: white; padding: 12px 24px; border-radius: 10px; font-weight: bold; font-size: 13px; text-decoration: none;">View Admin Dashboard →</a>
+      </div>
+
+      <div style="margin-top: 25px; text-align: center; font-size: 11px; color: #94a3b8; border-top: 1px solid #f1f5f9; padding-top: 12px;">
+        Automated admin notification sent by GrowLeadz Platform.
+      </div>
+    </div>
+  `;
+
+  try {
+    await sendEmail({
+      fromName: 'GrowLeadz Admin Alerts',
+      to: adminEmail,
+      subject: `👤 New User Registration — ${user.name || user.email}`,
+      html: htmlContent
+    });
+    console.log(`[Admin Alert] New signup email notification sent to ${adminEmail}`);
+  } catch (err) {
+    console.error(`[Admin Alert] Failed to send signup email:`, err.message);
+  }
+}
+
+/**
+ * Admin Alert: Sends email to admin whenever a user buys/upgrades a subscription.
+ */
+async function sendAdminNewSubscriptionAlert(user, planType, amount) {
+  const adminEmail = process.env.ADMIN_EMAIL || getSetting('ADMIN_EMAIL') || 'freelance.vishal22@gmail.com';
+  const paymentTime = new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' });
+
+  const planLabels = { starter: 'Starter Playbook ($5 Offer)', professional: 'Professional Engine', enterprise: 'Enterprise Cluster' };
+  const planLabel = planLabels[planType] || planType;
+
+  const htmlContent = `
+    <div style="font-family: sans-serif; max-width: 550px; margin: 0 auto; border: 1px solid #10b981; padding: 25px; border-radius: 16px; background-color: #ffffff; color: #1e293b;">
+      <div style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 16px; border-radius: 12px; text-align: center; margin-bottom: 20px;">
+        <h2 style="margin: 0; font-size: 22px; font-weight: 800;">🎉 NEW SUBSCRIPTION SALE! 💰</h2>
+        <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.9;">GrowLeadz Revenue Notification</p>
+      </div>
+
+      <div style="background-color: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 12px; padding: 18px; margin-bottom: 20px;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+          <tr>
+            <td style="padding: 6px 0; color: #047857; font-weight: 600; width: 130px;">Plan Purchased:</td>
+            <td style="padding: 6px 0; color: #065f46; font-weight: 800; font-size: 16px;">${planLabel}</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; color: #047857; font-weight: 600;">Amount Paid:</td>
+            <td style="padding: 6px 0; color: #047857; font-weight: 800; font-size: 16px;">$${amount || '5.00'} USD</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; color: #047857; font-weight: 600;">Customer Name:</td>
+            <td style="padding: 6px 0; color: #0f172a; font-weight: 700;">${user.name || 'N/A'}</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; color: #047857; font-weight: 600;">Customer Email:</td>
+            <td style="padding: 6px 0; color: #2563eb; font-weight: 700;">${user.email}</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; color: #047857; font-weight: 600;">Payment Time:</td>
+            <td style="padding: 6px 0; color: #0f172a;">${paymentTime} (IST)</td>
+          </tr>
+        </table>
+      </div>
+
+      <div style="text-align: center; margin-top: 20px;">
+        <a href="${process.env.FRONTEND_URL || 'https://growleadz.co'}/admin" style="background-color: #059669; color: white; padding: 12px 24px; border-radius: 10px; font-weight: bold; font-size: 13px; text-decoration: none;">View Revenue Dashboard →</a>
+      </div>
+
+      <div style="margin-top: 25px; text-align: center; font-size: 11px; color: #94a3b8; border-top: 1px solid #f1f5f9; padding-top: 12px;">
+        Automated revenue alert sent by GrowLeadz Billing Engine.
+      </div>
+    </div>
+  `;
+
+  try {
+    await sendEmail({
+      fromName: 'GrowLeadz Revenue Alerts',
+      to: adminEmail,
+      subject: `💰 NEW SALE: GrowLeadz ${planLabel} — ${user.name || user.email}`,
+      html: htmlContent
+    });
+    console.log(`[Admin Alert] New subscription email notification sent to ${adminEmail}`);
+  } catch (err) {
+    console.error(`[Admin Alert] Failed to send subscription email:`, err.message);
+  }
+}
+
 module.exports = {
   createTransporter,
   sendEmail,
@@ -342,4 +469,6 @@ module.exports = {
   sendSubscriptionWelcomeEmail,
   sendPaymentFailedEmail,
   sendSubscriptionCanceledEmail,
+  sendAdminNewSignupAlert,
+  sendAdminNewSubscriptionAlert,
 };

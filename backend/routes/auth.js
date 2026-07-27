@@ -200,6 +200,10 @@ router.post('/verify-signup', validate(verifySignupSchema), async (req, res) => 
       console.log(`[Auth] First verified user registered. Migrated existing records to user ID ${user.id}`);
     }
 
+    // Send Admin Notification Email
+    emailService.sendAdminNewSignupAlert(user)
+      .catch(err => console.error('[Auth] Failed to send admin signup notification:', err.message));
+
     // Seed default canned messages for this user if none exist
     const cannedCount = db.prepare('SELECT COUNT(*) as c FROM canned_messages WHERE user_id = ?').get(user.id).c;
     if (cannedCount === 0) {
