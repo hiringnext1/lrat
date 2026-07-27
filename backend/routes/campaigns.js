@@ -22,7 +22,7 @@ router.get('/', (req, res) => {
       
       return { 
         ...c, 
-        connections_sent: actualSent > 0 ? actualSent : c.connections_sent,
+        connections_sent: actualSent,
         accepted: actualAccepted,
         account_count: accountCount, 
         active_account_count: activeAccountCount,
