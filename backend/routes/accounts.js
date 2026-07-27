@@ -15,11 +15,11 @@ router.post('/connect-link', requireActiveSubscription, async (req, res) => {
       return res.status(400).json({ success: false, error: 'Unipile API Key is missing or invalid. Please check Settings.' });
     }
 
-    console.log(`[Unipile Debug] Using API Key (last 4): ${apiKey.slice(-4)}`);
-    console.log(`[Unipile Debug] Using DSN: ${dsn}`);
+    const baseUrl = process.env.FRONTEND_URL || (process.env.RAILWAY_STATIC_URL ? `https://${process.env.RAILWAY_STATIC_URL}` : 'https://growleadz.co');
     
-    const successUrl = redirect_url || `${process.env.FRONTEND_URL || 'http://localhost:5173'}/accounts?connected=1`;
-    const failUrl = redirect_url || `${process.env.FRONTEND_URL || 'http://localhost:5173'}/accounts?connected=0`;
+    const successUrl = redirect_url || `${baseUrl}/accounts?connected=1`;
+    const failUrl = redirect_url || `${baseUrl}/accounts?connected=0`;
+    const notifyUrl = `${baseUrl}/api/webhooks/unipile`;
 
     // Unipile V1 requires an expiry date, type, and providers array
     const expiresOn = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
@@ -31,8 +31,8 @@ router.post('/connect-link', requireActiveSubscription, async (req, res) => {
       expiresOn: expiresOn,
       success_redirect_url: successUrl,
       failure_redirect_url: failUrl,
-      notify_url: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/api/accounts/webhook`,
-      name: 'GrowLeads LinkedIn Account',
+      notify_url: notifyUrl,
+      name: 'GrowLeadz LinkedIn Account',
     };
 
     console.log('[Unipile Debug] Sending Request Body:', JSON.stringify(requestBody, null, 2));
@@ -62,6 +62,45 @@ router.post('/connect-link', requireActiveSubscription, async (req, res) => {
     console.error('[Unipile] Link Generation Failed:', detail);
     res.status(502).json({ success: false, error: 'Failed to generate connect link', details: detail });
   }
+});
+
+// Alias Webhook handler if Unipile posts to /api/accounts/webhook
+router.post('/webhook', async (req, res) => {
+  console.log('[Accounts Webhook Triggered]', req.body);
+  try {
+    const unipileService = require('../services/unipile');
+    const db = getDb();
+    const result = await unipileService.getAccounts();
+    if (result.success && Array.isArray(result.data)) {
+      const io = req.app.get('io');
+      const upsert = db.prepare(`
+        INSERT INTO accounts (unipile_account_id, name, email, photo_url, status, linkedin_url)
+        VALUES (?, ?, ?, ?, 'active', ?)
+        ON CONFLICT(unipile_account_id) DO UPDATE SET
+          name = excluded.name,
+          email = excluded.email,
+          photo_url = excluded.photo_url,
+          linkedin_url = excluded.linkedin_url
+      `);
+      for (const acc of result.data) {
+        const publicId = acc.public_identifier || acc.username || '';
+        const url = publicId ? `https://www.linkedin.com/in/${publicId}` : '';
+        upsert.run(
+          acc.id || acc.account_id,
+          acc.name || acc.username || 'LinkedIn Account',
+          acc.email || acc.username || '',
+          acc.profile_picture_url || acc.photo || '',
+          url
+        );
+      }
+      if (io) {
+        io.emit('linkedin_account_connected', { message: 'Account synced from webhook' });
+      }
+    }
+  } catch (err) {
+    console.error('[Accounts Webhook Error]', err);
+  }
+  res.json({ success: true });
 });
 
 // ⚡ 1-Click Direct Cookie (li_at) Connect Endpoint (3-Second Connect)
