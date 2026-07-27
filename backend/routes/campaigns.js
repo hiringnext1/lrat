@@ -17,8 +17,17 @@ router.get('/', (req, res) => {
       `).get(c.id, req.userId).c;
       
       const leadCount = db.prepare('SELECT COUNT(*) as c FROM leads WHERE campaign_id = ? AND user_id = ?').get(c.id, req.userId).c;
-      const actualSent = db.prepare("SELECT COUNT(*) as c FROM leads WHERE campaign_id = ? AND user_id = ? AND status IN ('connection_sent', 'connected', 'jd_sent', 'follow_up_sent')").get(c.id, req.userId).c;
-      const actualAccepted = db.prepare("SELECT COUNT(*) as c FROM leads WHERE campaign_id = ? AND user_id = ? AND status IN ('connected', 'jd_sent', 'follow_up_sent')").get(c.id, req.userId).c;
+      const actualSent = db.prepare(`
+        SELECT COUNT(*) as c FROM leads 
+        WHERE campaign_id = ? AND user_id = ? 
+        AND (connection_sent_at IS NOT NULL OR account_id_used IS NOT NULL)
+      `).get(c.id, req.userId).c;
+      const actualAccepted = db.prepare(`
+        SELECT COUNT(*) as c FROM leads 
+        WHERE campaign_id = ? AND user_id = ? 
+        AND status IN ('connected', 'jd_sent', 'follow_up_sent')
+        AND (connection_sent_at IS NOT NULL OR account_id_used IS NOT NULL)
+      `).get(c.id, req.userId).c;
       
       return { 
         ...c, 
