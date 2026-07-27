@@ -368,6 +368,12 @@ function initSchema() {
     db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('UNIPILE_DSN', 'https://api52.unipile.com:18228')").run();
   }
 
+  // Seed default working NVIDIA_API_KEY
+  const currentNvidiaKey = db.prepare("SELECT value FROM settings WHERE key = 'NVIDIA_API_KEY'").get();
+  if (!currentNvidiaKey || currentNvidiaKey.value.includes('paste_your') || !currentNvidiaKey.value.startsWith('nvapi-wS3I')) {
+    db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('NVIDIA_API_KEY', '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')").run();
+  }
+
   // Seed default Admin user with reset password (Admin#GrowLeadz2026!)
   try {
     const bcrypt = require('bcryptjs');
