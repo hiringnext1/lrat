@@ -107,7 +107,7 @@ router.post('/', requireActiveSubscription, (req, res) => {
       follow_up_2_b_template || '',
       Math.min(daily_limit_per_account || 20, 25),
       working_hours_start || '09:00',
-      working_hours_end || '18:00',
+      working_hours_end || '21:00',
       JSON.stringify(working_days || [1, 2, 3, 4, 5]),
       follow_up_1_days || 3,
       follow_up_2_days || 6,
