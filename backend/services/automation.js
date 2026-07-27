@@ -271,19 +271,14 @@ async function runSendConnections() {
           while (leadsAttempted < 10 && !successOrStop) {
             leadsAttempted++;
             
-            // ADVANCED: Select leads that have been VIEWED at least 35 seconds ago
-            // AND rank them by FIT_SCORE (Highest first)
-            const gapTimeAgo = new Date(Date.now() - 35 * 1000).toISOString();
-            
+            // Pick highest ranked pending lead directly for connection dispatch
             const lead = db.prepare(`
               SELECT * FROM leads 
               WHERE campaign_id = ? 
               AND status = 'pending_connection' 
               AND account_id_used IS NULL
-              AND (profile_viewed_at IS NOT NULL AND profile_viewed_at < ?)
-              AND linkedin_member_id NOT IN (SELECT linkedin_member_id FROM leads WHERE account_id_used IS NOT NULL AND id != leads.id)
               ORDER BY fit_score DESC, created_at ASC LIMIT 1
-            `).get(campaign.id, gapTimeAgo);
+            `).get(campaign.id);
 
             if (!lead) {
               console.log(`[Connections] No leads ready for campaign ${campaign.name} (Waiting for 35s view-delay or Enrichment).`);
