@@ -126,17 +126,6 @@ function canSendConnection(account, campaign = null, db = null) {
     return { allowed: false, reason: `Weekly limit reached (${account.week_connections})` };
   }
 
-  // NEW: Check for next scheduled action time
-  if (account.next_action_at) {
-    const nextTime = new Date(account.next_action_at).getTime();
-    if (Date.now() < nextTime) {
-      const waitSecs = Math.ceil((nextTime - Date.now()) / 1000);
-      const waitMins = Math.floor(waitSecs / 60);
-      const remainingSecs = waitSecs % 60;
-      return { allowed: false, reason: `Resting: ${waitMins}m ${remainingSecs}s left` };
-    }
-  }
-
   const startTime = campaign?.working_hours_start || '09:00';
   const endTime = campaign?.working_hours_end || '18:00';
 
