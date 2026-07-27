@@ -22,6 +22,41 @@ router.get('/conversations', async (req, res) => {
     const { account_id, campaign_id, sort } = req.query;
 
     let accounts = db.prepare("SELECT * FROM accounts WHERE is_active = 1 AND user_id = ?").all(req.userId);
+
+    // Auto-sync accounts from Unipile if user has 0 accounts linked in local DB
+    if (accounts.length === 0) {
+      try {
+        const uRes = await unipile.getAccounts();
+        if (uRes.success && Array.isArray(uRes.data)) {
+          const upsert = db.prepare(`
+            INSERT INTO accounts (unipile_account_id, name, email, photo_url, status, linkedin_url, user_id)
+            VALUES (?, ?, ?, ?, 'active', ?, ?)
+            ON CONFLICT(unipile_account_id) DO UPDATE SET
+              name = excluded.name,
+              email = excluded.email,
+              photo_url = excluded.photo_url,
+              linkedin_url = excluded.linkedin_url,
+              user_id = excluded.user_id
+          `);
+          for (const acc of uRes.data) {
+            const publicId = acc.public_identifier || acc.username || '';
+            const url = publicId ? `https://www.linkedin.com/in/${publicId}` : '';
+            upsert.run(
+              acc.id || acc.account_id,
+              acc.name || acc.username || acc.display_name || 'LinkedIn Account',
+              acc.email || acc.username || '',
+              acc.profile_picture_url || acc.photo || '',
+              url,
+              req.userId
+            );
+          }
+          accounts = db.prepare("SELECT * FROM accounts WHERE is_active = 1 AND user_id = ?").all(req.userId);
+        }
+      } catch (e) {
+        console.error('[Inbox Auto-Sync Accounts Error]', e.message);
+      }
+    }
+
     if (account_id) accounts = accounts.filter((a) => a.id === parseInt(account_id));
 
     const allConversations = [];
@@ -32,36 +67,36 @@ router.get('/conversations', async (req, res) => {
 
       for (const conv of result.data) {
         let memberId = conv.attendee_provider_id;
+        let otherParty = null;
         
         // Fallback for different Unipile versions/structures
-        if (!memberId) {
-           let attendees = [];
-           if (Array.isArray(conv.attendees) && conv.attendees.length > 0) attendees = conv.attendees;
-           else if (Array.isArray(conv.participants) && conv.participants.length > 0) attendees = conv.participants;
-           else if (conv.attendee) attendees = [conv.attendee];
+        let attendees = [];
+        if (Array.isArray(conv.attendees) && conv.attendees.length > 0) attendees = conv.attendees;
+        else if (Array.isArray(conv.participants) && conv.participants.length > 0) attendees = conv.participants;
+        else if (conv.attendee) attendees = [conv.attendee];
 
-           const otherParty = attendees.find((a) => a.id !== account.unipile_account_id) || attendees[0];
-           memberId = otherParty?.provider_id || otherParty?.id;
+        otherParty = attendees.find((a) => a.id !== account.unipile_account_id) || attendees[0];
+        if (!memberId) {
+          memberId = otherParty?.provider_id || otherParty?.id;
         }
 
-        if (!memberId) continue;
-
-        // 1. Try Database matching
-        let lead = db.prepare('SELECT * FROM leads WHERE linkedin_member_id = ? AND user_id = ?').get(memberId, req.userId);
+        // 1. Try Database matching for campaign lead
+        let lead = memberId ? db.prepare('SELECT * FROM leads WHERE linkedin_member_id = ? AND user_id = ?').get(memberId, req.userId) : null;
         
-        // ONLY display conversations that exist in our Leads database
-        if (!lead) continue;
-        
-        if (campaign_id && String(lead.campaign_id) !== String(campaign_id)) continue;
+        if (campaign_id && (!lead || String(lead.campaign_id) !== String(campaign_id))) continue;
 
-        // 2. Resolve Name (Database -> Cache -> Unipile API Fallback)
-        let attendeeName = 'Unknown User';
+        // 2. Resolve Name (Database -> Unipile attendee -> Cache -> Unipile API Fallback)
+        let attendeeName = 'LinkedIn User';
         
         if (lead?.full_name) {
           attendeeName = lead.full_name;
-        } else if (nameCache[memberId]) {
+        } else if (otherParty?.name || otherParty?.display_name) {
+          attendeeName = otherParty.display_name || otherParty.name;
+        } else if (conv.title || conv.name) {
+          attendeeName = conv.title || conv.name;
+        } else if (memberId && nameCache[memberId]) {
           attendeeName = nameCache[memberId];
-        } else {
+        } else if (memberId) {
           try {
             const attRes = await unipile.getAttendee(memberId);
             if (attRes.success && (attRes.data.display_name || attRes.data.name)) {
@@ -69,7 +104,7 @@ router.get('/conversations', async (req, res) => {
               nameCache[memberId] = attendeeName;
             }
           } catch (e) {
-             console.error(`[Inbox] Failed to resolve name for ${memberId}`);
+            console.error(`[Inbox] Failed to resolve name for ${memberId}`);
           }
         }
 
