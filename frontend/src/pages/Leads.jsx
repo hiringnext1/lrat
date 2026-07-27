@@ -58,6 +58,21 @@ export default function Leads() {
     } catch (e) { alert('Export failed'); }
   }
 
+  const [syncingConnections, setSyncingConnections] = useState(false);
+
+  async function handleSyncConnections() {
+    setSyncingConnections(true);
+    try {
+      const res = await axios.post('/api/leads/sync-connections');
+      alert(res.data.message || 'Synced connections successfully');
+      fetchLeads();
+    } catch (e) {
+      alert(e.response?.data?.error || 'Sync failed');
+    } finally {
+      setSyncingConnections(false);
+    }
+  }
+
   const sentimentCounts = { positive: 0, neutral: 0, negative: 0 };
   leads.forEach(l => { if (l.ai_sentiment) sentimentCounts[l.ai_sentiment] = (sentimentCounts[l.ai_sentiment] || 0) + 1; });
 
@@ -80,6 +95,10 @@ export default function Leads() {
                 <Table2 size={13} />
               </button>
             </div>
+            <GhostBtn onClick={handleSyncConnections} disabled={syncingConnections}>
+              <Sparkles size={13} className={syncingConnections ? 'animate-spin' : 'text-purple-400'} />
+              {syncingConnections ? 'Syncing...' : 'Sync Acceptances'}
+            </GhostBtn>
             <GhostBtn onClick={handleExport}><Download size={13} />Export CSV</GhostBtn>
             <PrimaryBtn onClick={() => setShowScraper(true)} id="import-leads-btn"><Upload size={13} />Import Leads</PrimaryBtn>
           </div>

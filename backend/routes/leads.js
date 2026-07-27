@@ -73,6 +73,106 @@ router.get('/', (req, res) => {
   }
 });
 
+// ⚡ Sync & Import Accepted LinkedIn Connections directly into CRM
+router.post('/sync-connections', requireActiveSubscription, async (req, res) => {
+  try {
+    const db = getDb();
+    const accounts = db.prepare("SELECT * FROM accounts WHERE user_id = ? AND status = 'active' AND is_active = 1").all(req.userId);
+    
+    if (!accounts.length) {
+      return res.status(400).json({ success: false, error: 'No active LinkedIn accounts found' });
+    }
+
+    let syncedCount = 0;
+    let updatedCount = 0;
+    const now = new Date().toISOString();
+
+    for (const account of accounts) {
+      const result = await unipile.getNewAcceptances(account.unipile_account_id);
+      if (!result.success || !result.data) continue;
+
+      const items = Array.isArray(result.data) ? result.data : (result.data.items || result.data.relations || []);
+      
+      for (const item of items) {
+        const memberId = item.member_id || item.provider_id || item.id || '';
+        const publicId = item.public_identifier || '';
+        const url = item.public_profile_url || item.url || '';
+        const fullName = [item.first_name, item.last_name].filter(Boolean).join(' ') || item.name || 'LinkedIn User';
+
+        let lead = null;
+        if (memberId || publicId) {
+          lead = db.prepare(`
+            SELECT * FROM leads 
+            WHERE user_id = ?
+            AND (
+              (linkedin_member_id IS NOT NULL AND linkedin_member_id != '' AND (linkedin_member_id = ? OR linkedin_member_id = ?))
+              OR (? != '' AND linkedin_url IS NOT NULL AND linkedin_url LIKE ?)
+            )
+            ORDER BY id DESC LIMIT 1
+          `).get(req.userId, memberId, publicId, publicId, `%${publicId}%`);
+        }
+
+        if (!lead && fullName) {
+          lead = db.prepare(`
+            SELECT * FROM leads 
+            WHERE user_id = ? AND LOWER(full_name) = LOWER(?)
+            ORDER BY id DESC LIMIT 1
+          `).get(req.userId, fullName);
+        }
+
+        if (lead) {
+          if (lead.status !== 'connected') {
+            db.prepare("UPDATE leads SET status = 'connected', accepted_at = ?, updated_at = ? WHERE id = ?").run(now, now, lead.id);
+            updatedCount++;
+          }
+        } else {
+          // Find or assign to default active campaign
+          let campaign = db.prepare("SELECT id FROM campaigns WHERE user_id = ? AND status = 'active' ORDER BY updated_at DESC LIMIT 1").get(req.userId);
+          if (!campaign) {
+            campaign = db.prepare("SELECT id FROM campaigns WHERE user_id = ? ORDER BY id DESC LIMIT 1").get(req.userId);
+          }
+          const campaignId = campaign ? campaign.id : null;
+
+          db.prepare(`
+            INSERT INTO leads (
+              user_id, campaign_id, account_id_used, full_name, linkedin_member_id, 
+              linkedin_url, company, designation, status, accepted_at, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'connected', ?, ?, ?)
+          `).run(
+            req.userId,
+            campaignId,
+            account.id,
+            fullName,
+            memberId || publicId,
+            url || (publicId ? `https://www.linkedin.com/in/${publicId}` : ''),
+            item.company || '',
+            item.headline || item.designation || '',
+            now,
+            now,
+            now
+          );
+          syncedCount++;
+        }
+      }
+    }
+
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`user_${req.userId}`).emit('leads_updated', { message: 'Connections synced successfully' });
+    }
+
+    res.json({
+      success: true,
+      message: `Synced ${syncedCount} new accepted connection(s) and updated ${updatedCount} existing lead(s) as Connected!`,
+      synced_new: syncedCount,
+      updated_existing: updatedCount
+    });
+  } catch (err) {
+    console.error('[Sync Connections Error]', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 router.post('/import/url', requireActiveSubscription, async (req, res) => {
   try {
     const db = getDb();
