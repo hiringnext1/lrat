@@ -2,7 +2,7 @@
 // Import this in every page for consistent dark navy styling
 
 export const PageBg = 'min-h-screen pb-24 text-left';
-export const PageStyle = { background: '#080C18', fontFamily: 'Inter, sans-serif' };
+export const PageStyle = { background: '#080C18' }; // Inter via CSS :root, Sora via h1-h6 CSS rule
 
 export function GlassCard({ children, className = '', style = {} }) {
   return (
@@ -19,7 +19,7 @@ export function PageHeader({ icon: Icon, title, subtitle, actions, accent = 'tex
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
-        <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-3">
+        <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-3 font-display">
           <div className="w-9 h-9 rounded-xl bg-white/6 flex items-center justify-center">
             <Icon size={17} className={accent} />
           </div>

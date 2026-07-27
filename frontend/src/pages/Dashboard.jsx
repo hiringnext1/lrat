@@ -68,7 +68,7 @@ function StatCard({ title, value, sub, icon: Icon, accent, trend, trendVal, spar
       </div>
 
       <div>
-        <p className="text-2xl font-black text-white mt-3 leading-none">{value}</p>
+        <p className="text-2xl font-black text-white mt-3 leading-none font-display" style={{fontVariantNumeric:'tabular-nums'}}>{value}</p>
         <p className="text-[10px] text-slate-500 font-medium mt-1">{sub}</p>
       </div>
 
@@ -362,7 +362,7 @@ export default function Dashboard() {
         {/* Left: Greeting + Title */}
         <div>
           <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-1">{greeting()}</p>
-          <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-3">
+          <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-3 font-display">
             <div className="w-8 h-8 rounded-xl bg-blue-500/15 flex items-center justify-center">
               <LayoutDashboard size={16} className="text-blue-400" />
             </div>
