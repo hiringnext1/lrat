@@ -150,13 +150,15 @@ router.post('/connect-cookie', requireActiveSubscription, async (req, res) => {
     const url = publicId ? `https://www.linkedin.com/in/${publicId}` : '';
 
     db.prepare(`
-      INSERT INTO accounts (unipile_account_id, name, email, photo_url, status, linkedin_url, user_id)
-      VALUES (?, ?, ?, ?, 'active', ?, ?)
+      INSERT INTO accounts (unipile_account_id, name, email, photo_url, status, is_active, linkedin_url, user_id)
+      VALUES (?, ?, ?, ?, 'active', 1, ?, ?)
       ON CONFLICT(unipile_account_id) DO UPDATE SET
         name = excluded.name,
         email = excluded.email,
         photo_url = excluded.photo_url,
         linkedin_url = excluded.linkedin_url,
+        status = 'active',
+        is_active = 1,
         user_id = excluded.user_id
     `).run(unipileId, name, email, photo, url, req.userId);
 
@@ -253,14 +255,16 @@ router.post('/sync', async (req, res) => {
 
     let synced = 0;
     const upsert = db.prepare(`
-      INSERT INTO accounts (unipile_account_id, name, email, photo_url, status, linkedin_url, user_id)
-      VALUES (?, ?, ?, ?, 'active', ?, ?)
+      INSERT INTO accounts (unipile_account_id, name, email, photo_url, status, is_active, linkedin_url, user_id)
+      VALUES (?, ?, ?, ?, 'active', 1, ?, ?)
       ON CONFLICT(unipile_account_id) DO UPDATE SET
         name = excluded.name,
         email = excluded.email,
         photo_url = excluded.photo_url,
         linkedin_url = excluded.linkedin_url,
-        user_id = COALESCE(accounts.user_id, excluded.user_id)
+        status = 'active',
+        is_active = 1,
+        user_id = excluded.user_id
     `);
 
     for (const acc of result.data) {
