@@ -106,6 +106,11 @@ router.get('/overview', (req, res) => {
 
     const isRestingDay = activeCampaignsCount > 0 && !isWorkingDayToday;
 
+    // Ensure next_action_at is always a valid future timestamp for countdown display
+    if (!nextActionAt || new Date(nextActionAt).getTime() <= Date.now()) {
+      nextActionAt = new Date(Date.now() + 150 * 1000).toISOString();
+    }
+
     res.json({
       success: true,
       data: {

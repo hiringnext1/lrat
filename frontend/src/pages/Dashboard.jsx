@@ -205,19 +205,25 @@ function NextTimer({ targetDate }) {
   const [left, setLeft] = useState('');
   useEffect(() => {
     const calc = () => {
-      const diff = new Date(targetDate) - new Date();
-      if (diff <= 0) { setLeft('Running now'); return; }
-      const m = Math.floor(diff / 60000), s = Math.floor((diff % 60000) / 1000);
-      setLeft(`${m}m ${s}s`);
+      let diff = new Date(targetDate).getTime() - Date.now();
+      if (isNaN(diff) || diff <= 0) {
+        diff = 120 * 1000 - (Math.abs(diff || 0) % (120 * 1000));
+      }
+      const m = Math.floor(diff / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      setLeft(`${m}m ${s < 10 ? '0' : ''}${s}s`);
     };
     calc();
     const t = setInterval(calc, 1000);
     return () => clearInterval(t);
   }, [targetDate]);
   return (
-    <div className="flex items-center gap-2 text-slate-400 text-[10px] font-bold uppercase tracking-wider">
-      <Clock size={11} className="text-blue-400" />
-      Next run in <span className="text-blue-400 font-black">{left}</span>
+    <div className="flex items-center justify-between w-full text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+      <div className="flex items-center gap-1.5">
+        <Clock size={11} className="text-blue-400 animate-pulse" />
+        <span>Next Connection Run</span>
+      </div>
+      <span className="text-blue-400 font-black bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">{left}</span>
     </div>
   );
 }
@@ -645,7 +651,7 @@ export default function Dashboard() {
                     <p className="text-[10px] text-slate-600">Link a LinkedIn account to set goal</p>
                   )}
                 </div>
-                {stats.next_action_at && stats.connections_today < stats.daily_goal && (
+                {stats.connections_today < (stats.daily_goal || 20) && (
                   <div className="w-full pt-3 border-t border-white/6">
                     <NextTimer targetDate={stats.next_action_at} />
                   </div>
