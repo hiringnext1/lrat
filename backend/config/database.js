@@ -401,9 +401,9 @@ function initSchema() {
     }).catch(() => {});
   } catch (_) {}
 
-  // Auto-attach active user accounts to campaigns with 0 linked accounts & auto-resume all healthy accounts
+  // Auto-attach active user accounts to campaigns & clear stuck next_action_at timers on startup
   try {
-    db.prepare("UPDATE accounts SET status = 'active', is_active = 1 WHERE status = 'paused' OR is_active = 0 OR status IS NULL").run();
+    db.prepare("UPDATE accounts SET status = 'active', is_active = 1, next_action_at = NULL WHERE status = 'paused' OR is_active = 0 OR status IS NULL OR status = 'active'").run();
     db.prepare("UPDATE campaigns SET working_hours_end = '23:59' WHERE working_hours_end = '18:00' OR working_hours_end = '21:00'").run();
     db.prepare("UPDATE leads SET status = 'pending_connection' WHERE connection_sent_at IS NULL AND account_id_used IS NULL AND status = 'connected'").run();
     db.prepare(`
