@@ -138,32 +138,6 @@ router.get('/conversations', async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
-    }
-
-    if (sort === 'score' || sort === 'fit_score') {
-      allConversations.sort((a, b) => {
-        const aScore = a.lead?.fit_score || 0;
-        const bScore = b.lead?.fit_score || 0;
-        if (bScore !== aScore) {
-          return bScore - aScore;
-        }
-        const aTime = a.last_message_at || a.updated_at || a.timestamp || '';
-        const bTime = b.last_message_at || b.updated_at || b.timestamp || '';
-        return bTime.localeCompare(aTime);
-      });
-    } else {
-      allConversations.sort((a, b) => {
-        const aTime = a.last_message_at || a.updated_at || a.timestamp || '';
-        const bTime = b.last_message_at || b.updated_at || b.timestamp || '';
-        return bTime.localeCompare(aTime);
-      });
-    }
-
-    res.json({ success: true, data: allConversations });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
 
 router.get('/conversations/:chatId/messages', async (req, res) => {
   try {
