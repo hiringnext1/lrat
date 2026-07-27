@@ -281,7 +281,7 @@ router.get('/engine-status', (req, res) => {
     const db = getDb();
     const safety = require('../services/safety');
     
-    const activeAccounts = db.prepare("SELECT COUNT(*) as c FROM accounts WHERE is_active = 1 AND user_id = ?").get(req.userId).c;
+    const activeAccounts = db.prepare("SELECT COUNT(*) as c FROM accounts WHERE (is_active = 1 OR status = 'active') AND user_id = ?").get(req.userId).c;
     const activeCampaigns = db.prepare("SELECT * FROM campaigns WHERE status = 'active' AND user_id = ?").all(req.userId);
     
     if (activeAccounts === 0) {
