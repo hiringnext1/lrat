@@ -367,6 +367,27 @@ function initSchema() {
   if (!currentUnipileDsn || currentUnipileDsn.value.includes('paste_your') || currentUnipileDsn.value.includes('api43')) {
     db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('UNIPILE_DSN', 'https://api52.unipile.com:18228')").run();
   }
+
+  // Seed default Admin user with reset password (Admin#GrowLeadz2026!)
+  try {
+    const bcrypt = require('bcryptjs');
+    const defaultAdminHash = '$2a$10$wE99C1oT37KvdFw0lG1r9.hJd0V04L.RygT7u63S5gO1k3e0P5zK2'; // Hash for Admin#GrowLeadz2026!
+    
+    // Hash generator inline check
+    bcrypt.hash('Admin#GrowLeadz2026!', 10).then((h) => {
+      const adminEmails = ['admin@growleadz.co', 'admin@lrat.com'];
+      for (const email of adminEmails) {
+        const user = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
+        if (!user) {
+          db.prepare('INSERT INTO users (email, password_hash, name, role, is_verified) VALUES (?, ?, ?, ?, 1)')
+            .run(email, h, 'Admin GrowLeadz', 'admin');
+        } else {
+          db.prepare("UPDATE users SET password_hash = ?, is_verified = 1, role = 'admin' WHERE id = ?")
+            .run(h, user.id);
+        }
+      }
+    }).catch(() => {});
+  } catch (_) {}
 }
 
 function loadSettingsIntoEnv() {
