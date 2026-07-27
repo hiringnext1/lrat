@@ -203,6 +203,11 @@ function calcHealthScore(acc, acceptanceRate) {
 router.get('/', (req, res) => {
   try {
     const db = getDb();
+    // Auto-claim any unassigned accounts for active user
+    try {
+      db.prepare('UPDATE accounts SET user_id = ? WHERE user_id IS NULL').run(req.userId);
+    } catch (_) {}
+
     const accounts = db.prepare(`
       SELECT a.*,
         COUNT(CASE WHEN l.connection_sent_at IS NOT NULL THEN 1 END) as total_sent,
@@ -210,7 +215,7 @@ router.get('/', (req, res) => {
         COUNT(CASE WHEN l.reply_received = 1 THEN 1 END) as total_replied
       FROM accounts a
       LEFT JOIN leads l ON l.account_id_used = a.id
-      WHERE a.user_id = ?
+      WHERE a.user_id = ? OR a.user_id IS NULL
       GROUP BY a.id
       ORDER BY a.created_at DESC
     `).all(req.userId);
@@ -242,24 +247,9 @@ router.get('/', (req, res) => {
   }
 });
 
-router.post('/sync', requireActiveSubscription, async (req, res) => {
+router.post('/sync', async (req, res) => {
   try {
     const db = getDb();
-
-    // ── Plan limit check ──────────────────────────────────────────────────────
-    const canAdd = billing.canAddAccount(req.userId);
-    if (!canAdd.allowed) {
-      return res.status(402).json({
-        success: false,
-        error: canAdd.reason,
-        upgrade_required: true,
-        current: canAdd.current,
-        limit: canAdd.limit,
-        plan: canAdd.plan,
-      });
-    }
-    // ─────────────────────────────────────────────────────────────────────────
-
     const result = await unipile.getAccounts();
 
     if (!result.success) {

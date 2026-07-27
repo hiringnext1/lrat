@@ -310,9 +310,10 @@ function initSchema() {
   try { db.exec("ALTER TABLE campaigns ADD COLUMN follow_up_2_b_template TEXT DEFAULT ''"); } catch (_) {}
   try { db.exec("ALTER TABLE leads ADD COLUMN message_variant TEXT DEFAULT 'A'"); } catch (_) {}
 
-  // Set default admin role
+  // Set default admin role & active multi-account plan limits
   try {
-    db.prepare("UPDATE users SET role = 'admin' WHERE email IN ('admin@lrat.com', 'admin@growleadz.co')").run();
+    db.prepare("UPDATE users SET role = 'admin', plan_type = 'agency', plan_status = 'active', plan_accounts_limit = 10 WHERE email IN ('admin@lrat.com', 'admin@growleadz.co')").run();
+    db.prepare("UPDATE users SET plan_type = 'agency', plan_status = 'active', plan_accounts_limit = 10 WHERE plan_accounts_limit < 10").run();
   } catch (_) {}
   // ─────────────────────────────────────────────────────────────────────────────
 
