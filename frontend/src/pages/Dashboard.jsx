@@ -207,7 +207,8 @@ function NextTimer({ targetDate }) {
     const calc = () => {
       let diff = new Date(targetDate).getTime() - Date.now();
       if (isNaN(diff) || diff <= 0) {
-        diff = 120 * 1000 - (Math.abs(diff || 0) % (120 * 1000));
+        setLeft('Dispatching now...');
+        return;
       }
       const m = Math.floor(diff / 60000);
       const s = Math.floor((diff % 60000) / 1000);

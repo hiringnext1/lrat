@@ -71,8 +71,11 @@ router.get('/overview', (req, res) => {
         for (const acc of campaignAccounts) {
           dailyGoal += campaign.daily_limit_per_account || safety.getEffectiveDailyLimit(acc);
           if (acc.next_action_at) {
-            if (!nextActionAt || acc.next_action_at < nextActionAt) {
-              nextActionAt = acc.next_action_at;
+            const accTime = new Date(acc.next_action_at).getTime();
+            if (accTime > Date.now()) {
+              if (!nextActionAt || accTime < new Date(nextActionAt).getTime()) {
+                nextActionAt = acc.next_action_at;
+              }
             }
           }
         }
@@ -97,8 +100,11 @@ router.get('/overview', (req, res) => {
       for (const acc of accounts) {
         dailyGoal += safety.getEffectiveDailyLimit(acc);
         if (acc.next_action_at) {
-          if (!nextActionAt || acc.next_action_at < nextActionAt) {
-            nextActionAt = acc.next_action_at;
+          const accTime = new Date(acc.next_action_at).getTime();
+          if (accTime > Date.now()) {
+            if (!nextActionAt || accTime < new Date(nextActionAt).getTime()) {
+              nextActionAt = acc.next_action_at;
+            }
           }
         }
       }
@@ -106,9 +112,10 @@ router.get('/overview', (req, res) => {
 
     const isRestingDay = activeCampaignsCount > 0 && !isWorkingDayToday;
 
-    // Ensure next_action_at is always a valid future timestamp for countdown display
+    // Fallback to random 7-10 min delay (420s to 600s) if no future cooldown is currently set
     if (!nextActionAt || new Date(nextActionAt).getTime() <= Date.now()) {
-      nextActionAt = new Date(Date.now() + 150 * 1000).toISOString();
+      const randMs = Math.floor(Math.random() * (600000 - 420000) + 420000);
+      nextActionAt = new Date(Date.now() + randMs).toISOString();
     }
 
     res.json({
