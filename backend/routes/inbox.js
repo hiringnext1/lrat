@@ -118,8 +118,22 @@ router.get('/conversations', async (req, res) => {
           } catch (_) {}
         }
 
-        if (!attendeeName) {
-          attendeeName = conv.title || conv.name || 'LinkedIn Member';
+        // 3. Resolve Last Message Text Snippet
+        let lastMsgText = conv.last_message_text || conv.text || conv.snippet || nameCache[`${conv.id}_msg`] || '';
+        let lastMsgTime = conv.last_message_at || conv.timestamp || conv.updated_at || null;
+        let lastMsgFrom = conv.last_message_from || 'them';
+
+        if (!lastMsgText) {
+          try {
+            const msgsRes = await unipile.getMessages(conv.id);
+            if (msgsRes.success && Array.isArray(msgsRes.data) && msgsRes.data.length > 0) {
+              const latestMsg = msgsRes.data[0];
+              lastMsgText = latestMsg.text || '';
+              lastMsgTime = latestMsg.timestamp || lastMsgTime;
+              lastMsgFrom = latestMsg.is_sender ? 'me' : 'them';
+              nameCache[`${conv.id}_msg`] = lastMsgText;
+            }
+          } catch (_) {}
         }
 
         allConversations.push({
@@ -128,6 +142,9 @@ router.get('/conversations', async (req, res) => {
           account_name: account.name,
           attendee_name: attendeeName,
           attendee_avatar: attendeeAvatar,
+          last_message_text: lastMsgText,
+          last_message_at: lastMsgTime,
+          last_message_from: lastMsgFrom,
           lead: lead || null,
         });
       }

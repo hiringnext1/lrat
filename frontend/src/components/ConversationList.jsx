@@ -238,13 +238,16 @@ export default function ConversationList({ conversations, activeId, onSelect, ac
                     </div>
                   </div>
 
-                  <p className="text-[9px] font-semibold text-slate-500 truncate mt-0.5">
-                    {conv.account_name || 'LinkedIn Account'}
-                  </p>
+                  {/* Designation / Company or Campaign label if available */}
+                  {(lead?.designation || lead?.company) && (
+                    <p className="text-[9px] font-semibold text-slate-500 truncate mt-0.5">
+                      {lead?.designation ? lead.designation : ''} {lead?.company ? `• ${lead.company}` : ''}
+                    </p>
+                  )}
                   
                   <div className="flex items-center justify-between mt-1 gap-2">
                     <p className={`text-[10px] truncate leading-tight flex-1 ${isUnread ? 'font-bold text-slate-200' : 'text-slate-400'}`}>
-                      {preview || 'Connected'}
+                      {preview || 'LinkedIn Message'}
                     </p>
                     {isUnread && (
                       <span className="w-2 h-2 bg-blue-500 rounded-full shrink-0 animate-pulse" />
