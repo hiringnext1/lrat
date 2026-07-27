@@ -54,9 +54,14 @@ let db;
 
 function getDb() {
   if (!db) {
+    const fs = require('fs');
+    const dbDir = path.dirname(DB_PATH);
+    if (!fs.existsSync(dbDir)) {
+      fs.mkdirSync(dbDir, { recursive: true });
+    }
     db = new Database(DB_PATH);
-    db.pragma('journal_mode = WAL');
-    db.pragma('foreign_keys = ON');
+    try { db.pragma('journal_mode = WAL'); } catch (_) {}
+    try { db.pragma('foreign_keys = ON'); } catch (_) {}
     initSchema();
   }
   return db;
