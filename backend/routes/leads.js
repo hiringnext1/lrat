@@ -228,11 +228,8 @@ router.post('/import/url', requireActiveSubscription, async (req, res) => {
           }
 
           if (totalImported < targetCount && hasMore) {
-            const minWait = 2;
-            const maxWait = 7;
-            const randomWaitMins = Math.floor(Math.random() * (maxWait - minWait + 1) + minWait);
-            console.log(`[Background Import] Resting for ${randomWaitMins} minutes...`);
-            await new Promise(resolve => setTimeout(resolve, randomWaitMins * 60 * 1000));
+            console.log(`[Background Import] Fetching next batch in 1.5s...`);
+            await new Promise(resolve => setTimeout(resolve, 1500));
             batchCount++;
           }
         }
