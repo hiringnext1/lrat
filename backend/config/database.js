@@ -352,6 +352,11 @@ function initSchema() {
     db.prepare("INSERT INTO settings (key, value) VALUES (?, ?)")
       .run('LEAD_SCORING_WEIGHTS', JSON.stringify(defaultWeights));
   }
+
+  const adminEmailSetting = db.prepare("SELECT COUNT(*) as c FROM settings WHERE key = 'ADMIN_EMAIL'").get();
+  if (adminEmailSetting.c === 0) {
+    db.prepare("INSERT INTO settings (key, value) VALUES ('ADMIN_EMAIL', 'freelance.vishal22@gmail.com')").run();
+  }
 }
 
 function loadSettingsIntoEnv() {
