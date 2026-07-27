@@ -397,21 +397,24 @@ function initSchema() {
           db.prepare("UPDATE users SET password_hash = ?, is_verified = 1, role = 'admin' WHERE id = ?")
             .run(h, user.id);
         }
-    // Recalculate campaign accepted & connections_sent stats from actual leads table
-    try {
-      db.prepare("DELETE FROM leads WHERE account_id_used IS NULL AND connection_sent_at IS NULL AND status = 'connected' AND (campaign_id IS NULL OR campaign_id = '')").run();
-      db.prepare(`
-        UPDATE campaigns SET 
-          accepted = (
-            SELECT COUNT(*) FROM leads 
-            WHERE leads.campaign_id = campaigns.id 
-            AND status IN ('connected', 'jd_sent', 'follow_up_sent')
-          )
-      `).run();
-    } catch (e) {
-      console.error('[Migration] Stats sync error:', e.message);
-    }
+      }
+    }).catch(() => {});
   } catch (_) {}
+
+  // Recalculate campaign accepted stats from actual leads table
+  try {
+    db.prepare("DELETE FROM leads WHERE account_id_used IS NULL AND connection_sent_at IS NULL AND status = 'connected' AND (campaign_id IS NULL OR campaign_id = '')").run();
+    db.prepare(`
+      UPDATE campaigns SET 
+        accepted = (
+          SELECT COUNT(*) FROM leads 
+          WHERE leads.campaign_id = campaigns.id 
+          AND status IN ('connected', 'jd_sent', 'follow_up_sent')
+        )
+    `).run();
+  } catch (e) {
+    console.error('[Migration] Stats sync error:', e.message);
+  }
 }
 
 function loadSettingsIntoEnv() {
