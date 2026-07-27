@@ -688,6 +688,11 @@ export default function CampaignBuilder() {
           setSteps(parsed.steps);
           setSettings({
             ...parsed.settings,
+            workingStart: c.working_hours_start || '09:00',
+            workingEnd: c.working_hours_end || '23:59',
+            workingDays: typeof c.working_days === 'string' ? JSON.parse(c.working_days) : (c.working_days || [1,2,3,4,5]),
+            dailyLimit: c.daily_limit_per_account || 20,
+            accounts: (c.accounts || []).map(a => a.id),
             startsAt: c.starts_at || '',
             endsAt: c.ends_at || ''
           });
@@ -805,7 +810,7 @@ export default function CampaignBuilder() {
       follow_up_2_b_template:     (fu2?.data.enableAB && !fu2?.data.aiMsg) ? (fu2?.data.messageB || '') : '',
       daily_limit_per_account:  s.dailyLimit  || 20,
       working_hours_start:      s.workingStart || '09:00',
-      working_hours_end:        s.workingEnd   || '18:00',
+      working_hours_end:        s.workingEnd   || '23:59',
       working_days:             s.workingDays  || [1,2,3,4,5],
       follow_up_1_days:         stepsArr[iIdx]?.waitAfter || 3,
       follow_up_2_days:         stepsArr[jIdx]?.waitAfter || 4,

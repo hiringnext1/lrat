@@ -401,8 +401,9 @@ function initSchema() {
     }).catch(() => {});
   } catch (_) {}
 
-  // Reset lead status to pending_connection if invite was never sent by GrowLeadz
+  // Reset lead status to pending_connection if invite was never sent by GrowLeadz & update working_hours_end
   try {
+    db.prepare("UPDATE campaigns SET working_hours_end = '23:59' WHERE working_hours_end = '18:00' OR working_hours_end = '21:00'").run();
     db.prepare("UPDATE leads SET status = 'pending_connection' WHERE connection_sent_at IS NULL AND account_id_used IS NULL AND status = 'connected'").run();
     db.prepare(`
       UPDATE campaigns SET 
