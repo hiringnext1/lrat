@@ -16,6 +16,10 @@ export default function Accounts() {
 
   async function fetchAccounts() {
     try {
+      if (window.location.search.includes('connected=1')) {
+        await axios.post('/api/accounts/sync');
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
       const res = await axios.get('/api/accounts');
       setAccounts(res.data.data || []);
     } catch (e) { console.error(e); }

@@ -255,6 +255,12 @@ router.post('/sync', requireActiveSubscription, async (req, res) => {
     }
 
     const accounts = db.prepare('SELECT * FROM accounts WHERE user_id = ? ORDER BY created_at DESC').all(req.userId);
+    
+    const io = req.app.get('io');
+    if (io && accounts.length > 0) {
+      io.to(`user_${req.userId}`).emit('linkedin_account_connected', { account: accounts[0] });
+    }
+
     res.json({ success: true, synced, data: accounts });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
