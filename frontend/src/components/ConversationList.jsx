@@ -180,7 +180,12 @@ export default function ConversationList({ conversations, activeId, onSelect, ac
             const preview = (conv.last_message_text || '').slice(0, 40);
             const time = conv.last_message_at || conv.updated_at;
             const isActive = conv.id === activeId;
-            const isUnread = !lead?.is_read && conv.last_message_from !== 'me';
+            const isUnread = Boolean(
+              conv.unread === 1 || 
+              conv.unread === true || 
+              (conv.unread_count && conv.unread_count > 0) || 
+              (lead && lead.is_read === 0 && conv.last_message_from !== 'me')
+            );
             const isAccountActive = accounts.find(a => String(a.id) === String(conv.account_id))?.status === 'active';
             const isPinned = pinnedIds.includes(conv.id);
 
@@ -220,9 +225,14 @@ export default function ConversationList({ conversations, activeId, onSelect, ac
                   <div className="flex items-center justify-between gap-1">
                     <div className="flex items-center gap-1.5 truncate">
                       {isPinned && <Pin size={10} className="text-amber-400 fill-amber-400 shrink-0" />}
-                      <p className={`text-[11px] truncate ${isUnread ? 'font-black text-white' : 'font-extrabold text-slate-300'}`}>
+                      <p className={`text-[11px] truncate ${isUnread ? 'font-black text-white' : 'font-semibold text-slate-300'}`}>
                         {name}
                       </p>
+                      {isUnread && (
+                        <span className="bg-blue-500/20 text-blue-400 border border-blue-500/40 text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded shrink-0">
+                          NEW
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
                       <span className="text-[8px] text-slate-500 font-bold uppercase">
@@ -246,12 +256,9 @@ export default function ConversationList({ conversations, activeId, onSelect, ac
                   )}
                   
                   <div className="flex items-center justify-between mt-1 gap-2">
-                    <p className={`text-[10px] truncate leading-tight flex-1 ${isUnread ? 'font-bold text-slate-200' : 'text-slate-400'}`}>
+                    <p className={`text-[10px] truncate leading-tight flex-1 ${isUnread ? 'font-bold text-blue-200' : 'text-slate-400'}`}>
                       {preview || 'LinkedIn Message'}
                     </p>
-                    {isUnread && (
-                      <span className="w-2 h-2 bg-blue-500 rounded-full shrink-0 animate-pulse" />
-                    )}
                   </div>
 
                   {/* Badges */}
