@@ -401,15 +401,20 @@ function initSchema() {
     }).catch(() => {});
   } catch (_) {}
 
-  // Recalculate campaign accepted stats from actual leads table
+  // Recalculate campaign accepted stats from actual leads table & purge organic leads
   try {
-    db.prepare("DELETE FROM leads WHERE account_id_used IS NULL AND connection_sent_at IS NULL AND status = 'connected' AND (campaign_id IS NULL OR campaign_id = '')").run();
+    db.prepare("DELETE FROM leads WHERE account_id_used IS NULL AND connection_sent_at IS NULL AND status = 'connected'").run();
     db.prepare(`
       UPDATE campaigns SET 
         accepted = (
           SELECT COUNT(*) FROM leads 
           WHERE leads.campaign_id = campaigns.id 
           AND status IN ('connected', 'jd_sent', 'follow_up_sent')
+        ),
+        connections_sent = (
+          SELECT COUNT(*) FROM leads 
+          WHERE leads.campaign_id = campaigns.id 
+          AND status IN ('connection_sent', 'connected', 'jd_sent', 'follow_up_sent')
         )
     `).run();
   } catch (e) {
