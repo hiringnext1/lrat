@@ -137,8 +137,8 @@ function shuffle(arr) {
 }
 
 function randomDelay() {
-  const min = 900000; // 15 minutes
-  const max = 1680000; // 28 minutes
+  const min = 420000; // 7 minutes
+  const max = 600000; // 10 minutes
   return Math.floor(Math.random() * (max - min) + min);
 }
 
