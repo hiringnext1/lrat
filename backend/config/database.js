@@ -401,10 +401,17 @@ function initSchema() {
     }).catch(() => {});
   } catch (_) {}
 
-  // Reset lead status to pending_connection if invite was never sent by GrowLeadz & update working_hours_end
+  // Auto-attach active user accounts to campaigns with 0 linked accounts
   try {
     db.prepare("UPDATE campaigns SET working_hours_end = '23:59' WHERE working_hours_end = '18:00' OR working_hours_end = '21:00'").run();
     db.prepare("UPDATE leads SET status = 'pending_connection' WHERE connection_sent_at IS NULL AND account_id_used IS NULL AND status = 'connected'").run();
+    db.prepare(`
+      INSERT OR IGNORE INTO campaign_accounts (campaign_id, account_id)
+      SELECT c.id, a.id 
+      FROM campaigns c
+      JOIN accounts a ON a.user_id = c.user_id AND a.is_active = 1 AND a.status = 'active'
+      WHERE c.id NOT IN (SELECT campaign_id FROM campaign_accounts)
+    `).run();
     db.prepare(`
       UPDATE campaigns SET 
         accepted = (

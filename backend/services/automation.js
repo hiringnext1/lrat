@@ -228,9 +228,20 @@ async function runSendConnections() {
         const workingDays = JSON.parse(campaign.working_days || '[1,2,3,4,5]');
         if (!workingDays.includes(safety.getISTDayOfWeek(timezone))) return;
 
-        const campaignAccounts = db.prepare(
+        let campaignAccounts = db.prepare(
           `SELECT a.* FROM accounts a JOIN campaign_accounts ca ON ca.account_id = a.id WHERE ca.campaign_id = ? AND a.is_active = 1 AND a.status = 'active'`
         ).all(campaign.id);
+
+        if (campaignAccounts.length === 0) {
+          campaignAccounts = db.prepare(
+            `SELECT * FROM accounts WHERE user_id = ? AND is_active = 1 AND status = 'active'`
+          ).all(campaign.user_id);
+        }
+
+        if (campaignAccounts.length === 0) {
+          console.log(`[Connections] No active senders for campaign ${campaign.name} (user ${campaign.user_id})`);
+          return;
+        }
 
         const shuffled = shuffle(campaignAccounts);
 
@@ -624,11 +635,16 @@ async function executeFlowNode(db, campaign, lead, node, execMap, nodeMap) {
       return;
     }
   } else {
-    const campaignAccounts = db.prepare(
+    let campaignAccounts = db.prepare(
       `SELECT a.* FROM accounts a 
        JOIN campaign_accounts ca ON ca.account_id = a.id 
        WHERE ca.campaign_id = ? AND a.is_active = 1 AND a.status = 'active'`
     ).all(campaign.id);
+    if (campaignAccounts.length === 0) {
+      campaignAccounts = db.prepare(
+        `SELECT * FROM accounts WHERE user_id = ? AND is_active = 1 AND status = 'active'`
+      ).all(campaign.user_id);
+    }
     if (campaignAccounts.length > 0) {
       acc = campaignAccounts[Math.floor(Math.random() * campaignAccounts.length)];
     }
