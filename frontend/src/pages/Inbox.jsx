@@ -44,10 +44,17 @@ export default function Inbox() {
 
   async function selectConversation(conv) {
     setActiveConv(conv);
+    
+    // Clear unread indicator immediately in local UI state on click
+    setConversations(prev => prev.map(c => 
+      c.id === conv.id 
+        ? { ...c, unread: 0, unread_count: 0, lead: c.lead ? { ...c.lead, is_read: 1 } : null } 
+        : c
+    ));
+
     if (conv?.lead && !conv.lead.is_read) {
       try {
         await axios.put(`/api/inbox/conversations/${conv.id}/read`, { lead_id: conv.lead.id });
-        setConversations(prev => prev.map(c => c.id === conv.id ? { ...c, lead: { ...c.lead, is_read: 1 } } : c));
         window.dispatchEvent(new Event('inbox_updated'));
       } catch (e) { console.error(e); }
     }
