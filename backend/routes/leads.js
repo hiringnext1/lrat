@@ -228,8 +228,9 @@ router.post('/import/url', requireActiveSubscription, async (req, res) => {
           }
 
           if (totalImported < targetCount && hasMore) {
-            console.log(`[Background Import] Fetching next batch in 1.5s...`);
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            const randomWaitSecs = Math.floor(Math.random() * (30 - 15 + 1)) + 15;
+            console.log(`[Background Import Safety Delay] Waiting ${randomWaitSecs}s for human-like paging behavior...`);
+            await new Promise(resolve => setTimeout(resolve, randomWaitSecs * 1000));
             batchCount++;
           }
         }
