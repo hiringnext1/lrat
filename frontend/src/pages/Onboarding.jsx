@@ -20,8 +20,11 @@ import {
   Compass,
   Home,
   Wrench,
-  PenTool
+  PenTool,
+  ArrowRight,
+  ShieldAlert
 } from 'lucide-react';
+import ConnectLinkedInModal from '../components/ConnectLinkedInModal';
 
 export default function Onboarding() {
   const navigate = useNavigate();
@@ -44,6 +47,7 @@ export default function Onboarding() {
 
   // Step 3 LinkedIn Connection variables
   const [connectPhase, setConnectPhase] = useState('idle'); // idle | waiting | success | error
+  const [showConnectModal, setShowConnectModal] = useState(false);
   const [connectUrl, setConnectUrl] = useState('');
   const [pollCount, setPollCount] = useState(0);
   const [connectedAccount, setConnectedAccount] = useState(null);
@@ -573,7 +577,7 @@ export default function Onboarding() {
                     Skip & Link Later
                   </button>
                   <button
-                    onClick={startLinkedInSync}
+                    onClick={() => setShowConnectModal(true)}
                     className="flex-1 flex items-center justify-center gap-2 bg-[#0077b5] hover:bg-[#006097] text-white py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest shadow-md transition-all active:scale-[0.98]"
                   >
                     <ExternalLink size={14} />
@@ -798,6 +802,22 @@ export default function Onboarding() {
               <ChevronRight size={16} strokeWidth={2.5} />
             </button>
           </div>
+        )}
+
+        {showConnectModal && (
+          <ConnectLinkedInModal
+            onClose={() => setShowConnectModal(false)}
+            onConnected={() => {
+              setShowConnectModal(false);
+              axios.get('/api/accounts').then(res => {
+                const accounts = res.data.data || [];
+                if (accounts.length > 0) {
+                  setConnectedAccount(accounts[0]);
+                  setConnectPhase('success');
+                }
+              });
+            }}
+          />
         )}
       </div>
     </div>

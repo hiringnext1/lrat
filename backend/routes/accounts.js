@@ -64,6 +64,79 @@ router.post('/connect-link', requireActiveSubscription, async (req, res) => {
   }
 });
 
+// ⚡ 1-Click Direct Cookie (li_at) Connect Endpoint (3-Second Connect)
+router.post('/connect-cookie', requireActiveSubscription, async (req, res) => {
+  try {
+    const { cookie_value } = req.body;
+    if (!cookie_value || !cookie_value.trim()) {
+      return res.status(400).json({ success: false, error: 'Please enter a valid li_at cookie value' });
+    }
+
+    const apiKey = getSetting('UNIPILE_API_KEY');
+    const dsn = getSetting('UNIPILE_DSN');
+
+    if (!apiKey || apiKey.includes('paste_your')) {
+      return res.status(400).json({ success: false, error: 'Unipile API Key is missing or invalid. Please check Settings.' });
+    }
+
+    const cleanCookie = cookie_value.trim().replace(/^"|"$/g, '');
+
+    const axios = require('axios');
+    const response = await axios.post(
+      `${dsn}/api/v1/accounts`,
+      {
+        provider: 'LINKEDIN',
+        access_token: cleanCookie,
+      },
+      {
+        headers: {
+          'X-API-KEY': apiKey,
+          'Content-Type': 'application/json',
+        },
+        timeout: 20000,
+      }
+    );
+
+    const unipileAccount = response.data;
+    if (!unipileAccount || (!unipileAccount.id && !unipileAccount.account_id)) {
+      return res.status(502).json({ success: false, error: 'Failed to connect LinkedIn account with cookie' });
+    }
+
+    const db = getDb();
+    const unipileId = unipileAccount.id || unipileAccount.account_id;
+    const name = unipileAccount.name || unipileAccount.username || 'LinkedIn Account';
+    const email = unipileAccount.email || '';
+    const photo = unipileAccount.profile_picture_url || unipileAccount.photo || '';
+    const publicId = unipileAccount.public_identifier || unipileAccount.username || '';
+    const url = publicId ? `https://www.linkedin.com/in/${publicId}` : '';
+
+    db.prepare(`
+      INSERT INTO accounts (unipile_account_id, name, email, photo_url, status, linkedin_url, user_id)
+      VALUES (?, ?, ?, ?, 'active', ?, ?)
+      ON CONFLICT(unipile_account_id) DO UPDATE SET
+        name = excluded.name,
+        email = excluded.email,
+        photo_url = excluded.photo_url,
+        linkedin_url = excluded.linkedin_url,
+        user_id = excluded.user_id
+    `).run(unipileId, name, email, photo, url, req.userId);
+
+    const account = db.prepare('SELECT * FROM accounts WHERE unipile_account_id = ?').get(unipileId);
+
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`user_${req.userId}`).emit('linkedin_account_connected', { account });
+    }
+
+    res.json({ success: true, account, message: 'LinkedIn account connected instantly!' });
+  } catch (err) {
+    const detail = err?.response?.data || err.message;
+    console.error('[Unipile Cookie Connect Error]', detail);
+    const errText = detail?.detail || detail?.message || (typeof detail === 'string' ? detail : 'Invalid or expired li_at cookie value');
+    res.status(400).json({ success: false, error: errText });
+  }
+});
+
 function calcHealthScore(acc, acceptanceRate) {
   if (acc.status === 'banned') return 0;
   let score = 100;
