@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X, ExternalLink, CheckCircle2, Loader2, RefreshCw, Shield, KeyRound, Globe, Sparkles, HelpCircle, ArrowRight, Zap, Copy, Check } from 'lucide-react';
 import axios from 'axios';
 import socket from '../socket';
@@ -189,8 +190,8 @@ export default function ConnectLinkedInModal({ onClose, onConnected }) {
     });
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-xl p-4 select-none">
+  const modalJSX = (
+    <div className="fixed inset-0 z-[999999] flex items-center justify-center bg-slate-950/85 backdrop-blur-xl p-4 select-none">
       <div className="bg-[#0D1221] border border-white/10 rounded-[32px] shadow-2xl w-full max-w-lg overflow-hidden relative text-left transition-all">
         
         {/* Glow ambient background accents */}
@@ -496,4 +497,6 @@ export default function ConnectLinkedInModal({ onClose, onConnected }) {
       </div>
     </div>
   );
+
+  return createPortal(modalJSX, document.body);
 }
