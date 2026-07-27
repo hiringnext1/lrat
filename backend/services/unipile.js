@@ -237,6 +237,17 @@ async function getAttendee(attendeeId) {
   }
 }
 
+async function getChatAttendees(chatId) {
+  try {
+    const client = getClient();
+    const res = await client.get(`/api/v1/chats/${chatId}/attendees`);
+    const items = res.data?.items || res.data?.attendees || res.data || [];
+    return { success: true, data: Array.isArray(items) ? items : [] };
+  } catch (err) {
+    return { success: false, data: [], error: err?.response?.data || err.message };
+  }
+}
+
 module.exports = {
   getAccounts,
   getProfilesFromSearchURL,
@@ -250,5 +261,6 @@ module.exports = {
   getRecentPosts,
   likePost,
   getAttendee,
+  getChatAttendees,
   deleteAccount,
 };

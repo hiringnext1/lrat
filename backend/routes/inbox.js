@@ -85,27 +85,41 @@ router.get('/conversations', async (req, res) => {
         
         if (campaign_id && (!lead || String(lead.campaign_id) !== String(campaign_id))) continue;
 
-        // 2. Resolve Name (Database -> Unipile attendee -> Cache -> Unipile API Fallback)
-        let attendeeName = 'LinkedIn User';
-        
-        if (lead?.full_name) {
-          attendeeName = lead.full_name;
-        } else if (otherParty?.name || otherParty?.display_name) {
-          attendeeName = otherParty.display_name || otherParty.name;
-        } else if (conv.title || conv.name) {
-          attendeeName = conv.title || conv.name;
-        } else if (memberId && nameCache[memberId]) {
-          attendeeName = nameCache[memberId];
-        } else if (memberId) {
+        // 2. Resolve Name & Avatar (Database -> Chat Attendees API -> Cache -> Fallback)
+        let attendeeName = lead?.full_name || nameCache[conv.id] || null;
+        let attendeeAvatar = lead?.profile_json ? JSON.parse(lead.profile_json)?.photo_url : (nameCache[`${conv.id}_pic`] || null);
+
+        if (!attendeeName) {
           try {
-            const attRes = await unipile.getAttendee(memberId);
-            if (attRes.success && (attRes.data.display_name || attRes.data.name)) {
-              attendeeName = attRes.data.display_name || attRes.data.name;
-              nameCache[memberId] = attendeeName;
+            const chatAttRes = await unipile.getChatAttendees(conv.id);
+            if (chatAttRes.success && Array.isArray(chatAttRes.data) && chatAttRes.data.length > 0) {
+              const other = chatAttRes.data.find(a => !a.is_self) || chatAttRes.data[0];
+              if (other?.name) {
+                attendeeName = other.name;
+                nameCache[conv.id] = attendeeName;
+              }
+              if (other?.picture_url) {
+                attendeeAvatar = other.picture_url;
+                nameCache[`${conv.id}_pic`] = attendeeAvatar;
+              }
             }
           } catch (e) {
-            console.error(`[Inbox] Failed to resolve name for ${memberId}`);
+            console.error(`[Inbox] Chat attendee fetch error for ${conv.id}:`, e.message);
           }
+        }
+
+        if (!attendeeName && memberId) {
+          try {
+            const attRes = await unipile.getAttendee(memberId);
+            if (attRes.success && (attRes.data?.display_name || attRes.data?.name)) {
+              attendeeName = attRes.data.display_name || attRes.data.name;
+              nameCache[conv.id] = attendeeName;
+            }
+          } catch (_) {}
+        }
+
+        if (!attendeeName) {
+          attendeeName = conv.title || conv.name || 'LinkedIn Member';
         }
 
         allConversations.push({
@@ -113,6 +127,7 @@ router.get('/conversations', async (req, res) => {
           account_id: account.id,
           account_name: account.name,
           attendee_name: attendeeName,
+          attendee_avatar: attendeeAvatar,
           lead: lead || null,
         });
       }

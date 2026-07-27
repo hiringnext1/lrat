@@ -194,9 +194,20 @@ export default function ConversationList({ conversations, activeId, onSelect, ac
                     : 'hover:bg-white/4 border-l-transparent'
                 }`}
               >
-                {/* Initials avatar */}
+                {/* Avatar with image fallback */}
                 <div className="relative shrink-0 mt-0.5">
-                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400 text-[10px] font-black uppercase">
+                  {conv.attendee_avatar ? (
+                    <img 
+                      src={conv.attendee_avatar} 
+                      alt={name} 
+                      className="w-9 h-9 rounded-xl object-cover border border-blue-500/30"
+                      onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                    />
+                  ) : null}
+                  <div 
+                    className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 border border-blue-500/30 items-center justify-center text-blue-400 text-[10px] font-black uppercase"
+                    style={{ display: conv.attendee_avatar ? 'none' : 'flex' }}
+                  >
                     {initials(name)}
                   </div>
                   <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-[#0D1221] ${
