@@ -85,7 +85,12 @@ async function generateConnectionNote(lead, userId = null) {
     const text = await callNvidia(prompt, 150, userId);
     return { success: true, data: text.slice(0, 280) };
   } catch (err) {
-    return { success: false, data: '', error: err.message };
+    console.warn(`[AI Warning] NVIDIA API error (${err.message}). Using smart fallback personalization.`);
+    const firstName = lead.full_name ? lead.full_name.split(' ')[0] : 'there';
+    const roleStr = lead.designation ? `work as ${lead.designation}` : 'background';
+    const companyStr = lead.company ? `at ${lead.company}` : '';
+    const fallbackNote = `Hi ${firstName}, I came across your profile and was impressed by your ${roleStr} ${companyStr}. I'd love to connect and share insights on scaling outreach & revenue!`;
+    return { success: true, data: fallbackNote.slice(0, 280), is_fallback: true };
   }
 }
 
@@ -95,7 +100,10 @@ async function generateJDMessage(lead, jdSummary, userId = null) {
     const text = await callNvidia(prompt, 600, userId);
     return { success: true, data: text };
   } catch (err) {
-    return { success: false, data: '', error: err.message };
+    console.warn(`[AI Warning] NVIDIA API error (${err.message}). Using smart fallback pitch generator.`);
+    const firstName = lead.full_name ? lead.full_name.split(' ')[0] : 'there';
+    const fallbackMessage = `Hi ${firstName}, thanks for connecting! I noticed your role at ${lead.company || 'your organization'} and thought this might be relevant.\n\n${jdSummary || "We help B2B teams automate LinkedIn lead generation safely with AI personalization and multi-account scaling."}\n\nGiven your background as ${lead.designation || 'a leader'}, I'd love to learn how you're currently tackling outreach. Would you be open to a quick 15-minute chat this week?`;
+    return { success: true, data: fallbackMessage, is_fallback: true };
   }
 }
 
@@ -106,7 +114,12 @@ async function generateFollowUp(lead, followUpNumber, userId = null) {
     const text = await callNvidia(prompt, 200, userId);
     return { success: true, data: text };
   } catch (err) {
-    return { success: false, data: '', error: err.message };
+    console.warn(`[AI Warning] NVIDIA API error (${err.message}). Using smart fallback follow-up.`);
+    const firstName = lead.full_name ? lead.full_name.split(' ')[0] : 'there';
+    const fallbackFollowUp = followUpNumber === 1
+      ? `Hi ${firstName}, following up on my previous message. I know things get busy at ${lead.company || 'work'} — wanted to check if you had a chance to review my note? Would love to hear your thoughts when you have a moment.`
+      : `Hi ${firstName}, quick final follow-up! No worries if the timing isn't right now. If you ever want to explore scaling B2B outreach automatically, feel free to reach out anytime.`;
+    return { success: true, data: fallbackFollowUp, is_fallback: true };
   }
 }
 
@@ -127,19 +140,30 @@ async function generateAIReply(lead, conversationHistory, lastMessage, userId = 
     const suggestions = JSON.parse(jsonMatch[0]);
     return { success: true, data: suggestions };
   } catch (err) {
+    const firstName = lead.full_name ? lead.full_name.split(' ')[0] : 'there';
     return {
-      success: false,
+      success: true,
       data: [
-        { type: 'ask_details', text: `Hi ${lead.full_name.split(' ')[0]}, great to hear from you! Could you share some more details so we can move things forward?` },
-        { type: 'schedule_call', text: `Hi ${lead.full_name.split(' ')[0]}, would you be free for a quick 15-minute call this week to explore mutual synergy?` },
-        { type: 'share_details', text: `Hi ${lead.full_name.split(' ')[0]}, happy to share more details. What specific aspects would you like to know more about?` },
+        { type: 'ask_details', text: `Hi ${firstName}, great to hear from you! Could you share some more details so we can move things forward?` },
+        { type: 'schedule_call', text: `Hi ${firstName}, would you be free for a quick 15-minute call this week to explore mutual synergy?` },
+        { type: 'share_details', text: `Hi ${firstName}, happy to share more details. What specific aspects would you like to know more about?` },
       ],
-      error: err.message,
+      is_fallback: true,
     };
   }
 }
 
 async function categorizeMessage(messageText, userId = null) {
+  const lowerMsg = (messageText || '').toLowerCase();
+  
+  // Smart rule-based detection first for fast response
+  if (/\b(interested|sure|call|demo|schedule|yes|talk|pricing|cost|send details|tell me more|share)\b/.test(lowerMsg)) {
+    return 'positive';
+  }
+  if (/\b(not interested|no thanks|stop|remove|unsubscribe|dont message|not relevant)\b/.test(lowerMsg)) {
+    return 'negative';
+  }
+
   const prompt = `Analyze this message from a prospect replying to an outreach message: "${messageText}".
 Categorize their response intent into exactly one of these three categories:
 - positive (e.g., interested, asking for details, wanting to call, sharing info)
@@ -150,7 +174,7 @@ Return ONLY the category word in lowercase (positive, negative, or neutral). No 
     let text = await callNvidia(prompt, 50, userId);
     text = text.toLowerCase().trim();
     if (['positive', 'negative', 'neutral'].includes(text)) return text;
-    return 'neutral'; // fallback
+    return 'neutral';
   } catch (err) {
     return 'neutral';
   }
@@ -169,16 +193,15 @@ async function generateIcebreaker(lead, userId = null) {
 
   const prompt = `${context}Write a highly personalized, single-sentence "ice-breaker" opening for a LinkedIn message to ${lead.full_name}, who is a ${lead.designation || 'professional'} at ${lead.company || 'their company'} in ${lead.location || 'their area'}. 
 Goal: Make them feel noticed as an individual before pitching your offer.
-Examples of good ice-breakers: 
-- "Saw your recent move to [Company], impressive trajectory!"
-- "Noticed you've been leading engineering at [Company] for 3 years now."
-- "Your background in [Industry/Tech] from [Location] caught my eye."
 Return ONLY the single sentence ice-breaker. No greeting like "Hi", no quotes, no extra text.`;
   try {
     const text = await callNvidia(prompt, 100, userId);
     return { success: true, data: text };
   } catch (err) {
-    return { success: false, data: '', error: err.message };
+    const roleStr = lead.designation ? `${lead.designation}` : 'professional';
+    const companyStr = lead.company ? `at ${lead.company}` : '';
+    const fallbackIcebreaker = `Noticed your impressive work as ${roleStr} ${companyStr} and wanted to reach out.`;
+    return { success: true, data: fallbackIcebreaker, is_fallback: true };
   }
 }
 
