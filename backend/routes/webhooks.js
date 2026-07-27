@@ -88,15 +88,35 @@ router.post('/unipile', verifyUnipileSignature, async (req, res) => {
       payload.event === 'chat.relation.updated'
     ) {
       const data = payload.data;
-      if (data && (data.status === 'CONNECTED' || data.status === 'accepted')) {
-        const memberId = data.provider_id || data.id;
+      if (data && (data.status === 'CONNECTED' || data.status === 'accepted' || data.relation === 'CONNECTED')) {
+        const memberId = data.provider_id || data.member_id || data.id || '';
+        const publicId = data.public_identifier || '';
+        const fullName = [data.first_name, data.last_name].filter(Boolean).join(' ') || data.name || '';
         const accountId = payload.account_id;
         
         // Find internal account
         const account = db.prepare('SELECT * FROM accounts WHERE unipile_account_id = ?').get(accountId);
         if (account) {
-          // Find lead with status connection_sent
-          const lead = db.prepare("SELECT * FROM leads WHERE linkedin_member_id = ? AND status = 'connection_sent'").get(memberId);
+          let lead = null;
+          if (memberId || publicId) {
+            lead = db.prepare(`
+              SELECT * FROM leads 
+              WHERE status != 'connected'
+              AND (
+                (linkedin_member_id IS NOT NULL AND linkedin_member_id != '' AND (linkedin_member_id = ? OR linkedin_member_id = ?))
+                OR (? != '' AND linkedin_url IS NOT NULL AND linkedin_url LIKE ?)
+              )
+              ORDER BY id DESC LIMIT 1
+            `).get(memberId, publicId, publicId, `%${publicId}%`);
+          }
+
+          if (!lead && fullName) {
+            lead = db.prepare(`
+              SELECT * FROM leads 
+              WHERE LOWER(full_name) = LOWER(?) AND status != 'connected'
+              ORDER BY id DESC LIMIT 1
+            `).get(fullName);
+          }
           
           if (lead) {
             const now = new Date().toISOString();

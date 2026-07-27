@@ -460,8 +460,32 @@ async function runCheckAcceptances() {
         }
 
         for (const item of acceptedList) {
-          const memberId = item.member_id || item.provider_id || item.id;
-          const lead = db.prepare("SELECT * FROM leads WHERE linkedin_member_id = ? AND status = 'connection_sent'").get(memberId);
+          const memberId = item.member_id || item.provider_id || item.id || '';
+          const publicId = item.public_identifier || '';
+          const url = item.public_profile_url || item.url || '';
+          const fullName = [item.first_name, item.last_name].filter(Boolean).join(' ') || item.name || '';
+
+          let lead = null;
+          if (memberId || publicId) {
+            lead = db.prepare(`
+              SELECT * FROM leads 
+              WHERE status != 'connected'
+              AND (
+                (linkedin_member_id IS NOT NULL AND linkedin_member_id != '' AND (linkedin_member_id = ? OR linkedin_member_id = ?))
+                OR (? != '' AND linkedin_url IS NOT NULL AND linkedin_url LIKE ?)
+              )
+              ORDER BY id DESC LIMIT 1
+            `).get(memberId, publicId, publicId, `%${publicId}%`);
+          }
+
+          if (!lead && fullName) {
+            lead = db.prepare(`
+              SELECT * FROM leads 
+              WHERE LOWER(full_name) = LOWER(?) AND status != 'connected'
+              ORDER BY id DESC LIMIT 1
+            `).get(fullName);
+          }
+
           if (!lead || lead.reply_received) continue;
           const campaign = db.prepare('SELECT * FROM campaigns WHERE id = ?').get(lead.campaign_id);
           if (!campaign) continue;

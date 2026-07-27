@@ -720,7 +720,10 @@ export default function CampaignBuilder() {
       
       const prettyGoal = GOALS.find(g => g.id === goalId)?.label || goalId;
       const formattedDate = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
-      setCampaignName(`${prettyGoal} Outreach - ${formattedDate}`);
+      // Only set default name if user has not typed a custom campaign name
+      if (!campaignName || campaignName.includes('Outreach -') || campaignName.includes('Sequence -')) {
+        setCampaignName(`${prettyGoal} Outreach - ${formattedDate}`);
+      }
     }
   }
 
@@ -735,7 +738,9 @@ export default function CampaignBuilder() {
       setSteps(freshSteps);
 
       const formattedDate = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
-      setCampaignName(`${preset.label} - ${formattedDate}`);
+      if (!campaignName || campaignName.includes('Outreach -') || campaignName.includes('Sequence -')) {
+        setCampaignName(`${preset.label} - ${formattedDate}`);
+      }
     }
   }
 

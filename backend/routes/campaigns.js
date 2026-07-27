@@ -162,6 +162,8 @@ router.put('/:id', requireActiveSubscription, (req, res) => {
     } = req.body;
 
     const now = new Date().toISOString();
+    const finalName = (name && typeof name === 'string' && name.trim()) ? name.trim() : campaign.name;
+
     db.prepare(
       `UPDATE campaigns SET
         name = ?, connection_note_template = ?, jd_message_template = ?,
@@ -173,7 +175,7 @@ router.put('/:id', requireActiveSubscription, (req, res) => {
         flow_json = ?, jd_summary = ?, starts_at = ?, ends_at = ?, updated_at = ?
        WHERE id = ? AND user_id = ?`
     ).run(
-      name ?? campaign.name,
+      finalName,
       connection_note_template ?? campaign.connection_note_template,
       jd_message_template ?? campaign.jd_message_template,
       follow_up_1_template ?? campaign.follow_up_1_template,
