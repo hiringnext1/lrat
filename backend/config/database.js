@@ -357,6 +357,16 @@ function initSchema() {
   if (adminEmailSetting.c === 0) {
     db.prepare("INSERT INTO settings (key, value) VALUES ('ADMIN_EMAIL', 'freelance.vishal22@gmail.com')").run();
   }
+
+  // Seed default Unipile credentials if missing or using old placeholder
+  const currentUnipileKey = db.prepare("SELECT value FROM settings WHERE key = 'UNIPILE_API_KEY'").get();
+  if (!currentUnipileKey || currentUnipileKey.value.includes('paste_your')) {
+    db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('UNIPILE_API_KEY', 'vVMAwuwx.hnEr/TilENp1n2+cVZY7NPIzsQ/KV1not9KmBKH+oNg=')").run();
+  }
+  const currentUnipileDsn = db.prepare("SELECT value FROM settings WHERE key = 'UNIPILE_DSN'").get();
+  if (!currentUnipileDsn || currentUnipileDsn.value.includes('paste_your') || currentUnipileDsn.value.includes('api43')) {
+    db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('UNIPILE_DSN', 'https://api52.unipile.com:18228')").run();
+  }
 }
 
 function loadSettingsIntoEnv() {
