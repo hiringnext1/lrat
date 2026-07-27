@@ -21,7 +21,7 @@ router.get('/conversations', async (req, res) => {
     const db = getDb();
     const { account_id, campaign_id, sort } = req.query;
 
-    let accounts = db.prepare("SELECT * FROM accounts WHERE is_active = 1 AND user_id = ?").all(req.userId);
+    let accounts = db.prepare("SELECT * FROM accounts WHERE is_active = 1 AND (user_id = ? OR user_id IS NULL)").all(req.userId);
 
     // Auto-sync accounts from Unipile if user has 0 accounts linked in local DB
     if (accounts.length === 0) {
@@ -50,7 +50,7 @@ router.get('/conversations', async (req, res) => {
               req.userId
             );
           }
-          accounts = db.prepare("SELECT * FROM accounts WHERE is_active = 1 AND user_id = ?").all(req.userId);
+          accounts = db.prepare("SELECT * FROM accounts WHERE is_active = 1 AND (user_id = ? OR user_id IS NULL)").all(req.userId);
         }
       } catch (e) {
         console.error('[Inbox Auto-Sync Accounts Error]', e.message);
@@ -59,23 +59,42 @@ router.get('/conversations', async (req, res) => {
 
     if (account_id) accounts = accounts.filter((a) => a.id === parseInt(account_id));
 
-    const allConversations = [];
+    // Parallel fetch conversations for all accounts
+    const accountResults = await Promise.all(
+      accounts.map(account =>
+        unipile.getConversations(account.unipile_account_id)
+          .then(res => ({ account, items: res.success && Array.isArray(res.data) ? res.data : [] }))
+          .catch(() => ({ account, items: [] }))
+      )
+    );
 
-    for (const account of accounts) {
-      const result = await unipile.getConversations(account.unipile_account_id);
-      if (!result.success) continue;
+    const rawList = [];
+    for (const { account, items } of accountResults) {
+      for (const conv of items) {
+        rawList.push({ conv, account });
+      }
+    }
 
-      for (const conv of result.data) {
+    // Sort by recency
+    rawList.sort((a, b) => {
+      const tA = new Date(a.conv.timestamp || a.conv.last_message_at || a.conv.updated_at || 0).getTime();
+      const tB = new Date(b.conv.timestamp || b.conv.last_message_at || b.conv.updated_at || 0).getTime();
+      return tB - tA;
+    });
+
+    // Limit to top 60 most recent conversations for fast rendering
+    const topList = rawList.slice(0, 60);
+
+    const allConversations = await Promise.all(
+      topList.map(async ({ conv, account }) => {
         let memberId = conv.attendee_provider_id;
-        let otherParty = null;
         
-        // Fallback for different Unipile versions/structures
         let attendees = [];
         if (Array.isArray(conv.attendees) && conv.attendees.length > 0) attendees = conv.attendees;
         else if (Array.isArray(conv.participants) && conv.participants.length > 0) attendees = conv.participants;
         else if (conv.attendee) attendees = [conv.attendee];
 
-        otherParty = attendees.find((a) => a.id !== account.unipile_account_id) || attendees[0];
+        const otherParty = attendees.find((a) => a.id !== account.unipile_account_id) || attendees[0];
         if (!memberId) {
           memberId = otherParty?.provider_id || otherParty?.id;
         }
@@ -83,60 +102,21 @@ router.get('/conversations', async (req, res) => {
         // 1. Try Database matching for campaign lead
         let lead = memberId ? db.prepare('SELECT * FROM leads WHERE linkedin_member_id = ? AND user_id = ?').get(memberId, req.userId) : null;
         
-        if (campaign_id && (!lead || String(lead.campaign_id) !== String(campaign_id))) continue;
+        if (campaign_id && (!lead || String(lead.campaign_id) !== String(campaign_id))) return null;
 
-        // 2. Resolve Name & Avatar (Database -> Chat Attendees API -> Cache -> Fallback)
-        let attendeeName = lead?.full_name || nameCache[conv.id] || null;
-        let attendeeAvatar = lead?.profile_json ? JSON.parse(lead.profile_json)?.photo_url : (nameCache[`${conv.id}_pic`] || null);
+        // 2. Resolve Name & Avatar (Database -> Cache -> Chat Attendees -> Fallback)
+        let attendeeName = lead?.full_name || nameCache[conv.id] || otherParty?.name || otherParty?.display_name || null;
+        let attendeeAvatar = lead?.profile_json ? JSON.parse(lead.profile_json)?.photo_url : (nameCache[`${conv.id}_pic`] || otherParty?.picture_url || null);
 
         if (!attendeeName) {
-          try {
-            const chatAttRes = await unipile.getChatAttendees(conv.id);
-            if (chatAttRes.success && Array.isArray(chatAttRes.data) && chatAttRes.data.length > 0) {
-              const other = chatAttRes.data.find(a => !a.is_self) || chatAttRes.data[0];
-              if (other?.name) {
-                attendeeName = other.name;
-                nameCache[conv.id] = attendeeName;
-              }
-              if (other?.picture_url) {
-                attendeeAvatar = other.picture_url;
-                nameCache[`${conv.id}_pic`] = attendeeAvatar;
-              }
-            }
-          } catch (e) {
-            console.error(`[Inbox] Chat attendee fetch error for ${conv.id}:`, e.message);
-          }
+          attendeeName = conv.title || conv.name || 'LinkedIn Member';
         }
 
-        if (!attendeeName && memberId) {
-          try {
-            const attRes = await unipile.getAttendee(memberId);
-            if (attRes.success && (attRes.data?.display_name || attRes.data?.name)) {
-              attendeeName = attRes.data.display_name || attRes.data.name;
-              nameCache[conv.id] = attendeeName;
-            }
-          } catch (_) {}
-        }
-
-        // 3. Resolve Last Message Text Snippet
         let lastMsgText = conv.last_message_text || conv.text || conv.snippet || nameCache[`${conv.id}_msg`] || '';
         let lastMsgTime = conv.last_message_at || conv.timestamp || conv.updated_at || null;
         let lastMsgFrom = conv.last_message_from || 'them';
 
-        if (!lastMsgText) {
-          try {
-            const msgsRes = await unipile.getMessages(conv.id);
-            if (msgsRes.success && Array.isArray(msgsRes.data) && msgsRes.data.length > 0) {
-              const latestMsg = msgsRes.data[0];
-              lastMsgText = latestMsg.text || '';
-              lastMsgTime = latestMsg.timestamp || lastMsgTime;
-              lastMsgFrom = latestMsg.is_sender ? 'me' : 'them';
-              nameCache[`${conv.id}_msg`] = lastMsgText;
-            }
-          } catch (_) {}
-        }
-
-        allConversations.push({
+        return {
           ...conv,
           account_id: account.id,
           account_name: account.name,
@@ -146,8 +126,18 @@ router.get('/conversations', async (req, res) => {
           last_message_at: lastMsgTime,
           last_message_from: lastMsgFrom,
           lead: lead || null,
-        });
-      }
+        };
+      })
+    );
+
+    const validConvs = allConversations.filter(Boolean);
+
+    res.json({ success: true, count: validConvs.length, data: validConvs });
+  } catch (err) {
+    console.error('[Inbox Conversations Error]', err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
     }
 
     if (sort === 'score' || sort === 'fit_score') {
