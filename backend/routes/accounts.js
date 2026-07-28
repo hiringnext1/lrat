@@ -21,8 +21,8 @@ router.post('/connect-link', requireActiveSubscription, async (req, res) => {
     const failUrl = redirect_url || `${baseUrl}/accounts?connected=0`;
     const notifyUrl = `${baseUrl}/api/webhooks/unipile`;
 
-    // Unipile V1 requires an expiry date, type, and providers array
-    const expiresOn = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    // Short 10-minute expiry for fresh auth session
+    const expiresOn = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
     const requestBody = {
       type: 'create',
@@ -32,7 +32,7 @@ router.post('/connect-link', requireActiveSubscription, async (req, res) => {
       success_redirect_url: successUrl,
       failure_redirect_url: failUrl,
       notify_url: notifyUrl,
-      name: 'GrowLeadz LinkedIn Account',
+      name: `GrowLeadz_User_${req.userId}`,
     };
 
     console.log('[Unipile Debug] Sending Request Body:', JSON.stringify(requestBody, null, 2));
@@ -268,11 +268,25 @@ router.post('/sync', async (req, res) => {
     `);
 
     for (const acc of result.data) {
+      const unipileId = acc.id || acc.account_id;
+      // Check if this account is already owned by another user in DB
+      const existing = db.prepare('SELECT user_id FROM accounts WHERE unipile_account_id = ?').get(unipileId);
+      if (existing && existing.user_id && existing.user_id !== req.userId) {
+        continue; // Strictly skip accounts owned by other users
+      }
+
+      // For unassigned accounts in Unipile, only claim if the account name carries this user's tag
+      const accName = String(acc.name || acc.username || acc.name_tag || '');
+      const userTag = `User_${req.userId}`;
+      if (!existing && !accName.includes(userTag)) {
+        continue; // Strictly skip pre-existing accounts created by other users
+      }
+
       const publicId = acc.public_identifier || acc.username || '';
       const url = publicId ? `https://www.linkedin.com/in/${publicId}` : '';
       
       upsert.run(
-        acc.id || acc.account_id,
+        unipileId,
         acc.name || acc.username || acc.display_name || 'LinkedIn Account',
         acc.email || acc.username || '',
         acc.profile_picture_url || acc.photo || '',
