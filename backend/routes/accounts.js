@@ -159,7 +159,7 @@ router.post('/connect-cookie', requireActiveSubscription, async (req, res) => {
         linkedin_url = excluded.linkedin_url,
         status = 'active',
         is_active = 1,
-        user_id = excluded.user_id
+        user_id = COALESCE(accounts.user_id, excluded.user_id)
     `).run(unipileId, name, email, photo, url, req.userId);
 
     const account = db.prepare('SELECT * FROM accounts WHERE unipile_account_id = ?').get(unipileId);
@@ -264,7 +264,7 @@ router.post('/sync', async (req, res) => {
         linkedin_url = excluded.linkedin_url,
         status = 'active',
         is_active = 1,
-        user_id = excluded.user_id
+        user_id = COALESCE(accounts.user_id, excluded.user_id)
     `);
 
     for (const acc of result.data) {
