@@ -113,12 +113,28 @@ function canSendConnection(account, campaign = null, db = null) {
     return { allowed: false, reason: 'Account is disabled' };
   }
 
-  const effectiveLimit = getEffectiveDailyLimit(account);
-  if (effectiveLimit === 0) {
+  const accountLimit = getEffectiveDailyLimit(account);
+  if (accountLimit === 0) {
     return { allowed: false, reason: 'Warmup not started — set warmup_week to begin' };
   }
+
+  // NOTE: daily_limit_per_account is a PER-ACCOUNT cap for accounts assigned to this campaign.
+  // If N accounts are assigned to a campaign, the overall campaign total per day can reach
+  // (effectiveLimit * N). An optional campaign-wide total daily cap (e.g. daily_limit_total)
+  // could be added as a separate field in the future if a global cap across all accounts is needed.
+  let effectiveLimit = accountLimit;
+  let source = 'account';
+
+  if (campaign && campaign.daily_limit_per_account > 0) {
+    const campaignLimit = Number(campaign.daily_limit_per_account);
+    if (campaignLimit < effectiveLimit) {
+      effectiveLimit = campaignLimit;
+      source = 'campaign';
+    }
+  }
+
   if (account.today_connections >= effectiveLimit) {
-    return { allowed: false, reason: `Daily limit reached (${account.today_connections}/${effectiveLimit})` };
+    return { allowed: false, reason: `Daily limit reached (${account.today_connections}/${effectiveLimit}, capped by ${source})` };
   }
   if (account.today_connections >= ABSOLUTE_MAX_DAILY) {
     return { allowed: false, reason: `Absolute daily max reached (${ABSOLUTE_MAX_DAILY})` };
