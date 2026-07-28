@@ -64,13 +64,14 @@ function getISTTime(timezone = 'Asia/Kolkata') {
 function getEffectiveDailyLimit(account) {
   const week = account.warmup_week;
   if (week === 0) return 0;
-  if (week === 1) return 5;
-  if (week === 2) return 10;
-  if (week === 3) return 15;
+  if (week === 1) return Math.min(account.daily_limit || 5, 5);
+  if (week === 2) return Math.min(account.daily_limit || 10, 10);
+  if (week === 3) return Math.min(account.daily_limit || 15, 15);
   
-  // Use randomized limit for the day if available, otherwise fallback to daily_limit
-  const baseLimit = account.current_day_limit || account.daily_limit || 20;
-  return Math.min(baseLimit, ABSOLUTE_MAX_DAILY);
+  // Strictly enforce user-defined daily_limit as the maximum upper bound
+  const userSetLimit = account.daily_limit || 20;
+  const currentLimit = account.current_day_limit || userSetLimit;
+  return Math.min(userSetLimit, currentLimit, ABSOLUTE_MAX_DAILY);
 }
 
 function isWithinWorkingHours(startTime, endTime, timezone = 'Asia/Kolkata') {
