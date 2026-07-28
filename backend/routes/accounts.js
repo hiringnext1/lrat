@@ -386,6 +386,31 @@ router.put('/:id', requireActiveSubscription, (req, res) => {
   }
 });
 
+// ⚡ Endpoint to toggle account pause / active status
+router.put('/:id/status', requireActiveSubscription, (req, res) => {
+  try {
+    const db = getDb();
+    const { is_active, status } = req.body;
+    const account = db.prepare('SELECT * FROM accounts WHERE id = ? AND user_id = ?').get(req.params.id, req.userId);
+    if (!account) return res.status(404).json({ success: false, error: 'Account not found' });
+
+    const newActive = is_active !== undefined ? (is_active ? 1 : 0) : account.is_active;
+    const newStatus = status ? status : (newActive ? 'active' : 'paused');
+
+    db.prepare('UPDATE accounts SET is_active = ?, status = ? WHERE id = ? AND user_id = ?').run(
+      newActive,
+      newStatus,
+      req.params.id,
+      req.userId
+    );
+
+    const updated = db.prepare('SELECT * FROM accounts WHERE id = ? AND user_id = ?').get(req.params.id, req.userId);
+    res.json({ success: true, data: updated, message: `Account status set to ${newStatus}` });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 router.post('/:id/warmup/start', requireActiveSubscription, (req, res) => {
   try {
     const db = getDb();
