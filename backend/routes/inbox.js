@@ -4,7 +4,7 @@ const { getDb } = require('../config/database');
 const unipile = require('../services/unipile');
 const aiService = require('../services/nvidia');
 
-const nameCache = {};
+const nameCache = new Map();
 
 router.get('/unread-count', (req, res) => {
   try {
@@ -105,14 +105,53 @@ router.get('/conversations', async (req, res) => {
         if (campaign_id && (!lead || String(lead.campaign_id) !== String(campaign_id))) return null;
 
         // 2. Resolve Name & Avatar (Database -> Cache -> Chat Attendees -> Fallback)
-        let attendeeName = lead?.full_name || nameCache[conv.id] || otherParty?.name || otherParty?.display_name || null;
-        let attendeeAvatar = lead?.profile_json ? JSON.parse(lead.profile_json)?.photo_url : (nameCache[`${conv.id}_pic`] || otherParty?.picture_url || null);
+        const cached = nameCache.get(conv.id);
+        let attendeeName = lead?.full_name || cached?.name || otherParty?.name || otherParty?.display_name || null;
+        let attendeeAvatar = lead?.profile_json ? JSON.parse(lead.profile_json)?.photo_url : (cached?.avatar || otherParty?.picture_url || null);
+
+        if (!attendeeName) {
+          if (cached?.name && (Date.now() - cached.timestamp < 15 * 60 * 1000)) {
+            attendeeName = cached.name;
+            if (cached.avatar && !attendeeAvatar) attendeeAvatar = cached.avatar;
+          } else {
+            try {
+              const attRes = await unipile.getChatAttendees(conv.id);
+              if (attRes.success && Array.isArray(attRes.data) && attRes.data.length > 0) {
+                const fetchedParty = attRes.data.find((a) => a.id !== account.unipile_account_id && a.account_id !== account.unipile_account_id) || attRes.data[0];
+                const fetchedName = fetchedParty?.name || fetchedParty?.display_name || fetchedParty?.full_name || null;
+                const fetchedAvatar = fetchedParty?.picture_url || fetchedParty?.avatar || fetchedParty?.photo_url || null;
+
+                if (fetchedName) {
+                  attendeeName = fetchedName;
+                  if (fetchedAvatar && !attendeeAvatar) attendeeAvatar = fetchedAvatar;
+
+                  nameCache.set(conv.id, {
+                    name: fetchedName,
+                    avatar: fetchedAvatar,
+                    timestamp: Date.now()
+                  });
+
+                  if (lead && !lead.full_name) {
+                    try {
+                      db.prepare('UPDATE leads SET full_name = ?, updated_at = ? WHERE id = ?').run(fetchedName, new Date().toISOString(), lead.id);
+                      lead.full_name = fetchedName;
+                    } catch (e) {
+                      console.error('[Inbox Lead Name Side-Write Error]', e.message);
+                    }
+                  }
+                }
+              }
+            } catch (err) {
+              console.error('[Inbox getChatAttendees Error]', err.message);
+            }
+          }
+        }
 
         if (!attendeeName) {
           attendeeName = conv.title || conv.name || 'LinkedIn Member';
         }
 
-        let lastMsgText = conv.last_message_text || conv.text || conv.snippet || nameCache[`${conv.id}_msg`] || '';
+        let lastMsgText = conv.last_message_text || conv.text || conv.snippet || '';
         let lastMsgTime = conv.last_message_at || conv.timestamp || conv.updated_at || null;
         let lastMsgFrom = conv.last_message_from || 'them';
 
