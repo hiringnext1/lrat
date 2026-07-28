@@ -89,6 +89,11 @@ export default function ConnectLinkedInModal({ onClose, onConnected }) {
   // ── Mode 1: Hosted Connect Flow ─────────────────────────────────────────────
   async function startHostedConnect() {
     setErrorMsg('');
+
+    // Open popup window immediately on click to prevent browser popup blockers!
+    const popup = window.open('about:blank', 'UnipileConnectWindow', 'width=620,height=720,left=200,top=100');
+    windowRef.current = popup;
+
     let url = connectUrl;
 
     if (!url) {
@@ -98,12 +103,21 @@ export default function ConnectLinkedInModal({ onClose, onConnected }) {
         url = res.data.url;
         setConnectUrl(url);
       } catch (e) {
+        popup?.close();
         setErrorMsg(e.response?.data?.error || 'Could not generate connect link. Check Unipile configuration.');
         setPhase('error');
         setLoadingUrl(false);
         return;
       }
       setLoadingUrl(false);
+    }
+
+    if (popup && !popup.closed) {
+      popup.location.href = url;
+      try { popup.focus(); } catch (_) {}
+    } else {
+      // Fallback if window popup was blocked
+      window.open(url, '_blank');
     }
 
     let initialIds = [];
@@ -116,7 +130,6 @@ export default function ConnectLinkedInModal({ onClose, onConnected }) {
       initialCountRef.current = 0;
     }
 
-    windowRef.current = window.open(url, '_blank', 'width=620,height=720,left=200,top=100');
     setPhase('waiting');
     startStepAnimation(3);
 
@@ -389,17 +402,35 @@ export default function ConnectLinkedInModal({ onClose, onConnected }) {
                       <Loader2 size={20} className="animate-spin text-blue-400 mx-auto" />
                       <p className="text-xs font-black text-blue-300 uppercase tracking-wider">Awaiting LinkedIn Login in Popup…</p>
                       <p className="text-[10px] text-slate-400 leading-relaxed font-medium">
-                        Log into LinkedIn in the open popup window. Account sync will auto-detect instantly!
+                        Please enter your LinkedIn credentials in the popup window. If popup was blocked or closed, click below:
                       </p>
                     </div>
 
-                    <button 
-                      onClick={manualCheck}
-                      className="w-full flex items-center justify-center gap-2 border border-white/10 text-slate-300 hover:bg-white/5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all"
-                    >
-                      <RefreshCw size={12} />
-                      <span>Trigger Instant Sync</span>
-                    </button>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (connectUrl) {
+                            window.open(connectUrl, '_blank', 'width=620,height=720,left=200,top=100');
+                          } else {
+                            startHostedConnect();
+                          }
+                        }}
+                        className="flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-md shadow-blue-500/20"
+                      >
+                        <ExternalLink size={12} />
+                        <span>Re-open Login Popup</span>
+                      </button>
+
+                      <button 
+                        type="button"
+                        onClick={manualCheck}
+                        className="flex items-center justify-center gap-1.5 border border-white/10 text-slate-300 hover:bg-white/5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all"
+                      >
+                        <RefreshCw size={12} />
+                        <span>Trigger Sync</span>
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
