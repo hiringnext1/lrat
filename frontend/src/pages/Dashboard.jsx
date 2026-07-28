@@ -201,10 +201,14 @@ function LogRow({ log }) {
 }
 
 // ─── NEXT TIMER ──────────────────────────────────────────────────────────────
-function NextTimer({ targetDate }) {
+function NextTimer({ targetDate, isPaused = false }) {
   const [left, setLeft] = useState('');
   useEffect(() => {
     const calc = () => {
+      if (isPaused || !targetDate) {
+        setLeft('Paused / Waiting');
+        return;
+      }
       let diff = new Date(targetDate).getTime() - Date.now();
       if (isNaN(diff) || diff <= 0) {
         setLeft('Dispatching now...');
@@ -217,14 +221,18 @@ function NextTimer({ targetDate }) {
     calc();
     const t = setInterval(calc, 1000);
     return () => clearInterval(t);
-  }, [targetDate]);
+  }, [targetDate, isPaused]);
   return (
     <div className="flex items-center justify-between w-full text-slate-400 text-[10px] font-bold uppercase tracking-wider">
       <div className="flex items-center gap-1.5">
         <Clock size={11} className="text-blue-400 animate-pulse" />
         <span>Next Connection Run</span>
       </div>
-      <span className="text-blue-400 font-black bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">{left}</span>
+      <span className={`font-black px-2 py-0.5 rounded border ${
+        left.includes('Paused') || left.includes('Waiting')
+          ? 'text-amber-400 bg-amber-500/10 border-amber-500/20'
+          : 'text-blue-400 bg-blue-500/10 border-blue-500/20'
+      }`}>{left}</span>
     </div>
   );
 }
@@ -654,7 +662,7 @@ export default function Dashboard() {
                 </div>
                 {stats.connections_today < (stats.daily_goal || 20) && (
                   <div className="w-full pt-3 border-t border-white/6">
-                    <NextTimer targetDate={stats.next_action_at} />
+                    <NextTimer targetDate={stats.next_action_at} isPaused={stats.active_accounts === 0 || stats.active_campaigns === 0} />
                   </div>
                 )}
               </div>
