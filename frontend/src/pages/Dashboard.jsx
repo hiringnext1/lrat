@@ -205,8 +205,12 @@ function NextTimer({ targetDate, isPaused = false }) {
   const [left, setLeft] = useState('');
   useEffect(() => {
     const calc = () => {
-      if (isPaused || !targetDate) {
-        setLeft('Paused / Waiting');
+      if (isPaused) {
+        setLeft('Paused');
+        return;
+      }
+      if (!targetDate) {
+        setLeft('Active (Next Loop)');
         return;
       }
       let diff = new Date(targetDate).getTime() - Date.now();
@@ -229,7 +233,7 @@ function NextTimer({ targetDate, isPaused = false }) {
         <span>Next Connection Run</span>
       </div>
       <span className={`font-black px-2 py-0.5 rounded border ${
-        left.includes('Paused') || left.includes('Waiting')
+        left.includes('Paused')
           ? 'text-amber-400 bg-amber-500/10 border-amber-500/20'
           : 'text-blue-400 bg-blue-500/10 border-blue-500/20'
       }`}>{left}</span>
