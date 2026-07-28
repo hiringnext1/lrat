@@ -275,13 +275,6 @@ router.post('/sync', async (req, res) => {
         continue; // Strictly skip accounts owned by other users
       }
 
-      // For unassigned accounts in Unipile, only claim if the account name carries this user's tag
-      const accName = String(acc.name || acc.username || acc.name_tag || '');
-      const userTag = `User_${req.userId}`;
-      if (!existing && !accName.includes(userTag)) {
-        continue; // Strictly skip pre-existing accounts created by other users
-      }
-
       const publicId = acc.public_identifier || acc.username || '';
       const url = publicId ? `https://www.linkedin.com/in/${publicId}` : '';
       
