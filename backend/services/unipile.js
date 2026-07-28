@@ -20,17 +20,48 @@ function getClient() {
   });
 }
 
+function isLinkedInAccount(a) {
+  if (!a || typeof a !== 'object') return false;
+  const isMatch = (str) => typeof str === 'string' && str.toUpperCase().includes('LINKEDIN');
+  
+  if (isMatch(a.type) || isMatch(a.provider) || isMatch(a.account_type) || isMatch(a.service) || isMatch(a.provider_name)) {
+    return true;
+  }
+  if (Array.isArray(a.sources)) {
+    if (a.sources.some(s => isMatch(s?.type) || isMatch(s?.provider) || isMatch(s?.service))) {
+      return true;
+    }
+  }
+  // Fallback: If item has an id/account_id and is not explicitly mail/whatsapp/etc.
+  if ((a.id || a.account_id) && !a.type && !a.provider) {
+    return true;
+  }
+  return false;
+}
+
 async function getAccounts() {
   try {
     const client = getClient();
     const res = await client.get('/api/v1/accounts');
     unipileBreaker.reset();
-    const items = res.data?.items || res.data?.accounts || res.data || [];
+
+    const isDebug = process.env.DEBUG_UNIPILE !== 'false';
+    if (isDebug) {
+      console.log('[Unipile Debug - Raw Accounts]', JSON.stringify(res.data, null, 2));
+    }
+
+    const items = res.data?.items || res.data?.accounts || (Array.isArray(res.data) ? res.data : []);
     const linkedin = Array.isArray(items)
-      ? items.filter((a) => a.type === 'LINKEDIN' || a.provider === 'LINKEDIN')
+      ? items.filter(isLinkedInAccount)
       : [];
+
+    if (isDebug) {
+      console.log(`[Unipile Debug - Filtered Accounts] Found ${linkedin.length} matching LinkedIn account(s) out of ${items.length} total items.`);
+    }
+
     return { success: true, data: linkedin };
   } catch (err) {
+    console.error('[Unipile Error - getAccounts]', err?.response?.data || err.message);
     return { success: false, data: [], error: err?.response?.data || err.message };
   }
 }

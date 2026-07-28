@@ -272,6 +272,9 @@ router.post('/sync', async (req, res) => {
       // Check if this account is already owned by another user in DB
       const existing = db.prepare('SELECT user_id FROM accounts WHERE unipile_account_id = ?').get(unipileId);
       if (existing && existing.user_id && existing.user_id !== req.userId) {
+        if (process.env.DEBUG_UNIPILE !== 'false') {
+          console.log(`[Sync Debug - Ownership Skip] Skipping account ${unipileId} (${acc.name || 'Unknown'}) because it belongs to user_id ${existing.user_id}, but sync request is for user_id ${req.userId}`);
+        }
         continue; // Strictly skip accounts owned by other users
       }
 
