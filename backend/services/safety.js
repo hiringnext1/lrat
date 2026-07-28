@@ -122,8 +122,15 @@ function canSendConnection(account, campaign = null, db = null) {
   if (account.today_connections >= ABSOLUTE_MAX_DAILY) {
     return { allowed: false, reason: `Absolute daily max reached (${ABSOLUTE_MAX_DAILY})` };
   }
-  if (account.week_connections >= Math.min(account.weekly_limit || 150, ABSOLUTE_MAX_WEEKLY)) {
-    return { allowed: false, reason: `Weekly limit reached (${account.week_connections})` };
+  // Enforce mandatory 7 to 10 minute cooldown between connection actions for each account
+  if (account.next_action_at) {
+    const nextTime = new Date(account.next_action_at).getTime();
+    if (Date.now() < nextTime) {
+      const waitSecs = Math.ceil((nextTime - Date.now()) / 1000);
+      const waitMins = Math.floor(waitSecs / 60);
+      const remainingSecs = waitSecs % 60;
+      return { allowed: false, reason: `Resting: ${waitMins}m ${remainingSecs}s left` };
+    }
   }
 
   const startTime = campaign?.working_hours_start || '09:00';

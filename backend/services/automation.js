@@ -228,18 +228,12 @@ async function runSendConnections() {
         const workingDays = JSON.parse(campaign.working_days || '[1,2,3,4,5]');
         if (!workingDays.includes(safety.getISTDayOfWeek(timezone))) return;
 
-        let campaignAccounts = db.prepare(
+        const campaignAccounts = db.prepare(
           `SELECT a.* FROM accounts a JOIN campaign_accounts ca ON ca.account_id = a.id WHERE ca.campaign_id = ? AND a.is_active = 1 AND a.status = 'active'`
         ).all(campaign.id);
 
         if (campaignAccounts.length === 0) {
-          campaignAccounts = db.prepare(
-            `SELECT * FROM accounts WHERE user_id = ? AND is_active = 1 AND status = 'active'`
-          ).all(campaign.user_id);
-        }
-
-        if (campaignAccounts.length === 0) {
-          console.log(`[Connections] No active senders for campaign ${campaign.name} (user ${campaign.user_id})`);
+          console.log(`[Connections] No active senders explicitly linked to campaign ${campaign.name} (ID: ${campaign.id})`);
           return;
         }
 
@@ -327,6 +321,9 @@ async function runSendConnections() {
               }
               safety.updateAccountHealth(db, account, false);
               logActivity(db, { account_id: account.id, lead_id: lead.id, campaign_id: campaign.id, action_type: 'connection_sent', status: 'failed', error_message: errStr.slice(0, 200) });
+              const errorDelayMs = randomDelay();
+              const nextActionAt = new Date(Date.now() + errorDelayMs).toISOString();
+              db.prepare('UPDATE accounts SET next_action_at = ? WHERE id = ?').run(nextActionAt, account.id);
               if (result.isRateLimit) {
                 await pauseAccountTemporarily(db, account, 8 * 60 * 60 * 1000, 'Rate limit resting 8h');
               }
@@ -630,16 +627,11 @@ async function executeFlowNode(db, campaign, lead, node, execMap, nodeMap) {
       return;
     }
   } else {
-    let campaignAccounts = db.prepare(
+    const campaignAccounts = db.prepare(
       `SELECT a.* FROM accounts a 
        JOIN campaign_accounts ca ON ca.account_id = a.id 
        WHERE ca.campaign_id = ? AND a.is_active = 1 AND a.status = 'active'`
     ).all(campaign.id);
-    if (campaignAccounts.length === 0) {
-      campaignAccounts = db.prepare(
-        `SELECT * FROM accounts WHERE user_id = ? AND is_active = 1 AND status = 'active'`
-      ).all(campaign.user_id);
-    }
     if (campaignAccounts.length > 0) {
       acc = campaignAccounts[Math.floor(Math.random() * campaignAccounts.length)];
     }

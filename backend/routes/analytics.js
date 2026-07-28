@@ -112,12 +112,6 @@ router.get('/overview', (req, res) => {
 
     const isRestingDay = activeCampaignsCount > 0 && !isWorkingDayToday;
 
-    // Fallback to random 7-10 min delay (420s to 600s) if no future cooldown is currently set
-    if (!nextActionAt || new Date(nextActionAt).getTime() <= Date.now()) {
-      const randMs = Math.floor(Math.random() * (600000 - 420000) + 420000);
-      nextActionAt = new Date(Date.now() + randMs).toISOString();
-    }
-
     res.json({
       success: true,
       data: {
