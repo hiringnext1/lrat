@@ -729,7 +729,8 @@ async function executeFlowNode(db, campaign, lead, node, execMap, nodeMap) {
         await record();
       } else {
         const errStr = JSON.stringify(inviteResult.error || '').toLowerCase();
-        if (errStr.includes('already_invited') || errStr.includes('already_sent')) {
+        if (errStr.includes('already_invited') || errStr.includes('already_sent') || errStr.includes('cannot_resend_yet') || errStr.includes('cannot resend yet')) {
+          console.log(`[Flow] Invite already sent or cooldowned for ${lead.full_name}. Marking connection_sent.`);
           db.prepare("UPDATE leads SET status = 'connection_sent', account_id_used = ?, connection_sent_at = ?, updated_at = ? WHERE id = ?").run(acc.id, now, now, lead.id);
           await record();
         } else {
