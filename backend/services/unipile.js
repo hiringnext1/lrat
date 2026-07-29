@@ -97,17 +97,43 @@ async function getProfilesFromSearchURL(searchUrl, accountId, cursor = null) {
 
 async function sendConnectionRequest(accountId, linkedinMemberId, note) {
   try {
-    return await unipileBreaker.call(async () => {
+    const resObj = await unipileBreaker.call(async () => {
       const client = getClient();
       await sleep(1000);
-      // Unipile V1: POST /api/v1/users/invite
-      const res = await client.post('/api/v1/users/invite', {
-        account_id: accountId,
-        provider_id: linkedinMemberId,
-        message: note || '',
-      });
-      return { success: true, data: res.data };
+      try {
+        // Unipile V1: POST /api/v1/users/invite
+        const res = await client.post('/api/v1/users/invite', {
+          account_id: accountId,
+          provider_id: linkedinMemberId,
+          message: note || '',
+        });
+        return { success: true, data: res.data };
+      } catch (axiosErr) {
+        const status = axiosErr?.response?.status;
+        const data = axiosErr?.response?.data;
+        const errStr = JSON.stringify(data || '').toLowerCase();
+
+        const isBenign = (status === 422 || status === 400) && (
+          errStr.includes('already_invited') ||
+          errStr.includes('already_sent') ||
+          errStr.includes('cannot_resend_yet') ||
+          errStr.includes('cannot resend yet')
+        );
+
+        if (isBenign) {
+          // Return non-throwing result inside breaker call so failure counter is NOT incremented
+          return { success: false, benign: true, data: null, error: data || axiosErr.message };
+        }
+        // Let genuine failures (5xx, timeouts, network, rate limits) throw to trigger breaker
+        throw axiosErr;
+      }
     });
+
+    if (resObj.benign) {
+      return { success: false, data: null, error: resObj.error, isRateLimit: false };
+    }
+
+    return resObj;
   } catch (err) {
     if (err.circuitOpen) {
       log.warn({ fn: 'sendConnectionRequest' }, err.message);
@@ -145,16 +171,40 @@ async function getNewAcceptances(accountId, since) {
 
 async function sendMessage(accountId, linkedinMemberId, messageText) {
   try {
-    return await unipileBreaker.call(async () => {
+    const resObj = await unipileBreaker.call(async () => {
       const client = getClient();
       await sleep(1000);
-      const res = await client.post('/api/v1/chats', {
-        account_id: accountId,
-        attendees_ids: [linkedinMemberId],
-        text: messageText,
-      });
-      return { success: true, data: res.data };
+      try {
+        const res = await client.post('/api/v1/chats', {
+          account_id: accountId,
+          attendees_ids: [linkedinMemberId],
+          text: messageText,
+        });
+        return { success: true, data: res.data };
+      } catch (axiosErr) {
+        const status = axiosErr?.response?.status;
+        const data = axiosErr?.response?.data;
+        const errStr = JSON.stringify(data || '').toLowerCase();
+
+        const isBenign = (status === 422 || status === 400) && (
+          errStr.includes('already_exists') ||
+          errStr.includes('chat_exists') ||
+          errStr.includes('cannot_resend_yet') ||
+          errStr.includes('cannot resend yet')
+        );
+
+        if (isBenign) {
+          return { success: false, benign: true, data: null, error: data || axiosErr.message };
+        }
+        throw axiosErr;
+      }
     });
+
+    if (resObj.benign) {
+      return { success: false, data: null, error: resObj.error };
+    }
+
+    return resObj;
   } catch (err) {
     if (err.circuitOpen) {
       log.warn({ fn: 'sendMessage' }, err.message);
@@ -192,14 +242,37 @@ async function getMessages(chatId) {
 
 async function sendReply(chatId, messageText) {
   try {
-    return await unipileBreaker.call(async () => {
+    const resObj = await unipileBreaker.call(async () => {
       const client = getClient();
       await sleep(1000);
-      const res = await client.post(`/api/v1/chats/${chatId}/messages`, {
-        text: messageText,
-      });
-      return { success: true, data: res.data };
+      try {
+        const res = await client.post(`/api/v1/chats/${chatId}/messages`, {
+          text: messageText,
+        });
+        return { success: true, data: res.data };
+      } catch (axiosErr) {
+        const status = axiosErr?.response?.status;
+        const data = axiosErr?.response?.data;
+        const errStr = JSON.stringify(data || '').toLowerCase();
+
+        const isBenign = (status === 422 || status === 400) && (
+          errStr.includes('duplicate') ||
+          errStr.includes('cannot_resend_yet') ||
+          errStr.includes('cannot resend yet')
+        );
+
+        if (isBenign) {
+          return { success: false, benign: true, data: null, error: data || axiosErr.message };
+        }
+        throw axiosErr;
+      }
     });
+
+    if (resObj.benign) {
+      return { success: false, data: null, error: resObj.error };
+    }
+
+    return resObj;
   } catch (err) {
     if (err.circuitOpen) {
       log.warn({ fn: 'sendReply' }, err.message);
