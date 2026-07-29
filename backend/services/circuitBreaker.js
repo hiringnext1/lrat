@@ -68,7 +68,14 @@ class CircuitBreaker {
       this._onSuccess();
       return result;
     } catch (err) {
-      this._onFailure(err);
+      const status = err?.response?.status;
+      // 4xx validation/client responses (e.g. 400, 422, 404, 409) mean the server is UP & HEALTHY.
+      // Do NOT count 4xx responses as service failures!
+      if (status && status >= 400 && status < 500) {
+        this._onSuccess();
+      } else {
+        this._onFailure(err);
+      }
       throw err;
     }
   }
