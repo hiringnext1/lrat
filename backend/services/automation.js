@@ -314,8 +314,8 @@ async function runSendConnections() {
               successOrStop = true;
             } else {
               const errStr = JSON.stringify(result.error || '').toLowerCase();
-              if (errStr.includes('already_invited') || errStr.includes('already_sent')) {
-                console.log(`[Connections] Syncing ${lead.full_name}: Already sent. Moving to next...`);
+              if (errStr.includes('already_invited') || errStr.includes('already_sent') || errStr.includes('cannot_resend_yet') || errStr.includes('cannot resend yet')) {
+                console.log(`[Connections] Syncing ${lead.full_name}: Invite already sent or provider cooldowned. Moving to next...`);
                 db.prepare("UPDATE leads SET status = 'connection_sent', account_id_used = ?, updated_at = ? WHERE id = ?").run(account.id, new Date().toISOString(), lead.id);
                 continue; // LOOP AGAIN
               }
