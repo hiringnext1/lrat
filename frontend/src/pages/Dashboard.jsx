@@ -210,7 +210,7 @@ function NextTimer({ targetDate, isPaused = false }) {
         return;
       }
       if (!targetDate) {
-        setLeft('Active (Next Loop)');
+        setLeft('Active (Scanning)');
         return;
       }
       let diff = new Date(targetDate).getTime() - Date.now();
