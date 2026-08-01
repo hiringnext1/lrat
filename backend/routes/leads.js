@@ -160,10 +160,10 @@ router.post('/import/url', requireActiveSubscription, async (req, res) => {
       return res.status(400).json({ success: false, error: 'search_url, account_id, and campaign_id are required' });
     }
 
-    const account = db.prepare('SELECT * FROM accounts WHERE id = ? AND user_id = ?').get(account_id, req.userId);
+    const account = db.prepare('SELECT * FROM accounts WHERE id = ? AND (user_id = ? OR user_id IS NULL)').get(account_id, req.userId);
     if (!account) return res.status(404).json({ success: false, error: 'Account not found' });
 
-    const campaign = db.prepare('SELECT * FROM campaigns WHERE id = ? AND user_id = ?').get(campaign_id, req.userId);
+    const campaign = db.prepare('SELECT * FROM campaigns WHERE id = ? AND (user_id = ? OR user_id IS NULL)').get(campaign_id, req.userId);
     if (!campaign) return res.status(404).json({ success: false, error: 'Campaign not found' });
 
     const currentUserId = req.userId;
