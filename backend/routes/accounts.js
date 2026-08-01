@@ -269,26 +269,34 @@ router.post('/sync', async (req, res) => {
 
     for (const acc of result.data) {
       const unipileId = acc.id || acc.account_id;
-      // Check if this account is already owned by another user in DB
-      const existing = db.prepare('SELECT user_id FROM accounts WHERE unipile_account_id = ?').get(unipileId);
-      if (existing && existing.user_id && existing.user_id !== req.userId) {
-        if (process.env.DEBUG_UNIPILE !== 'false') {
-          console.log(`[Sync Debug - Ownership Skip] Skipping account ${unipileId} (${acc.name || 'Unknown'}) because it belongs to user_id ${existing.user_id}, but sync request is for user_id ${req.userId}`);
-        }
-        continue; // Strictly skip accounts owned by other users
-      }
-
+      const accName = acc.name || acc.username || acc.display_name || 'LinkedIn Account';
       const publicId = acc.public_identifier || acc.username || '';
       const url = publicId ? `https://www.linkedin.com/in/${publicId}` : '';
-      
-      upsert.run(
-        unipileId,
-        acc.name || acc.username || acc.display_name || 'LinkedIn Account',
-        acc.email || acc.username || '',
-        acc.profile_picture_url || acc.photo || '',
-        url,
-        req.userId
-      );
+
+      // Check if this account already exists by name or unipile_account_id
+      const existingByName = db.prepare('SELECT id, user_id, unipile_account_id FROM accounts WHERE name = ?').get(accName);
+      if (existingByName) {
+        db.prepare(`
+          UPDATE accounts SET 
+            unipile_account_id = ?, 
+            status = 'active', 
+            is_active = 1, 
+            linkedin_url = COALESCE(NULLIF(?, ''), linkedin_url),
+            user_id = COALESCE(user_id, ?),
+            consecutive_failures = 0,
+            next_action_at = NULL
+          WHERE id = ?
+        `).run(unipileId, url, req.userId, existingByName.id);
+      } else {
+        upsert.run(
+          unipileId,
+          accName,
+          acc.email || acc.username || '',
+          acc.profile_picture_url || acc.photo || '',
+          url,
+          req.userId
+        );
+      }
       synced++;
     }
 

@@ -6,6 +6,8 @@ frontend/node_modules/
 .env.local
 backend/db/lrat.db
 backend/db/*.db
+backend/db/*.db-shm
+backend/db/*.db-wal
 lrat.db
 frontend/dist/
 *.log
