@@ -364,6 +364,26 @@ router.get('/import/jobs', async (req, res) => {
   }
 });
 
+// Helper function for flexible CSV column matching (BOM safe, case insensitive, fallback headers)
+function getCsvRowValue(row, targetKey, fallbackKeys = []) {
+  if (!row || typeof row !== 'object') return '';
+  if (targetKey && row[targetKey] !== undefined && String(row[targetKey]).trim() !== '') {
+    return String(row[targetKey]).trim();
+  }
+  const keys = Object.keys(row);
+  const searchKeys = [targetKey, ...fallbackKeys].filter(Boolean).map(k => k.toLowerCase());
+  for (const k of keys) {
+    const cleanKey = k.replace(/^\uFEFF/, '').trim().toLowerCase();
+    if (searchKeys.some(sk => cleanKey === sk || cleanKey.includes(sk))) {
+      const val = row[k];
+      if (val !== undefined && val !== null && String(val).trim() !== '') {
+        return String(val).trim();
+      }
+    }
+  }
+  return '';
+}
+
 router.post('/import/csv', upload.single('file'), requireActiveSubscription, (req, res) => {
   try {
     const db = getDb();
@@ -374,7 +394,7 @@ router.post('/import/csv', upload.single('file'), requireActiveSubscription, (re
       return res.status(400).json({ success: false, error: 'CSV file and campaign_id are required' });
     }
 
-    const campaign = db.prepare('SELECT * FROM campaigns WHERE id = ? AND user_id = ?').get(campaign_id, req.userId);
+    const campaign = db.prepare('SELECT * FROM campaigns WHERE id = ? AND (user_id = ? OR user_id IS NULL)').get(campaign_id, req.userId);
     if (!campaign) {
       if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
       return res.status(404).json({ success: false, error: 'Campaign not found' });
@@ -398,10 +418,10 @@ router.post('/import/csv', upload.single('file'), requireActiveSubscription, (re
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
           );
 
-          const checkDuplicateUrl = db.prepare('SELECT id FROM leads WHERE linkedin_url = ? AND user_id = ?');
+          const checkDuplicateUrl = db.prepare('SELECT id FROM leads WHERE linkedin_url = ? AND (user_id = ? OR user_id IS NULL)');
 
           for (const row of rows) {
-            const linkedinUrl = row[colMap.linkedin_url] || row.linkedin_url || row['LinkedIn URL'] || row.url || '';
+            const linkedinUrl = getCsvRowValue(row, colMap.linkedin_url, ['linkedin_url', 'linkedin url', 'url', 'profile url', 'linkedin', 'link', 'profile']);
             if (!linkedinUrl) continue;
 
             const existing = checkDuplicateUrl.get(linkedinUrl, currentUserId);
@@ -410,9 +430,12 @@ router.post('/import/csv', upload.single('file'), requireActiveSubscription, (re
               continue;
             }
 
-            const designationStr = row[colMap.designation] || row.designation || row['Designation'] || row['Job Title'] || '';
-            const headlineStr = row[colMap.headline] || row.headline || row['Headline'] || '';
-            const companyStr = row[colMap.company] || row.company || row['Company'] || '';
+            const fullNameStr = getCsvRowValue(row, colMap.full_name, ['full_name', 'full name', 'name', 'first name', 'contact name']) || 'Unknown';
+            const designationStr = getCsvRowValue(row, colMap.designation, ['designation', 'job title', 'title', 'position', 'role']);
+            const headlineStr = getCsvRowValue(row, colMap.headline, ['headline', 'tagline', 'bio']);
+            const companyStr = getCsvRowValue(row, colMap.company, ['company', 'company name', 'organization']);
+            const locationStr = getCsvRowValue(row, colMap.location, ['location', 'city', 'country', 'region']);
+            const memberIdStr = getCsvRowValue(row, colMap.member_id, ['member_id', 'member id', 'provider_id', 'provider id', 'id']);
 
             const score = calculateScore({
               designation: designationStr,
@@ -422,13 +445,13 @@ router.post('/import/csv', upload.single('file'), requireActiveSubscription, (re
             }, weights);
 
             const r = insertLead.run(
-              row[colMap.full_name] || row.full_name || row['Full Name'] || row.name || 'Unknown',
+              fullNameStr,
               headlineStr,
               companyStr,
               designationStr,
-              row[colMap.location] || row.location || row['Location'] || '',
+              locationStr,
               linkedinUrl,
-              row[colMap.member_id] || row.member_id || row['Member ID'] || '',
+              memberIdStr,
               campaign_id,
               currentUserId,
               score,
@@ -444,7 +467,7 @@ router.post('/import/csv', upload.single('file'), requireActiveSubscription, (re
           }
 
           if (imported > 0) {
-            db.prepare('UPDATE campaigns SET total_leads = total_leads + ? WHERE id = ? AND user_id = ?').run(imported, campaign_id, currentUserId);
+            db.prepare('UPDATE campaigns SET total_leads = total_leads + ? WHERE id = ?').run(imported, campaign_id);
           }
 
           return { imported, duplicates };
@@ -452,7 +475,8 @@ router.post('/import/csv', upload.single('file'), requireActiveSubscription, (re
 
         const { imported, duplicates } = transaction(results);
 
-        fs.unlinkSync(req.file.path);
+        if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+        console.log(`[CSV Import] Processed ${results.length} row(s) for Campaign ${campaign_id}: ${imported} imported, ${duplicates} duplicates/skipped.`);
         res.json({ success: true, imported, duplicates, total: results.length });
       })
       .on('error', (err) => {
