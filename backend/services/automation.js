@@ -316,21 +316,30 @@ async function runSendConnections() {
               successOrStop = true;
             } else {
               const errStr = JSON.stringify(result.error || '').toLowerCase();
-              if (errStr.includes('already_invited') || errStr.includes('already_sent') || errStr.includes('cannot_resend_yet') || errStr.includes('cannot resend yet')) {
-                console.log(`[Connections] Syncing ${lead.full_name}: Invite already sent or provider cooldowned. Moving to next...`);
-                db.prepare("UPDATE leads SET status = 'connection_sent', account_id_used = ?, updated_at = ? WHERE id = ?").run(account.id, new Date().toISOString(), lead.id);
-                await new Promise(r => setTimeout(r, 2000));
-                continue; // LOOP AGAIN
+              if (result.isAlreadyInvited || errStr.includes('already_invited') || errStr.includes('already_sent')) {
+                console.log(`[Connections] Syncing ${lead.full_name}: Invite already sent previously on LinkedIn. Marking connection_sent...`);
+                const now = new Date().toISOString();
+                db.prepare("UPDATE leads SET status = 'connection_sent', account_id_used = ?, connection_sent_at = ?, updated_at = ? WHERE id = ?").run(account.id, now, now, lead.id);
+                const delayMs = randomDelay();
+                const nextActionAt = new Date(Date.now() + delayMs).toISOString();
+                db.prepare('UPDATE accounts SET next_action_at = ? WHERE id = ?').run(nextActionAt, account.id);
+                successOrStop = true;
+              } else if (result.isCooldown || result.isRateLimit || errStr.includes('cannot_resend_yet') || errStr.includes('cannot resend yet')) {
+                console.log(`[Connections] Account ${account.name} is on LinkedIn provider cooldown (${errStr.slice(0, 80)}). Resting account 4h and keeping lead pending...`);
+                safety.updateAccountHealth(db, account, false);
+                await pauseAccountTemporarily(db, account, 4 * 60 * 60 * 1000, 'LinkedIn provider cooldown (cannot resend yet)');
+                successOrStop = true;
+              } else {
+                safety.updateAccountHealth(db, account, false);
+                logActivity(db, { account_id: account.id, lead_id: lead.id, campaign_id: campaign.id, action_type: 'connection_sent', status: 'failed', error_message: errStr.slice(0, 200) });
+                const errorDelayMs = randomDelay();
+                const nextActionAt = new Date(Date.now() + errorDelayMs).toISOString();
+                db.prepare('UPDATE accounts SET next_action_at = ? WHERE id = ?').run(nextActionAt, account.id);
+                if (result.isRateLimit) {
+                  await pauseAccountTemporarily(db, account, 8 * 60 * 60 * 1000, 'Rate limit resting 8h');
+                }
+                successOrStop = true;
               }
-              safety.updateAccountHealth(db, account, false);
-              logActivity(db, { account_id: account.id, lead_id: lead.id, campaign_id: campaign.id, action_type: 'connection_sent', status: 'failed', error_message: errStr.slice(0, 200) });
-              const errorDelayMs = randomDelay();
-              const nextActionAt = new Date(Date.now() + errorDelayMs).toISOString();
-              db.prepare('UPDATE accounts SET next_action_at = ? WHERE id = ?').run(nextActionAt, account.id);
-              if (result.isRateLimit) {
-                await pauseAccountTemporarily(db, account, 8 * 60 * 60 * 1000, 'Rate limit resting 8h');
-              }
-              successOrStop = true;
             }
           }
         }
@@ -770,10 +779,14 @@ async function executeFlowNode(db, campaign, lead, node, execMap, nodeMap) {
         await record();
       } else {
         const errStr = JSON.stringify(inviteResult.error || '').toLowerCase();
-        if (errStr.includes('already_invited') || errStr.includes('already_sent') || errStr.includes('cannot_resend_yet') || errStr.includes('cannot resend yet')) {
-          console.log(`[Flow] Invite already sent or cooldowned for ${lead.full_name}. Marking connection_sent.`);
+        if (inviteResult.isAlreadyInvited || errStr.includes('already_invited') || errStr.includes('already_sent')) {
+          console.log(`[Flow] Invite already sent previously on LinkedIn for ${lead.full_name}. Marking connection_sent.`);
           db.prepare("UPDATE leads SET status = 'connection_sent', account_id_used = ?, connection_sent_at = ?, updated_at = ? WHERE id = ?").run(acc.id, now, now, lead.id);
           await record();
+        } else if (inviteResult.isCooldown || inviteResult.isRateLimit || errStr.includes('cannot_resend_yet') || errStr.includes('cannot resend yet')) {
+          console.log(`[Flow] Account ${acc.name} on provider cooldown for ${lead.full_name}. Resting account 4h and leaving lead pending.`);
+          safety.updateAccountHealth(db, acc, false);
+          await pauseAccountTemporarily(db, acc, 4 * 60 * 60 * 1000, 'LinkedIn provider cooldown (cannot resend yet)');
         } else {
           safety.updateAccountHealth(db, acc, false);
           logActivity(db, { account_id: acc.id, lead_id: lead.id, campaign_id: campaign.id, action_type: 'connection_sent', status: 'failed', error_message: errStr.slice(0, 200) });

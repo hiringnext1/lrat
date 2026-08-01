@@ -113,16 +113,27 @@ async function sendConnectionRequest(accountId, linkedinMemberId, note) {
         const data = axiosErr?.response?.data;
         const errStr = JSON.stringify(data || '').toLowerCase();
 
-        const isBenign = (status === 422 || status === 400) && (
+        const isAlreadyInvited = (status === 422 || status === 400) && (
           errStr.includes('already_invited') ||
-          errStr.includes('already_sent') ||
-          errStr.includes('cannot_resend_yet') ||
-          errStr.includes('cannot resend yet')
+          errStr.includes('already_sent')
         );
 
-        if (isBenign) {
+        const isCooldown = (status === 422 || status === 400 || status === 429) && (
+          errStr.includes('cannot_resend_yet') ||
+          errStr.includes('cannot resend yet') ||
+          errStr.includes('cooldown')
+        );
+
+        if (isAlreadyInvited || isCooldown) {
           // Return non-throwing result inside breaker call so failure counter is NOT incremented
-          return { success: false, benign: true, data: null, error: data || axiosErr.message };
+          return { 
+            success: false, 
+            benign: true, 
+            isAlreadyInvited, 
+            isCooldown, 
+            data: null, 
+            error: data || axiosErr.message 
+          };
         }
         // Let genuine failures (5xx, timeouts, network, rate limits) throw to trigger breaker
         throw axiosErr;
@@ -130,7 +141,14 @@ async function sendConnectionRequest(accountId, linkedinMemberId, note) {
     });
 
     if (resObj.benign) {
-      return { success: false, data: null, error: resObj.error, isRateLimit: false };
+      return { 
+        success: false, 
+        data: null, 
+        error: resObj.error, 
+        isAlreadyInvited: resObj.isAlreadyInvited, 
+        isCooldown: resObj.isCooldown, 
+        isRateLimit: !!resObj.isCooldown 
+      };
     }
 
     return resObj;
