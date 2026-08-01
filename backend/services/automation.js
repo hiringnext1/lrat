@@ -271,6 +271,8 @@ async function runSendConnections() {
               WHERE campaign_id = ? 
               AND status = 'pending_connection' 
               AND account_id_used IS NULL
+              AND linkedin_member_id IS NOT NULL 
+              AND linkedin_member_id != ''
               ORDER BY fit_score DESC, created_at ASC LIMIT 1
             `).get(campaign.id);
 
@@ -317,6 +319,7 @@ async function runSendConnections() {
               if (errStr.includes('already_invited') || errStr.includes('already_sent') || errStr.includes('cannot_resend_yet') || errStr.includes('cannot resend yet')) {
                 console.log(`[Connections] Syncing ${lead.full_name}: Invite already sent or provider cooldowned. Moving to next...`);
                 db.prepare("UPDATE leads SET status = 'connection_sent', account_id_used = ?, updated_at = ? WHERE id = ?").run(account.id, new Date().toISOString(), lead.id);
+                await new Promise(r => setTimeout(r, 2000));
                 continue; // LOOP AGAIN
               }
               safety.updateAccountHealth(db, account, false);
@@ -350,7 +353,6 @@ async function runLeadEnrichment() {
       SELECT * FROM leads 
       WHERE is_enriched = 0 
       AND (enrichment_failed = 0 OR enrichment_failed IS NULL)
-      AND linkedin_member_id IS NOT NULL 
       AND status = 'pending_connection'
     `).all();
 
@@ -380,10 +382,45 @@ async function runLeadEnrichment() {
         }
 
         const account = accounts[Math.floor(Math.random() * accounts.length)];
+        const now = new Date().toISOString();
+        let memberId = lead.linkedin_member_id;
+
+        // Resolve member_id from URL if missing
+        if (!memberId || typeof memberId !== 'string' || memberId.trim() === '') {
+          console.log(`[Enrichment] Resolving missing linkedin_member_id for ${lead.full_name} from URL: ${lead.linkedin_url}...`);
+          const resolveRes = await unipile.resolveProfileFromUrl(account.unipile_account_id, lead.linkedin_url);
+          if (resolveRes.success && resolveRes.memberId) {
+            memberId = resolveRes.memberId;
+            db.prepare('UPDATE leads SET linkedin_member_id = ?, updated_at = ? WHERE id = ?').run(memberId, now, lead.id);
+            lead.linkedin_member_id = memberId;
+            console.log(`[Enrichment] Successfully resolved member_id for ${lead.full_name}: ${memberId}`);
+          } else {
+            const attempts = (lead.enrichment_attempts || 0) + 1;
+            console.error(`[Enrichment] Failed to resolve member_id for ${lead.full_name} (Attempt ${attempts}/3):`, resolveRes.error);
+            if (attempts >= 3) {
+              db.prepare(`
+                UPDATE leads 
+                SET enrichment_attempts = ?, 
+                    enrichment_failed = 1, 
+                    notes = ?, 
+                    updated_at = ? 
+                WHERE id = ?
+              `).run(attempts, `Profile resolution failed permanently: ${typeof resolveRes.error === 'object' ? JSON.stringify(resolveRes.error) : resolveRes.error}`, now, lead.id);
+            } else {
+              db.prepare(`
+                UPDATE leads 
+                SET enrichment_attempts = ?, 
+                    updated_at = ? 
+                WHERE id = ?
+              `).run(attempts, now, lead.id);
+            }
+            return;
+          }
+        }
+
         console.log(`[Enrichment] Fetching profile for ${lead.full_name} using ${account.name} (Attempt: ${(lead.enrichment_attempts || 0) + 1})...`);
         
-        const result = await unipile.viewProfile(account.unipile_account_id, lead.linkedin_member_id);
-        const now = new Date().toISOString();
+        const result = await unipile.viewProfile(account.unipile_account_id, memberId);
         
         if (result.success) {
           const profileData = result.data;
@@ -689,6 +726,10 @@ async function executeFlowNode(db, campaign, lead, node, execMap, nodeMap) {
     case 'invite':
       if (!acc) {
         console.log(`[Flow] No active account to invite ${lead.full_name}`);
+        return;
+      }
+      if (!lead.linkedin_member_id || typeof lead.linkedin_member_id !== 'string' || lead.linkedin_member_id.trim() === '') {
+        console.log(`[Flow] Skipping invite node for ${lead.full_name}: missing linkedin_member_id (waiting for enrichment resolution).`);
         return;
       }
       let safetyCheck = safety.canSendConnection(acc, campaign, db);

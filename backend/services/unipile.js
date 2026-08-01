@@ -353,6 +353,34 @@ async function getChatAttendees(chatId) {
   }
 }
 
+function extractPublicIdentifier(linkedinUrl) {
+  if (!linkedinUrl || typeof linkedinUrl !== 'string') return null;
+  const match = linkedinUrl.match(/linkedin\.com\/in\/([^/?#]+)/i);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+async function resolveProfileFromUrl(accountId, linkedinUrl) {
+  const publicIdentifier = extractPublicIdentifier(linkedinUrl);
+  if (!publicIdentifier) {
+    return { success: false, error: 'Could not extract a public identifier from linkedin_url' };
+  }
+  try {
+    const client = getClient();
+    await sleep(1000);
+    const res = await client.get(`/api/v1/users/${publicIdentifier}`, {
+      params: { account_id: accountId },
+    });
+    const data = res.data || {};
+    const memberId = data.provider_id || data.id || data.member_id || null;
+    if (!memberId) {
+      return { success: false, error: 'Profile resolved but no provider_id/member_id returned' };
+    }
+    return { success: true, data, memberId };
+  } catch (err) {
+    return { success: false, error: err?.response?.data || err.message };
+  }
+}
+
 module.exports = {
   getAccounts,
   getProfilesFromSearchURL,
@@ -368,4 +396,6 @@ module.exports = {
   getAttendee,
   getChatAttendees,
   deleteAccount,
+  extractPublicIdentifier,
+  resolveProfileFromUrl,
 };
