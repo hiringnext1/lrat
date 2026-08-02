@@ -156,8 +156,10 @@ router.post('/sync-connections', requireActiveSubscription, async (req, res) => 
 router.post('/import/url', requireActiveSubscription, async (req, res) => {
   try {
     const db = getDb();
-    const { search_url, account_id, campaign_id } = req.body;
+    const { search_url, account_id, campaign_id, max_leads } = req.body;
     const io = req.app.get('io');
+    // Respect the user's requested max_leads (default 100, max 500)
+    const targetCount = Math.min(parseInt(max_leads) || 100, 500);
 
     if (!search_url || !account_id || !campaign_id) {
       return res.status(400).json({ success: false, error: 'search_url, account_id, and campaign_id are required' });
@@ -191,7 +193,6 @@ router.post('/import/url', requireActiveSubscription, async (req, res) => {
         let currentCursor = null;
         let totalImported = 0;
         let hasMore = true;
-        let targetCount = 200;
         let batchCount = 1;
 
         console.log(`[Background Import] Starting for Campaign ${campaign_id}, Job ${jobId}`);
@@ -202,15 +203,16 @@ router.post('/import/url', requireActiveSubscription, async (req, res) => {
           const result = await unipile.getProfilesFromSearchURL(search_url, account.unipile_account_id, currentCursor);
           
           if (!result.success) {
-            console.error('[Background Import] Batch Failed:', result.error);
+            const errMsg = typeof result.error === 'object' ? JSON.stringify(result.error) : (result.error || 'Unipile connection error');
+            console.error('[Background Import] Batch Failed:', errMsg);
             db.prepare('UPDATE sourcing_jobs SET status = ?, error_message = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
-              .run('failed', 'Unipile connection error', jobId);
+              .run('failed', errMsg.slice(0, 300), jobId);
 
             if (io) {
               io.to('user_' + currentUserId).emit('import_error', { 
                 campaign_id, 
                 job_id: jobId, 
-                error: 'Unipile connection error' 
+                error: errMsg.slice(0, 200)
               });
             }
             break;
