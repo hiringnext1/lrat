@@ -129,9 +129,9 @@ function initSchema() {
       follow_up_1_template TEXT DEFAULT '',
       follow_up_2_template TEXT DEFAULT '',
       daily_limit_per_account INTEGER DEFAULT 20,
-      working_hours_start TEXT DEFAULT '09:00',
-      working_hours_end TEXT DEFAULT '18:00',
-      working_days TEXT DEFAULT '[1,2,3,4,5]',
+      working_hours_start TEXT DEFAULT '00:00',
+      working_hours_end TEXT DEFAULT '23:59',
+      working_days TEXT DEFAULT '[0,1,2,3,4,5,6]',
       follow_up_1_days INTEGER DEFAULT 3,
       follow_up_2_days INTEGER DEFAULT 6,
       total_leads INTEGER DEFAULT 0,
@@ -403,7 +403,8 @@ function initSchema() {
 
   // Startup metrics synchronization and working hours fix
   try {
-    db.prepare("UPDATE campaigns SET working_hours_end = '23:59' WHERE working_hours_end = '18:00' OR working_hours_end = '21:00'").run();
+    db.prepare("UPDATE campaigns SET working_hours_start = '00:00', working_hours_end = '23:59' WHERE working_hours_end = '18:00' OR working_hours_end = '21:00' OR working_hours_start IS NULL").run();
+    db.prepare("UPDATE campaigns SET working_days = '[0,1,2,3,4,5,6]' WHERE working_days = '[1,2,3,4,5]' OR working_days IS NULL OR working_days = ''").run();
     db.prepare("UPDATE leads SET status = 'pending_connection' WHERE connection_sent_at IS NULL AND account_id_used IS NULL AND status = 'connected'").run();
     
     // 🛡️ BUG FIX: Reset leads that were incorrectly auto-marked as 'connection_sent' by the

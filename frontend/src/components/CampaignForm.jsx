@@ -15,7 +15,7 @@ export default function CampaignForm({ campaign, onSaved, onCancel }) {
     daily_limit_per_account: 20,
     working_hours_start: '09:00',
     working_hours_end: '18:00',
-    working_days: [1, 2, 3, 4, 5],
+    working_days: [0, 1, 2, 3, 4, 5, 6],
     follow_up_1_days: 3,
     follow_up_2_days: 6,
     account_ids: [],

@@ -63,7 +63,7 @@ router.get('/overview', (req, res) => {
         ).all(campaignId);
         activeAccountsCount = campaignAccounts.length;
 
-        const workingDays = JSON.parse(campaign.working_days || '[1,2,3,4,5]');
+        const workingDays = JSON.parse(campaign.working_days || '[0,1,2,3,4,5,6]');
         if (workingDays.includes(dayNum)) {
           isWorkingDayToday = campaign.status === 'active';
         }
@@ -86,7 +86,7 @@ router.get('/overview', (req, res) => {
 
       if (activeCampaignsCount > 0) {
         for (const campaign of activeCampaignsList) {
-          const workingDays = JSON.parse(campaign.working_days || '[1,2,3,4,5]');
+          const workingDays = JSON.parse(campaign.working_days || '[0,1,2,3,4,5,6]');
           if (workingDays.includes(dayNum)) {
             isWorkingDayToday = true;
             break;
@@ -305,7 +305,7 @@ router.get('/engine-status', (req, res) => {
 
     const dayNum = safety.getISTDayOfWeek();
     const isWorkingDayToday = activeCampaigns.some(c => {
-      const workingDays = JSON.parse(c.working_days || '[1,2,3,4,5]');
+      const workingDays = JSON.parse(c.working_days || '[0,1,2,3,4,5,6]');
       return workingDays.includes(dayNum);
     });
 

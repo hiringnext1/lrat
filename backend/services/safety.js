@@ -75,22 +75,17 @@ function getEffectiveDailyLimit(account) {
 }
 
 function isWithinWorkingHours(startTime, endTime, timezone = 'Asia/Kolkata') {
+  if (!startTime || typeof startTime !== 'string' || !startTime.includes(':')) startTime = '00:00';
+  if (!endTime || typeof endTime !== 'string' || !endTime.includes(':')) endTime = '23:59';
   const { hour: curH, minute: curM } = getISTTimeInfo(timezone);
   const currentMinutes = curH * 60 + curM;
 
   const [sh, sm] = startTime.split(':').map(Number);
   const [eh, em] = endTime.split(':').map(Number);
-  const startMinutes = sh * 60 + sm;
-  const endMinutes = eh * 60 + em;
+  const startMinutes = (isNaN(sh) ? 0 : sh) * 60 + (isNaN(sm) ? 0 : sm);
+  const endMinutes = (isNaN(eh) ? 23 : eh) * 60 + (isNaN(em) ? 59 : em);
 
-  // Commercial standard: allow wider window, trust user setting within reason
-  const hardStart = 6 * 60; // 6:00 AM IST
-  const hardEnd = 23 * 60;  // 11:00 PM IST
-
-  const effectiveStart = Math.max(startMinutes, hardStart);
-  const effectiveEnd = Math.min(endMinutes, hardEnd);
-
-  return currentMinutes >= effectiveStart && currentMinutes <= effectiveEnd;
+  return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
 }
 
 function isWeekday(timezone = 'Asia/Kolkata') {

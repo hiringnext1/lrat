@@ -240,7 +240,7 @@ async function runSendConnections() {
 
         const user = db.prepare('SELECT timezone FROM users WHERE id = ?').get(campaign.user_id);
         const timezone = user?.timezone || 'Asia/Kolkata';
-        const workingDays = safeJsonParse(campaign.working_days, [1, 2, 3, 4, 5]);
+        const workingDays = safeJsonParse(campaign.working_days, [0, 1, 2, 3, 4, 5, 6]);
         if (!workingDays.includes(safety.getISTDayOfWeek(timezone))) return;
 
         if (!safety.isWithinWorkingHours(campaign.working_hours_start, campaign.working_hours_end, timezone)) {
@@ -678,7 +678,7 @@ async function runFlowExecution() {
                 stopFlow = true;
                 break;
               }
-              const workingDays = safeJsonParse(campaign.working_days, [1, 2, 3, 4, 5]);
+              const workingDays = safeJsonParse(campaign.working_days, [0, 1, 2, 3, 4, 5, 6]);
               if (!workingDays.includes(safety.getISTDayOfWeek(timezone))) {
                 stopFlow = true;
                 break;
