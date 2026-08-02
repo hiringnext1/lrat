@@ -309,19 +309,35 @@ async function runSendConnections() {
             }
 
             if (lead.linkedin_member_id) {
-              const other = db.prepare("SELECT id FROM leads WHERE linkedin_member_id = ? AND id != ? AND status NOT IN ('pending_connection', 'not_interested')").get(lead.linkedin_member_id, lead.id);
+              // 🛡️ Duplicate check scoped to same user only
+              const other = db.prepare("SELECT id FROM leads WHERE user_id = ? AND linkedin_member_id = ? AND id != ? AND status NOT IN ('pending_connection', 'not_interested')").get(lead.user_id, lead.linkedin_member_id, lead.id);
               if (other) {
                 db.prepare("UPDATE leads SET status = 'not_interested', notes = 'Skipped: Duplicate' WHERE id = ?").run(lead.id);
                 continue;
               }
             }
 
-            const result = await unipile.sendConnectionRequest(account.unipile_account_id, lead.linkedin_member_id, '');
+            // Fix #3: Use campaign connection_note_template instead of always blank
+            // Also respect A/B variant for the connection note
+            const firstName = (lead.full_name || '').split(' ')[0];
+            const variant = Math.random() < 0.5 ? 'A' : 'B';
+            let connectionNote = '';
+            const noteTemplate = (variant === 'B' && campaign.connection_note_b_template && campaign.connection_note_b_template.trim())
+              ? campaign.connection_note_b_template
+              : (campaign.connection_note_template || '');
+            if (noteTemplate.trim()) {
+              connectionNote = noteTemplate
+                .replace(/\{\{first_name\}\}/g, firstName)
+                .replace(/\{\{name\}\}/g, firstName)
+                .replace(/\{\{full_name\}\}/g, lead.full_name || '')
+                .replace(/\{\{company\}\}/g, lead.company || '')
+                .replace(/\{\{designation\}\}/g, lead.designation || '');
+            }
+            const result = await unipile.sendConnectionRequest(account.unipile_account_id, lead.linkedin_member_id, connectionNote);
 
             if (result.success) {
               safety.updateAccountHealth(db, account, true);
               const now = new Date().toISOString();
-              const variant = Math.random() < 0.5 ? 'A' : 'B';
               db.prepare("UPDATE leads SET status = 'connection_sent', account_id_used = ?, connection_sent_at = ?, message_variant = ?, updated_at = ? WHERE id = ?").run(account.id, now, variant, now, lead.id);
               db.prepare('UPDATE accounts SET today_connections = today_connections + 1, week_connections = week_connections + 1, last_action_at = ? WHERE id = ?').run(now, account.id);
               db.prepare('UPDATE campaigns SET connections_sent = connections_sent + 1, updated_at = ? WHERE id = ?').run(now, campaign.id);
@@ -330,7 +346,7 @@ async function runSendConnections() {
               const nextActionAt = new Date(Date.now() + delayMs).toISOString();
               db.prepare('UPDATE accounts SET next_action_at = ? WHERE id = ?').run(nextActionAt, account.id);
 
-              logActivity(db, { account_id: account.id, lead_id: lead.id, campaign_id: campaign.id, action_type: 'connection_sent', status: 'success', message_preview: 'Direct invite' });
+              logActivity(db, { account_id: account.id, lead_id: lead.id, campaign_id: campaign.id, action_type: 'connection_sent', status: 'success', message_preview: connectionNote ? connectionNote.slice(0, 100) : 'Direct invite (no note)' });
               emit('activity_update', { account_id: account.id, lead_name: lead.full_name, action_type: 'connection_sent', status: 'success', timestamp: now });
               console.log(`[Connections] Sent to ${lead.full_name} via ${account.name}`);
               successOrStop = true;
@@ -535,24 +551,27 @@ async function runCheckAcceptances() {
           const fullName = [item.first_name, item.last_name].filter(Boolean).join(' ') || item.name || '';
 
           let lead = null;
+          const accountUserId = account.user_id;
           if (memberId || publicId) {
             lead = db.prepare(`
               SELECT * FROM leads 
-              WHERE status != 'connected'
+              WHERE user_id = ?
+              AND status != 'connected'
               AND (
                 (linkedin_member_id IS NOT NULL AND linkedin_member_id != '' AND (linkedin_member_id = ? OR linkedin_member_id = ?))
                 OR (? != '' AND linkedin_url IS NOT NULL AND linkedin_url LIKE ?)
               )
               ORDER BY id DESC LIMIT 1
-            `).get(memberId, publicId, publicId, `%${publicId}%`);
+            `).get(accountUserId, memberId, publicId, publicId, `%${publicId}%`);
           }
 
           if (!lead && fullName) {
+            // 🛡️ user_id scoped — only match leads belonging to this account's user
             lead = db.prepare(`
               SELECT * FROM leads 
-              WHERE LOWER(full_name) = LOWER(?) AND status != 'connected'
+              WHERE user_id = ? AND LOWER(full_name) = LOWER(?) AND status != 'connected'
               ORDER BY id DESC LIMIT 1
-            `).get(fullName);
+            `).get(accountUserId, fullName);
           }
 
           // 🛡️ CRITICAL GUARD: Only process leads that we actually sent a connection request for.
