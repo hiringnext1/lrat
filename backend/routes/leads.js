@@ -208,9 +208,18 @@ router.post('/import/url', requireActiveSubscription, async (req, res) => {
 
         console.log(`[Background Import] Starting for Campaign ${campaign_id}, Job ${jobId}`);
 
+        // 🕐 Human-like initial delay: simulate natural page load before starting scroll
+        const initialDelaySecs = Math.floor(Math.random() * (8 - 3 + 1)) + 3;
+        console.log(`[Background Import] Initial human delay: ${initialDelaySecs}s before first fetch...`);
+        await new Promise(resolve => setTimeout(resolve, initialDelaySecs * 1000));
+
         while (hasMore && totalImported < targetCount) {
           console.log(`[Background Import] Fetching batch ${batchCount}...`);
           
+          // 🕐 Pre-call jitter: randomize exact timing of each API call (2-5s)
+          const preFetchJitter = Math.floor(Math.random() * (5 - 2 + 1)) + 2;
+          await new Promise(resolve => setTimeout(resolve, preFetchJitter * 1000));
+
           const result = await unipile.getProfilesFromSearchURL(search_url, account.unipile_account_id, currentCursor);
           
           if (!result.success) {
@@ -321,8 +330,12 @@ router.post('/import/url', requireActiveSubscription, async (req, res) => {
           }
 
           if (totalImported < targetCount && hasMore) {
-            const randomWaitSecs = Math.floor(Math.random() * (30 - 15 + 1)) + 15;
-            console.log(`[Background Import Safety Delay] Waiting ${randomWaitSecs}s for human-like paging behavior...`);
+            // 🕐 Human-like inter-batch delay: simulate human scrolling to next page
+            // Range: 45–90 seconds (much more natural than 15–30s)
+            const minWait = 45;
+            const maxWait = 90;
+            const randomWaitSecs = Math.floor(Math.random() * (maxWait - minWait + 1)) + minWait;
+            console.log(`[Background Import] Inter-batch human delay: waiting ${randomWaitSecs}s before next page fetch (batch ${batchCount + 1})...`);
             await new Promise(resolve => setTimeout(resolve, randomWaitSecs * 1000));
             batchCount++;
           }

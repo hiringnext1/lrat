@@ -69,7 +69,9 @@ async function getAccounts() {
 async function getProfilesFromSearchURL(searchUrl, accountId, cursor = null) {
   try {
     const client = getClient();
-    await sleep(1000);
+    // 🕐 Human-like read delay: simulate time a human takes to look at search results (3-7s)
+    const readDelaySecs = Math.floor(Math.random() * (7 - 3 + 1)) + 3;
+    await sleep(readDelaySecs * 1000);
     
     const requestData = cursor ? { cursor } : { url: searchUrl };
     
