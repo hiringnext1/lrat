@@ -121,7 +121,10 @@ router.post('/sync-connections', requireActiveSubscription, async (req, res) => 
         }
 
         if (lead) {
-          if (lead.status !== 'connected') {
+          // 🛡️ CRITICAL GUARD: Only sync acceptances for leads where we actually sent a connection.
+          // This prevents leads from being auto-marked as 'connected' just because the recruiter
+          // already knows this person on LinkedIn (existing connections in their network).
+          if (lead.status !== 'connected' && (lead.connection_sent_at || lead.account_id_used)) {
             db.prepare("UPDATE leads SET status = 'connected', accepted_at = ?, updated_at = ? WHERE id = ?").run(now, now, lead.id);
             if (lead.campaign_id) {
               const actualAccepted = db.prepare("SELECT COUNT(*) as c FROM leads WHERE campaign_id = ? AND user_id = ? AND status IN ('connected', 'jd_sent', 'follow_up_sent')").get(lead.campaign_id, req.userId).c;

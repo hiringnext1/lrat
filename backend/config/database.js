@@ -405,6 +405,22 @@ function initSchema() {
   try {
     db.prepare("UPDATE campaigns SET working_hours_end = '23:59' WHERE working_hours_end = '18:00' OR working_hours_end = '21:00'").run();
     db.prepare("UPDATE leads SET status = 'pending_connection' WHERE connection_sent_at IS NULL AND account_id_used IS NULL AND status = 'connected'").run();
+    
+    // 🛡️ BUG FIX: Reset leads that were incorrectly auto-marked as 'connection_sent' by the
+    // acceptance syncer (runCheckAcceptances / sync-connections) without us actually sending
+    // an invite. These leads had account_id_used=NULL and connection_sent_at=NULL but were
+    // matched against recruiter's existing LinkedIn connections.
+    const fixedLeads = db.prepare(`
+      UPDATE leads 
+      SET status = 'pending_connection', updated_at = CURRENT_TIMESTAMP
+      WHERE status = 'connection_sent'
+      AND connection_sent_at IS NULL 
+      AND account_id_used IS NULL
+    `).run();
+    if (fixedLeads.changes > 0) {
+      console.log(`[Migration] Reset ${fixedLeads.changes} falsely-marked 'connection_sent' leads back to 'pending_connection'.`);
+    }
+
     db.prepare(`
       UPDATE campaigns SET 
         accepted = (

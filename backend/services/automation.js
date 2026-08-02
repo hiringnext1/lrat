@@ -71,19 +71,34 @@ function isLeadBlacklisted(db, lead) {
   return { blacklisted: false };
 }
 
+function safeJsonParse(str, fallback) {
+  if (!str) return fallback;
+  try {
+    return typeof str === 'string' ? JSON.parse(str) : str;
+  } catch (e) {
+    return fallback;
+  }
+}
+
 function isCampaignScheduled(campaign, db) {
   if (campaign.status !== 'active') return { active: false, reason: 'Campaign is not active' };
 
   const todayDateStr = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
-  if (campaign.starts_at && todayDateStr < campaign.starts_at) {
-    return { active: false, reason: `Campaign not scheduled to start yet (Scheduled: ${campaign.starts_at})` };
+  if (campaign.starts_at) {
+    const startDateStr = campaign.starts_at.split('T')[0];
+    if (todayDateStr < startDateStr) {
+      return { active: false, reason: `Campaign not scheduled to start yet (Scheduled: ${campaign.starts_at})` };
+    }
   }
 
-  if (campaign.ends_at && todayDateStr > campaign.ends_at) {
-    try {
-      db.prepare("UPDATE campaigns SET status = 'paused', updated_at = ? WHERE id = ?").run(new Date().toISOString(), campaign.id);
-    } catch (_) {}
-    return { active: false, reason: `Campaign expired (End date: ${campaign.ends_at})` };
+  if (campaign.ends_at) {
+    const endDateStr = campaign.ends_at.split('T')[0];
+    if (todayDateStr > endDateStr) {
+      try {
+        db.prepare("UPDATE campaigns SET status = 'paused', updated_at = ? WHERE id = ?").run(new Date().toISOString(), campaign.id);
+      } catch (_) {}
+      return { active: false, reason: `Campaign expired (End date: ${campaign.ends_at})` };
+    }
   }
 
   return { active: true };
@@ -225,8 +240,13 @@ async function runSendConnections() {
 
         const user = db.prepare('SELECT timezone FROM users WHERE id = ?').get(campaign.user_id);
         const timezone = user?.timezone || 'Asia/Kolkata';
-        const workingDays = JSON.parse(campaign.working_days || '[1,2,3,4,5]');
+        const workingDays = safeJsonParse(campaign.working_days, [1, 2, 3, 4, 5]);
         if (!workingDays.includes(safety.getISTDayOfWeek(timezone))) return;
+
+        if (!safety.isWithinWorkingHours(campaign.working_hours_start, campaign.working_hours_end, timezone)) {
+          console.log(`[Connections] Skipping campaign ${campaign.name}: Outside working hours (${campaign.working_hours_start || '09:00'} - ${campaign.working_hours_end || '18:00'})`);
+          return;
+        }
 
         const campaignAccounts = db.prepare(
           `SELECT a.* FROM accounts a JOIN campaign_accounts ca ON ca.account_id = a.id WHERE ca.campaign_id = ? AND a.is_active = 1 AND a.status = 'active'`
@@ -302,7 +322,7 @@ async function runSendConnections() {
               safety.updateAccountHealth(db, account, true);
               const now = new Date().toISOString();
               const variant = Math.random() < 0.5 ? 'A' : 'B';
-              db.prepare("UPDATE leads SET status = 'connection_sent', account_id_used = ?, connection_sent_at = ?, message_variant = ?, updated_at = ? WHERE id = ?").run(account.id, now, now, variant, now, lead.id);
+              db.prepare("UPDATE leads SET status = 'connection_sent', account_id_used = ?, connection_sent_at = ?, message_variant = ?, updated_at = ? WHERE id = ?").run(account.id, now, variant, now, lead.id);
               db.prepare('UPDATE accounts SET today_connections = today_connections + 1, week_connections = week_connections + 1, last_action_at = ? WHERE id = ?').run(now, account.id);
               db.prepare('UPDATE campaigns SET connections_sent = connections_sent + 1, updated_at = ? WHERE id = ?').run(now, campaign.id);
 
@@ -535,11 +555,18 @@ async function runCheckAcceptances() {
             `).get(fullName);
           }
 
+          // 🛡️ CRITICAL GUARD: Only process leads that we actually sent a connection request for.
+          // Without this check, ANY existing LinkedIn connection whose member_id matches a lead
+          // would be incorrectly auto-marked as 'connected' skipping the invite step entirely.
           if (!lead || lead.reply_received) continue;
+          if (!lead.connection_sent_at && !lead.account_id_used) {
+            // We never actually sent an invite — skip this match entirely
+            continue;
+          }
           const campaign = db.prepare('SELECT * FROM campaigns WHERE id = ?').get(lead.campaign_id);
           if (!campaign) continue;
 
-          const flow = JSON.parse(campaign.flow_json || '{}');
+          const flow = safeJsonParse(campaign.flow_json, {});
           const hasVisualFlow = flow.nodes && flow.nodes.length > 0;
           const now = new Date().toISOString();
 
@@ -566,6 +593,13 @@ async function runCheckAcceptances() {
             if (!jdText.trim()) {
               const jdResult = await aiService.generateJDMessage(lead, 'an exciting opportunity matching your profile', lead.user_id);
               jdText = jdResult.success ? jdResult.data : `Hi ${firstName}, thanks for connecting! I have an exciting opportunity I'd love to share with you.`;
+            } else {
+              jdText = jdText
+                .replace(/\{\{first_name\}\}/g, firstName)
+                .replace(/\{\{name\}\}/g, firstName)
+                .replace(/\{\{full_name\}\}/g, lead.full_name || '')
+                .replace(/\{\{company\}\}/g, lead.company || '')
+                .replace(/\{\{designation\}\}/g, lead.designation || '');
             }
             const msgResult = await unipile.sendMessage(account.unipile_account_id, memberId, jdText);
             if (msgResult.success) {
@@ -598,12 +632,12 @@ async function runFlowExecution() {
 
         const scheduleCheck = isCampaignScheduled(campaign, db);
         if (!scheduleCheck.active) return;
-        const flow = JSON.parse(campaign.flow_json || '{}');
+        const flow = safeJsonParse(campaign.flow_json, {});
         if (!flow.nodes || flow.nodes.length === 0) return;
 
         const nodeMap = {}; flow.nodes.forEach(n => nodeMap[n.id] = n);
         const edgeMap = {}; (flow.edges || []).forEach(e => edgeMap[e.source] = e.target);
-        const execs = JSON.parse(lead.flow_executions || '[]');
+        const execs = safeJsonParse(lead.flow_executions, []);
         const execMap = {}; execs.forEach(e => execMap[e.node_id] = e);
 
         const trigger = flow.nodes.find(n => n.type === 'trigger');
@@ -625,7 +659,7 @@ async function runFlowExecution() {
                 stopFlow = true;
                 break;
               }
-              const workingDays = JSON.parse(campaign.working_days || '[1,2,3,4,5]');
+              const workingDays = safeJsonParse(campaign.working_days, [1, 2, 3, 4, 5]);
               if (!workingDays.includes(safety.getISTDayOfWeek(timezone))) {
                 stopFlow = true;
                 break;
@@ -660,8 +694,9 @@ async function executeFlowNode(db, campaign, lead, node, execMap, nodeMap) {
   const now = new Date().toISOString();
   
   async function record(extra = {}) {
+    const execObj = { node_id: node.id, executed_at: now, ...extra };
+    execMap[node.id] = execObj;
     const execs = Object.values(execMap);
-    execs.push({ node_id: node.id, executed_at: now, ...extra });
     db.prepare("UPDATE leads SET flow_executions = ?, updated_at = ? WHERE id = ?").run(JSON.stringify(execs), now, lead.id);
   }
 
@@ -689,7 +724,7 @@ async function executeFlowNode(db, campaign, lead, node, execMap, nodeMap) {
     case 'delay':
       let prevNode = null;
       try {
-        const flow = JSON.parse(campaign.flow_json || '{}');
+        const flow = safeJsonParse(campaign.flow_json, {});
         const edgeMap = {}; (flow.edges || []).forEach(e => edgeMap[e.source] = e.target);
         let currSearchId = node.id;
         while (true) {
@@ -947,8 +982,8 @@ async function scheduleNextConnectionRun() {
 
   if (nextReady && nextReady.next_action_at) {
     const diff = new Date(nextReady.next_action_at).getTime() - Date.now();
-    // If next ready is in the future, wait until then. If past, run in 5s.
-    delayMs = Math.max(5000, diff);
+    // If next ready is in the future, wait until then. If past or ready, schedule run with 30s backoff to avoid aggressive polling.
+    delayMs = diff > 0 ? Math.max(5000, diff) : 30000;
   }
 
   // Cap max wait at 10 minutes to ensure system doesn't stay idle if new leads are added
