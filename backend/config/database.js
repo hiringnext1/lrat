@@ -435,6 +435,18 @@ function initSchema() {
           AND (connection_sent_at IS NOT NULL OR account_id_used IS NOT NULL)
         )
     `).run();
+
+    // 🛡️ AUTO-WARMUP FIX: If an account is active (is_active=1 AND status='active')
+    // but warmup_week is still 0, it will NEVER send connections (effective limit = 0).
+    // Auto-set warmup_week = 4 (full speed) for all such accounts at startup.
+    const warmupFixed = db.prepare(`
+      UPDATE accounts 
+      SET warmup_week = 4, warmup_started_at = CURRENT_TIMESTAMP
+      WHERE is_active = 1 AND status = 'active' AND (warmup_week = 0 OR warmup_week IS NULL)
+    `).run();
+    if (warmupFixed.changes > 0) {
+      console.log(`[Migration] Auto-started warmup (week 4) for ${warmupFixed.changes} active account(s) that had warmup_week=0.`);
+    }
   } catch (e) {
     console.error('[Migration] Stats cleanup error:', e.message);
   }
