@@ -73,7 +73,15 @@ async function getProfilesFromSearchURL(searchUrl, accountId, cursor = null) {
     
     const requestData = cursor ? { cursor } : { url: searchUrl };
     
-    console.log(`[Unipile] Fetching leads batch... URL: ${searchUrl}, Cursor: ${cursor ? 'YES' : 'NO'}`);
+    // Detect URL type for logging
+    let urlType = 'unknown';
+    if (searchUrl) {
+      if (searchUrl.includes('linkedin.com/sales/')) urlType = 'Sales Navigator';
+      else if (searchUrl.includes('linkedin.com/recruiter/')) urlType = 'LinkedIn Recruiter';
+      else if (searchUrl.includes('linkedin.com/search/results/')) urlType = 'Regular LinkedIn';
+    }
+    
+    console.log(`[Unipile] Fetching leads batch... Type: ${urlType}, Cursor: ${cursor ? 'YES' : 'NO'}`);
 
     const res = await client.post('/api/v1/linkedin/search', 
       requestData,

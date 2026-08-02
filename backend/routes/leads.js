@@ -165,6 +165,17 @@ router.post('/import/url', requireActiveSubscription, async (req, res) => {
       return res.status(400).json({ success: false, error: 'search_url, account_id, and campaign_id are required' });
     }
 
+    // Validate it's actually a LinkedIn URL
+    if (!search_url.includes('linkedin.com')) {
+      return res.status(400).json({ success: false, error: 'Invalid URL — must be a LinkedIn search URL (Regular LinkedIn or Sales Navigator)' });
+    }
+
+    // Detect URL type for logging
+    let urlType = 'Regular LinkedIn';
+    if (search_url.includes('linkedin.com/sales/')) urlType = 'Sales Navigator';
+    else if (search_url.includes('linkedin.com/recruiter/')) urlType = 'LinkedIn Recruiter';
+    console.log(`[Import] Starting ${urlType} import for campaign ${campaign_id}`);
+
     const account = db.prepare('SELECT * FROM accounts WHERE id = ? AND (user_id = ? OR user_id IS NULL)').get(account_id, req.userId);
     if (!account) return res.status(404).json({ success: false, error: 'Account not found' });
 

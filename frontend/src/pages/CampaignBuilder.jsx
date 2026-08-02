@@ -1792,19 +1792,53 @@ export default function CampaignBuilder() {
   }
 
   // WIZARD STEP 4: SOURCING FROM LINKEDIN
+  const getUrlType = (url) => {
+    if (!url) return null;
+    if (url.includes('linkedin.com/sales/')) return 'sales_navigator';
+    if (url.includes('linkedin.com/recruiter/')) return 'recruiter';
+    if (url.includes('linkedin.com/search/results/people') || url.includes('linkedin.com/search/results/')) return 'regular';
+    return 'unknown';
+  };
+  const urlType = getUrlType(sourceUrl);
+
   const renderSourcing = () => (
     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6 text-left">
       <div className="bg-white dark:bg-slate-900/60 rounded-[32px] p-6 border border-slate-100 dark:border-slate-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.01)] space-y-5">
         <div>
-          <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">LinkedIn Search URL Source</label>
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">LinkedIn Search URL</label>
+            {urlType === 'sales_navigator' && (
+              <span className="text-[9px] font-black bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 border border-amber-200/50 px-2 py-0.5 rounded-lg uppercase tracking-widest">⭐ Sales Navigator</span>
+            )}
+            {urlType === 'recruiter' && (
+              <span className="text-[9px] font-black bg-purple-50 dark:bg-purple-950/30 text-purple-600 dark:text-purple-400 border border-purple-200/50 px-2 py-0.5 rounded-lg uppercase tracking-widest">🎯 LinkedIn Recruiter</span>
+            )}
+            {urlType === 'regular' && (
+              <span className="text-[9px] font-black bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 border border-blue-200/50 px-2 py-0.5 rounded-lg uppercase tracking-widest">🔵 Regular LinkedIn</span>
+            )}
+            {urlType === 'unknown' && sourceUrl && (
+              <span className="text-[9px] font-black bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 border border-rose-200/50 px-2 py-0.5 rounded-lg uppercase tracking-widest">⚠️ Invalid URL</span>
+            )}
+          </div>
           <div className="relative">
             <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
             <input 
               value={sourceUrl} 
               onChange={e => setSourceUrl(e.target.value)}
-              placeholder="Paste LinkedIn Sales Navigator Search URL..."
+              placeholder="Paste LinkedIn search URL (Regular or Sales Navigator)..."
               className="w-full text-sm border border-slate-100 dark:border-slate-800 rounded-2xl pl-12 pr-4 py-3.5 bg-slate-55 dark:bg-slate-900 focus:bg-white focus:border-blue-500 outline-none text-slate-800 dark:text-slate-200 transition-all placeholder:text-slate-400" 
             />
+          </div>
+          {/* URL type helper tips */}
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <div className="bg-blue-50/60 dark:bg-blue-950/10 border border-blue-100/50 dark:border-blue-900/30 rounded-xl px-3 py-2">
+              <p className="text-[9px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-0.5">🔵 Regular LinkedIn</p>
+              <p className="text-[9px] text-slate-500 dark:text-slate-400 font-semibold leading-tight">linkedin.com/search/results/people/...</p>
+            </div>
+            <div className="bg-amber-50/60 dark:bg-amber-950/10 border border-amber-100/50 dark:border-amber-900/30 rounded-xl px-3 py-2">
+              <p className="text-[9px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest mb-0.5">⭐ Sales Navigator</p>
+              <p className="text-[9px] text-slate-500 dark:text-slate-400 font-semibold leading-tight">linkedin.com/sales/search/people/...</p>
+            </div>
           </div>
         </div>
 
@@ -1833,7 +1867,7 @@ export default function CampaignBuilder() {
 
         <button 
           onClick={fetchSourcingPreview} 
-          disabled={sourcingLoading}
+          disabled={sourcingLoading || urlType === 'unknown'}
           className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-all disabled:opacity-50"
         >
           {sourcingLoading ? 'Searching...' : 'Scan Leads'}
