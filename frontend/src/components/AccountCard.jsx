@@ -70,14 +70,22 @@ export default function AccountCard({ account, onUpdate, onOpenLogs, onOpenReaut
 
       {/* Profile Header */}
       <div className="p-6 pb-5 flex items-start gap-4 border-b border-slate-50 dark:border-slate-800/80 relative z-10">
-        <div className="w-16 h-16 rounded-[22px] bg-slate-50 dark:bg-slate-800 flex-shrink-0 overflow-hidden border border-slate-100 dark:border-slate-700 shadow-inner flex items-center justify-center relative">
-          {account.photo_url ? (
-            <img src={account.photo_url} alt="" className="w-full h-full object-cover" />
-          ) : (
-            <span className="text-xl font-extrabold text-blue-600 dark:text-blue-400 uppercase">
-              {account.name?.charAt(0)}
-            </span>
-          )}
+        <div className="relative flex-shrink-0">
+          <div className="w-16 h-16 rounded-[22px] bg-slate-50 dark:bg-slate-800 overflow-hidden border border-slate-100 dark:border-slate-700 shadow-inner flex items-center justify-center">
+            {account.photo_url ? (
+              <img src={account.photo_url} alt={account.name} className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-xl font-extrabold text-blue-600 dark:text-blue-400 uppercase">
+                {account.name?.charAt(0)}
+              </span>
+            )}
+          </div>
+          {/* LinkedIn Platform Logo Badge */}
+          <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-[#0077B5] rounded-md border-2 border-white dark:border-slate-900 flex items-center justify-center shadow-md" title="Connected via LinkedIn">
+            <svg className="w-2.5 h-2.5 fill-white" viewBox="0 0 24 24">
+              <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/>
+            </svg>
+          </div>
         </div>
 
         <div className="min-w-0 flex-1">

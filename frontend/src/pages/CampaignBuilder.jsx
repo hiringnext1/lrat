@@ -1032,8 +1032,22 @@ export default function CampaignBuilder() {
                 }} 
                 className="w-4 h-4 rounded text-blue-600 border-slate-300 dark:border-slate-700 bg-slate-55 dark:bg-slate-900 focus:ring-blue-500" 
               />
+              <div className="relative flex-shrink-0">
+                <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden flex items-center justify-center border border-slate-200 dark:border-slate-700">
+                  {acc.photo_url ? (
+                    <img src={acc.photo_url} alt={acc.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-xs font-black text-blue-500">{acc.name?.charAt(0)}</span>
+                  )}
+                </div>
+                <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-[#0077B5] rounded border border-white dark:border-slate-900 flex items-center justify-center shadow-xs">
+                  <svg className="w-2 h-2 fill-white" viewBox="0 0 24 24">
+                    <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/>
+                  </svg>
+                </div>
+              </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-black text-slate-800 dark:text-slate-200 truncate leading-none">{acc.name}</p>
+                <p className="text-sm font-black text-slate-800 dark:text-slate-200 truncate leading-none flex items-center gap-1.5">{acc.name}</p>
                 <p className="text-[8px] text-slate-400 dark:text-slate-500 font-extrabold uppercase tracking-widest mt-1.5">{acc.status} • Warmup {acc.warmup_week || 1}</p>
               </div>
             </label>
