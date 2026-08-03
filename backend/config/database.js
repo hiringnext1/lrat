@@ -48,7 +48,7 @@ function decryptValue(storedValue) {
   }
 }
 
-const DB_PATH = path.join(__dirname, '../db/lrat.db');
+const DB_PATH = process.env.DATABASE_PATH || path.join(__dirname, '../db/lrat.db');
 
 let db;
 
