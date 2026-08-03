@@ -168,11 +168,32 @@ app.use('/api/admin', authenticateJWT, isAdmin, adminRouter);
 // ─── Health Check (enhanced) ─────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
   let dbOk = false;
+  let debugInfo = {};
   try {
     const db = getDb();
     db.prepare('SELECT 1').get();
     dbOk = true;
-  } catch (_) {}
+
+    const totalLeads = db.prepare('SELECT COUNT(*) as c FROM leads').get()?.c || 0;
+    const leadsByStatus = db.prepare('SELECT status, count(*) as c FROM leads GROUP BY status').all();
+    const leadsByCampaign = db.prepare('SELECT campaign_id, status, count(*) as c FROM leads GROUP BY campaign_id, status').all();
+    const campaignsInfo = db.prepare('SELECT id, name, status, user_id, working_hours_start, working_hours_end, working_days FROM campaigns').all();
+    const campaignAccountsInfo = db.prepare('SELECT ca.campaign_id, a.id as account_id, a.name, a.status, a.is_active, a.warmup_week, a.today_connections, a.next_action_at FROM campaign_accounts ca JOIN accounts a ON a.id = ca.account_id').all();
+    const leadsNoMemberId = db.prepare("SELECT COUNT(*) as c FROM leads WHERE status = 'pending_connection' AND (linkedin_member_id IS NULL OR linkedin_member_id = '')").get()?.c || 0;
+    const accountsInfo = db.prepare('SELECT id, name, status, is_active, warmup_week, today_connections, last_action_at, next_action_at FROM accounts').all();
+
+    debugInfo = {
+      totalLeads,
+      leadsByStatus,
+      leadsByCampaign,
+      campaignsInfo,
+      campaignAccountsInfo,
+      accountsInfo,
+      leadsNoMemberId
+    };
+  } catch (e) {
+    debugInfo = { error: e.message };
+  }
 
   const memUsage = process.memoryUsage();
 
@@ -190,6 +211,7 @@ app.get('/api/health', (req, res) => {
       unipile: unipileBreaker.getStatus(),
       nvidia: nvidiaBreaker.getStatus(),
     },
+    debugInfo
   });
 });
 
