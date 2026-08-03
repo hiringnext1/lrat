@@ -365,9 +365,19 @@ async function runSendConnections() {
                 safety.updateAccountHealth(db, account, false);
                 await pauseAccountTemporarily(db, account, 4 * 60 * 60 * 1000, 'LinkedIn provider cooldown (cannot resend yet)');
                 successOrStop = true;
+              } else if (result.isGatewayError) {
+                // 502/503/504 from Unipile — temporary gateway issue, pause account 5 min and retry
+                console.log(`[Connections] Unipile gateway error for ${lead.full_name}. Pausing account ${account.name} 5 min, lead stays pending.`);
+                await pauseAccountTemporarily(db, account, 5 * 60 * 1000, 'Unipile 502/503 gateway error — retrying in 5 min');
+                successOrStop = true;
               } else {
                 safety.updateAccountHealth(db, account, false);
-                logActivity(db, { account_id: account.id, lead_id: lead.id, campaign_id: campaign.id, action_type: 'connection_sent', status: 'failed', error_message: errStr.slice(0, 200) });
+                // Clean error message — strip HTML if present
+                let cleanErr = errStr.slice(0, 200);
+                if (cleanErr.includes('<html') || cleanErr.includes('bad gateway')) {
+                  cleanErr = `Unipile API error (status: ${JSON.stringify(result.error).slice(0, 50)})`;
+                }
+                logActivity(db, { account_id: account.id, lead_id: lead.id, campaign_id: campaign.id, action_type: 'connection_sent', status: 'failed', error_message: cleanErr });
                 const errorDelayMs = randomDelay();
                 const nextActionAt = new Date(Date.now() + errorDelayMs).toISOString();
                 db.prepare('UPDATE accounts SET next_action_at = ? WHERE id = ?').run(nextActionAt, account.id);

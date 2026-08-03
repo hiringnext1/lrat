@@ -169,8 +169,18 @@ async function sendConnectionRequest(accountId, linkedinMemberId, note) {
     }
     const status = err?.response?.status;
     const data = err?.response?.data;
-    const errStr = JSON.stringify(data || '').toLowerCase();
-    
+    const rawStr = typeof data === 'string' ? data : JSON.stringify(data || '');
+    const errStr = rawStr.toLowerCase();
+
+    // 502/503/504 = Unipile gateway/proxy temporarily unavailable — NOT a LinkedIn error
+    const isGatewayError = status === 502 || status === 503 || status === 504 ||
+      (typeof data === 'string' && (data.includes('<html') || data.toLowerCase().includes('bad gateway')));
+
+    if (isGatewayError) {
+      log.warn({ fn: 'sendConnectionRequest', status }, 'Unipile gateway error (502/503/504) — temporary, will retry');
+      return { success: false, data: null, error: `Unipile gateway error (${status || 502}) — temporary`, isGatewayError: true, isRateLimit: false };
+    }
+
     // 422 is used for many things. Only treat as rate limit if it mentions "rate", "limit", or "resend_yet"
     // and EXCLUDE "already_invited" or "already_sent"
     const isRateLimit = (status === 429 || status === 422) && 
