@@ -237,26 +237,25 @@ router.post('/unipile', verifyUnipileSignature, async (req, res) => {
         const unipileService = require('../services/unipile');
         const accResult = await unipileService.getAccounts();
         if (accResult.success && Array.isArray(accResult.data)) {
-          const upsert = db.prepare(`
-            INSERT INTO accounts (unipile_account_id, name, email, photo_url, status, linkedin_url)
-            VALUES (?, ?, ?, ?, 'active', ?)
-            ON CONFLICT(unipile_account_id) DO UPDATE SET
-              name = excluded.name,
-              email = excluded.email,
-              photo_url = excluded.photo_url,
-              linkedin_url = excluded.linkedin_url
-          `);
-
           for (const acc of accResult.data) {
+            const unipileId = acc.id || acc.account_id;
+            const accName = acc.name || acc.username || acc.display_name || 'LinkedIn Account';
             const publicId = acc.public_identifier || acc.username || '';
             const url = publicId ? `https://www.linkedin.com/in/${publicId}` : '';
-            upsert.run(
-              acc.id || acc.account_id,
-              acc.name || acc.username || 'LinkedIn Account',
-              acc.email || acc.username || '',
-              acc.profile_picture_url || acc.photo || '',
-              url
-            );
+
+            // Only update existing accounts by unipile_account_id to preserve correct user_id
+            const existing = db.prepare('SELECT id FROM accounts WHERE unipile_account_id = ?').get(unipileId);
+            if (existing) {
+              db.prepare(`
+                UPDATE accounts SET
+                  name = ?,
+                  email = COALESCE(NULLIF(?, ''), email),
+                  photo_url = COALESCE(NULLIF(?, ''), photo_url),
+                  linkedin_url = COALESCE(NULLIF(?, ''), linkedin_url),
+                  status = 'active'
+                WHERE id = ?
+              `).run(accName, acc.email || '', acc.profile_picture_url || acc.photo || '', url, existing.id);
+            }
           }
 
           if (io) {

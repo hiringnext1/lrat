@@ -73,25 +73,24 @@ router.post('/webhook', async (req, res) => {
     const result = await unipileService.getAccounts();
     if (result.success && Array.isArray(result.data)) {
       const io = req.app.get('io');
-      const upsert = db.prepare(`
-        INSERT INTO accounts (unipile_account_id, name, email, photo_url, status, linkedin_url)
-        VALUES (?, ?, ?, ?, 'active', ?)
-        ON CONFLICT(unipile_account_id) DO UPDATE SET
-          name = excluded.name,
-          email = excluded.email,
-          photo_url = excluded.photo_url,
-          linkedin_url = excluded.linkedin_url
-      `);
       for (const acc of result.data) {
+        const unipileId = acc.id || acc.account_id;
+        const accName = acc.name || acc.username || acc.display_name || 'LinkedIn Account';
         const publicId = acc.public_identifier || acc.username || '';
         const url = publicId ? `https://www.linkedin.com/in/${publicId}` : '';
-        upsert.run(
-          acc.id || acc.account_id,
-          acc.name || acc.username || 'LinkedIn Account',
-          acc.email || acc.username || '',
-          acc.profile_picture_url || acc.photo || '',
-          url
-        );
+
+        const existing = db.prepare('SELECT id FROM accounts WHERE unipile_account_id = ?').get(unipileId);
+        if (existing) {
+          db.prepare(`
+            UPDATE accounts SET
+              name = ?,
+              email = COALESCE(NULLIF(?, ''), email),
+              photo_url = COALESCE(NULLIF(?, ''), photo_url),
+              linkedin_url = COALESCE(NULLIF(?, ''), linkedin_url),
+              status = 'active'
+            WHERE id = ?
+          `).run(accName, acc.email || '', acc.profile_picture_url || acc.photo || '', url, existing.id);
+        }
       }
       if (io) {
         io.emit('linkedin_account_connected', { message: 'Account synced from webhook' });
@@ -273,22 +272,31 @@ router.post('/sync', async (req, res) => {
       const publicId = acc.public_identifier || acc.username || '';
       const url = publicId ? `https://www.linkedin.com/in/${publicId}` : '';
 
-      // Check if this account already exists by name or unipile_account_id
-      const existingByName = db.prepare('SELECT id, user_id, unipile_account_id FROM accounts WHERE name = ?').get(accName);
-      if (existingByName) {
+      // Check if this account already exists for THIS user or by unipileId
+      const existingAccount = db.prepare(`
+        SELECT id, user_id FROM accounts 
+        WHERE unipile_account_id = ? OR (name = ? AND user_id = ?)
+      `).get(unipileId, accName, req.userId);
+
+      if (existingAccount) {
         db.prepare(`
           UPDATE accounts SET 
             unipile_account_id = ?, 
+            name = ?,
             status = 'active', 
             is_active = 1, 
             linkedin_url = COALESCE(NULLIF(?, ''), linkedin_url),
-            user_id = COALESCE(user_id, ?),
+            user_id = ?,
             consecutive_failures = 0,
             next_action_at = NULL
           WHERE id = ?
-        `).run(unipileId, url, req.userId, existingByName.id);
+        `).run(unipileId, accName, url, req.userId, existingAccount.id);
       } else {
-        upsert.run(
+        // Create new account entry strictly scoped to req.userId
+        db.prepare(`
+          INSERT INTO accounts (unipile_account_id, name, email, photo_url, status, is_active, linkedin_url, user_id, warmup_week, warmup_started_at)
+          VALUES (?, ?, ?, ?, 'active', 1, ?, ?, 4, CURRENT_TIMESTAMP)
+        `).run(
           unipileId,
           accName,
           acc.email || acc.username || '',
