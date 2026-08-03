@@ -210,12 +210,12 @@ function NextTimer({ targetDate, isPaused = false }) {
         return;
       }
       if (!targetDate) {
-        setLeft('Active (Scanning)');
+        setLeft('Ready to Send');
         return;
       }
       let diff = new Date(targetDate).getTime() - Date.now();
       if (isNaN(diff) || diff <= 0) {
-        setLeft('Dispatching now...');
+        setLeft('Sending now...');
         return;
       }
       const m = Math.floor(diff / 60000);
@@ -235,6 +235,8 @@ function NextTimer({ targetDate, isPaused = false }) {
       <span className={`font-black px-2 py-0.5 rounded border ${
         left.includes('Paused')
           ? 'text-amber-400 bg-amber-500/10 border-amber-500/20'
+          : left === 'Ready to Send' || left === 'Sending now...'
+          ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
           : 'text-blue-400 bg-blue-500/10 border-blue-500/20'
       }`}>{left}</span>
     </div>
