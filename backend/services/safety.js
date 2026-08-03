@@ -145,7 +145,7 @@ function canSendConnection(account, campaign = null, db = null) {
     }
   }
 
-  const startTime = campaign?.working_hours_start || '09:00';
+  const startTime = campaign?.working_hours_start || '00:00';
   const endTime = campaign?.working_hours_end || '23:59';
 
   let timezone = 'Asia/Kolkata';
