@@ -450,6 +450,13 @@ function initSchema() {
     if (warmupFixed.changes > 0) {
       console.log(`[Migration] Auto-started warmup (week 4) for ${warmupFixed.changes} active account(s) that had warmup_week=0.`);
     }
+
+    // 🛡️ CLEANUP: Delete stale paused duplicate accounts (is_active=0 AND status='paused')
+    db.prepare("DELETE FROM campaign_accounts WHERE account_id IN (SELECT id FROM accounts WHERE is_active = 0 AND status = 'paused')").run();
+    const staleDeleted = db.prepare("DELETE FROM accounts WHERE is_active = 0 AND status = 'paused'").run();
+    if (staleDeleted.changes > 0) {
+      console.log(`[Migration] Cleaned up ${staleDeleted.changes} stale paused duplicate account entries.`);
+    }
   } catch (e) {
     console.error('[Migration] Stats cleanup error:', e.message);
   }
