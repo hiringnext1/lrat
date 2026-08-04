@@ -108,6 +108,17 @@ function canSendConnection(account, campaign = null, db = null) {
     return { allowed: false, reason: 'Account is disabled' };
   }
 
+  // 🛡️ NEW ACCOUNT GUARD: Freshly connected accounts must wait at least 5 minutes
+  // before their first action to prevent instant fire on connect.
+  if (account.created_at) {
+    const createdMs = new Date(account.created_at).getTime();
+    const minAgeMs = 5 * 60 * 1000; // 5 minutes minimum age
+    if (Date.now() - createdMs < minAgeMs) {
+      const waitSecs = Math.ceil((createdMs + minAgeMs - Date.now()) / 1000);
+      return { allowed: false, reason: `Newly connected account — warming up (${waitSecs}s remaining)` };
+    }
+  }
+
   const accountLimit = getEffectiveDailyLimit(account);
   if (accountLimit === 0) {
     return { allowed: false, reason: 'Warmup not started — set warmup_week to begin' };

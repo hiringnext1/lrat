@@ -424,9 +424,6 @@ async function runLeadEnrichment() {
 
     if (leads.length === 0) return;
 
-    const accounts = db.prepare("SELECT * FROM accounts WHERE is_active = 1 AND status = 'active'").all();
-    if (accounts.length === 0) return;
-
     for (const lead of leads) {
       await logStorage.run({ userId: lead.user_id }, async () => {
         const blacklistCheck = isLeadBlacklisted(db, lead);
@@ -436,7 +433,15 @@ async function runLeadEnrichment() {
           return;
         }
 
-        const account = accounts[Math.floor(Math.random() * accounts.length)];
+        // CRITICAL: Only use accounts belonging to THIS lead's user — never cross-user accounts
+        const userAccounts = db.prepare(
+          "SELECT * FROM accounts WHERE is_active = 1 AND status = 'active' AND user_id = ?"
+        ).all(lead.user_id);
+        if (userAccounts.length === 0) {
+          console.log(`[Enrichment] No active accounts for user ${lead.user_id} to enrich lead ${lead.full_name}. Skipping.`);
+          return;
+        }
+        const account = userAccounts[Math.floor(Math.random() * userAccounts.length)];
         const now = new Date().toISOString();
         let memberId = lead.linkedin_member_id;
 
@@ -526,7 +531,7 @@ async function runLeadEnrichment() {
         }
       });
       
-      await new Promise(r => setTimeout(r, 5000)); // Be gentle
+      await new Promise(r => setTimeout(r, 5000)); // Be gentle — 5s between enrichment calls
     }
   } catch (err) {
     console.error('[Enrichment] Error:', err.message);
@@ -999,19 +1004,24 @@ async function scheduleNextConnectionRun() {
     return;
   }
 
-  // Find the account that is ready the soonest
+  // Find the account that is ready the soonest.
+  // CRITICAL: We use COALESCE(next_action_at, datetime('now', '+5 minutes')) so that
+  // newly connected accounts with NULL next_action_at are NOT treated as immediately ready.
+  // NULL in ASC order would sort first (i.e., fire instantly) which caused the bug where
+  // a new account triggered automation runs with zero delay.
   const nextReady = db.prepare(`
-    SELECT next_action_at 
+    SELECT COALESCE(next_action_at, datetime('now', '+5 minutes')) as next_action_at 
     FROM accounts 
     WHERE is_active = 1 AND status = 'active' 
-    ORDER BY next_action_at ASC LIMIT 1
+      AND datetime(COALESCE(created_at, 'now')) <= datetime('now', '-2 minutes')
+    ORDER BY COALESCE(next_action_at, datetime('now', '+5 minutes')) ASC LIMIT 1
   `).get();
 
   let delayMs = 60000; // Default: check again in 1 minute if nothing scheduled
 
   if (nextReady && nextReady.next_action_at) {
     const diff = new Date(nextReady.next_action_at).getTime() - Date.now();
-    // If next ready is in the future, wait until then. If past or ready, schedule run with 30s backoff to avoid aggressive polling.
+    // If next ready is in the future, wait until then. If past or ready, use 30s backoff.
     delayMs = diff > 0 ? Math.max(5000, diff) : 30000;
   }
 

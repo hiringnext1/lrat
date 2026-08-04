@@ -15,6 +15,14 @@ router.post('/connect-link', requireActiveSubscription, async (req, res) => {
       return res.status(400).json({ success: false, error: 'Unipile API Key is missing or invalid. Please check Settings.' });
     }
 
+    const db = getDb();
+
+    // Store a pending connection record so the webhook knows which user initiated this
+    const pendingResult = db.prepare(
+      `INSERT INTO pending_connections (user_id, status, created_at) VALUES (?, 'pending', ?)`
+    ).run(req.userId, new Date().toISOString());
+    const pendingId = pendingResult.lastInsertRowid;
+
     const baseUrl = process.env.FRONTEND_URL || (process.env.RAILWAY_STATIC_URL ? `https://${process.env.RAILWAY_STATIC_URL}` : 'https://growleadz.co');
     
     const successUrl = redirect_url || `${baseUrl}/accounts?connected=1`;
@@ -53,10 +61,12 @@ router.post('/connect-link', requireActiveSubscription, async (req, res) => {
     const authUrl = response.data?.url || response.data?.link || response.data;
     if (!authUrl) {
       console.error('[Unipile] No URL in response:', response.data);
+      // Clean up pending record
+      db.prepare('DELETE FROM pending_connections WHERE id = ?').run(pendingId);
       return res.status(502).json({ success: false, error: 'Unipile did not return a connect URL' });
     }
 
-    res.json({ success: true, url: authUrl });
+    res.json({ success: true, url: authUrl, pendingId });
   } catch (err) {
     const detail = err?.response?.data || err.message;
     console.error('[Unipile] Link Generation Failed:', detail);
@@ -68,32 +78,79 @@ router.post('/connect-link', requireActiveSubscription, async (req, res) => {
 router.post('/webhook', async (req, res) => {
   console.log('[Accounts Webhook Triggered]', req.body);
   try {
-    const unipileService = require('../services/unipile');
     const db = getDb();
-    const result = await unipileService.getAccounts();
-    if (result.success && Array.isArray(result.data)) {
-      const io = req.app.get('io');
-      for (const acc of result.data) {
-        const unipileId = acc.id || acc.account_id;
-        const accName = acc.name || acc.username || acc.display_name || 'LinkedIn Account';
-        const publicId = acc.public_identifier || acc.username || '';
-        const url = publicId ? `https://www.linkedin.com/in/${publicId}` : '';
+    const io = req.app.get('io');
+    const payload = req.body || {};
+    const accountId = payload.account_id || payload.data?.account_id;
 
-        const existing = db.prepare('SELECT id FROM accounts WHERE unipile_account_id = ?').get(unipileId);
-        if (existing) {
-          db.prepare(`
-            UPDATE accounts SET
-              name = ?,
-              email = COALESCE(NULLIF(?, ''), email),
-              photo_url = COALESCE(NULLIF(?, ''), photo_url),
-              linkedin_url = COALESCE(NULLIF(?, ''), linkedin_url),
-              status = 'active'
-            WHERE id = ?
-          `).run(accName, acc.email || '', acc.profile_picture_url || acc.photo || '', url, existing.id);
+    if (accountId) {
+      // Fetch ONLY this specific account from Unipile
+      const axios = require('axios');
+      const apiKey = getSetting('UNIPILE_API_KEY');
+      const dsn = getSetting('UNIPILE_DSN');
+
+      if (apiKey && dsn) {
+        try {
+          const accRes = await axios.get(`${dsn}/api/v1/accounts/${accountId}`, {
+            headers: { 'X-API-KEY': apiKey },
+            timeout: 8000,
+          });
+          const acc = accRes.data;
+          if (acc) {
+            const unipileId = acc.id || acc.account_id || accountId;
+            const accName = acc.name || acc.username || acc.display_name || 'LinkedIn Account';
+            const publicId = acc.public_identifier || acc.username || '';
+            const url = publicId ? `https://www.linkedin.com/in/${publicId}` : '';
+
+            // Check if already in DB
+            const existing = db.prepare('SELECT id, user_id FROM accounts WHERE unipile_account_id = ?').get(unipileId);
+            if (existing) {
+              db.prepare(`
+                UPDATE accounts SET
+                  name = COALESCE(NULLIF(?, ''), name),
+                  email = COALESCE(NULLIF(?, ''), email),
+                  photo_url = COALESCE(NULLIF(?, ''), photo_url),
+                  linkedin_url = COALESCE(NULLIF(?, ''), linkedin_url),
+                  status = 'active'
+                WHERE id = ?
+              `).run(accName, acc.email || '', acc.profile_picture_url || acc.photo || '', url, existing.id);
+              
+              if (io && existing.user_id) {
+                io.to(`user_${existing.user_id}`).emit('linkedin_account_connected', { message: 'Account synced from webhook' });
+              }
+            } else {
+              // New account — determine user from name tag or pending_connections
+              let userId = null;
+              const nameMatch = accName.match(/GrowLeadz_User_(\d+)/);
+              if (nameMatch) userId = parseInt(nameMatch[1], 10);
+
+              if (!userId) {
+                const pending = db.prepare(
+                  `SELECT user_id FROM pending_connections WHERE status = 'pending' ORDER BY created_at DESC LIMIT 1`
+                ).get();
+                if (pending) userId = pending.user_id;
+              }
+
+              if (userId) {
+                db.prepare(`
+                  INSERT INTO accounts (unipile_account_id, name, email, photo_url, status, is_active, linkedin_url, user_id, warmup_week, warmup_started_at)
+                  VALUES (?, ?, ?, ?, 'active', 1, ?, ?, 4, CURRENT_TIMESTAMP)
+                `).run(unipileId, accName, acc.email || '', acc.profile_picture_url || acc.photo || '', url, userId);
+
+                // Mark pending as completed
+                db.prepare(`UPDATE pending_connections SET status = 'completed', unipile_account_id = ? WHERE user_id = ? AND status = 'pending'`).run(unipileId, userId);
+
+                const newAcc = db.prepare('SELECT * FROM accounts WHERE unipile_account_id = ?').get(unipileId);
+                if (io) {
+                  io.to(`user_${userId}`).emit('linkedin_account_connected', { account: newAcc });
+                }
+                console.log(`[Accounts Webhook] Created new account for user ${userId}: ${accName}`);
+              }
+            }
+          }
+        } catch (e) {
+          console.error('[Accounts Webhook] Error fetching account:', e.message);
         }
-      }
-      if (io) {
-        io.emit('linkedin_account_connected', { message: 'Account synced from webhook' });
       }
     }
   } catch (err) {
@@ -148,9 +205,11 @@ router.post('/connect-cookie', requireActiveSubscription, async (req, res) => {
     const publicId = unipileAccount.public_identifier || unipileAccount.username || '';
     const url = publicId ? `https://www.linkedin.com/in/${publicId}` : '';
 
+    const initialNextAction = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // 5 min warm-up before first automation run
+
     db.prepare(`
-      INSERT INTO accounts (unipile_account_id, name, email, photo_url, status, is_active, linkedin_url, user_id)
-      VALUES (?, ?, ?, ?, 'active', 1, ?, ?)
+      INSERT INTO accounts (unipile_account_id, name, email, photo_url, status, is_active, linkedin_url, user_id, warmup_week, warmup_started_at, next_action_at)
+      VALUES (?, ?, ?, ?, 'active', 1, ?, ?, 4, CURRENT_TIMESTAMP, ?)
       ON CONFLICT(unipile_account_id) DO UPDATE SET
         name = excluded.name,
         email = excluded.email,
@@ -158,8 +217,9 @@ router.post('/connect-cookie', requireActiveSubscription, async (req, res) => {
         linkedin_url = excluded.linkedin_url,
         status = 'active',
         is_active = 1,
-        user_id = COALESCE(accounts.user_id, excluded.user_id)
-    `).run(unipileId, name, email, photo, url, req.userId);
+        user_id = COALESCE(accounts.user_id, excluded.user_id),
+        next_action_at = COALESCE(accounts.next_action_at, excluded.next_action_at)
+    `).run(unipileId, name, email, photo, url, req.userId, initialNextAction);
 
     const account = db.prepare('SELECT * FROM accounts WHERE unipile_account_id = ?').get(unipileId);
 
@@ -246,77 +306,145 @@ router.get('/', (req, res) => {
 router.post('/sync', async (req, res) => {
   try {
     const db = getDb();
-    const result = await unipile.getAccounts();
+    const axios = require('axios');
+    const apiKey = getSetting('UNIPILE_API_KEY');
+    const dsn = getSetting('UNIPILE_DSN');
+    let synced = 0;
 
-    if (!result.success) {
-      return res.status(502).json({ success: false, error: 'Failed to fetch accounts from Unipile', details: result.error });
+    // ── Step 1: Check for pending connections belonging to THIS user ──
+    // When a user connects via Hosted Auth, we saved a pending_connections record.
+    // Now we check if any new Unipile accounts appeared that match this user's pending request.
+    const pendingRecords = db.prepare(
+      `SELECT * FROM pending_connections WHERE user_id = ? AND status = 'pending' ORDER BY created_at DESC LIMIT 5`
+    ).all(req.userId);
+
+    if (pendingRecords.length > 0 && apiKey && dsn) {
+      // Fetch current Unipile accounts to find the newly connected one
+      const existingIds = db.prepare('SELECT unipile_account_id FROM accounts WHERE user_id = ?')
+        .all(req.userId)
+        .map(a => a.unipile_account_id);
+
+      try {
+        const unipileRes = await axios.get(`${dsn}/api/v1/accounts`, {
+          headers: { 'X-API-KEY': apiKey },
+          timeout: 10000,
+        });
+
+        const items = unipileRes.data?.items || unipileRes.data?.accounts || (Array.isArray(unipileRes.data) ? unipileRes.data : []);
+
+        for (const acc of items) {
+          const unipileId = acc.id || acc.account_id;
+          if (!unipileId) continue;
+
+          // Check if this is a LinkedIn account
+          const type = (acc.type || acc.provider || '').toUpperCase();
+          if (type && !type.includes('LINKEDIN')) continue;
+
+          // Check if this account belongs to this user via name tag OR is truly new
+          const accName = acc.name || acc.username || acc.display_name || '';
+          const belongsToUser = accName.includes(`GrowLeadz_User_${req.userId}`);
+
+          // Skip if this account already exists in ANY user's DB (prevent stealing)
+          const existsInDb = db.prepare('SELECT id, user_id FROM accounts WHERE unipile_account_id = ?').get(unipileId);
+          if (existsInDb) {
+            // Only update if it belongs to this user
+            if (existsInDb.user_id === req.userId) {
+              const publicId = acc.public_identifier || acc.username || '';
+              const url = publicId ? `https://www.linkedin.com/in/${publicId}` : '';
+              db.prepare(`
+                UPDATE accounts SET
+                  name = COALESCE(NULLIF(?, ''), name),
+                  email = COALESCE(NULLIF(?, ''), email),
+                  photo_url = COALESCE(NULLIF(?, ''), photo_url),
+                  linkedin_url = COALESCE(NULLIF(?, ''), linkedin_url),
+                  status = 'active',
+                  is_active = 1,
+                  consecutive_failures = 0,
+                  next_action_at = NULL
+                WHERE id = ?
+              `).run(
+                accName || '', acc.email || '', acc.profile_picture_url || acc.photo || '', url, existsInDb.id
+              );
+              synced++;
+            }
+            continue;
+          }
+
+          // New account — only create if it belongs to this user
+          if (belongsToUser) {
+            const publicId = acc.public_identifier || acc.username || '';
+            const url = publicId ? `https://www.linkedin.com/in/${publicId}` : '';
+            db.prepare(`
+              INSERT INTO accounts (unipile_account_id, name, email, photo_url, status, is_active, linkedin_url, user_id, warmup_week, warmup_started_at)
+              VALUES (?, ?, ?, ?, 'active', 1, ?, ?, 4, CURRENT_TIMESTAMP)
+            `).run(
+              unipileId,
+              accName || 'LinkedIn Account',
+              acc.email || acc.username || '',
+              acc.profile_picture_url || acc.photo || '',
+              url,
+              req.userId
+            );
+
+            // Mark pending as completed
+            for (const p of pendingRecords) {
+              db.prepare(`UPDATE pending_connections SET status = 'completed', unipile_account_id = ? WHERE id = ?`).run(unipileId, p.id);
+            }
+            synced++;
+            console.log(`[Sync] Created new account for user ${req.userId}: ${accName} (${unipileId})`);
+          }
+        }
+      } catch (e) {
+        console.error('[Sync] Unipile fetch error during pending check:', e.message);
+      }
     }
 
-    let synced = 0;
-    const upsert = db.prepare(`
-      INSERT INTO accounts (unipile_account_id, name, email, photo_url, status, is_active, linkedin_url, user_id)
-      VALUES (?, ?, ?, ?, 'active', 1, ?, ?)
-      ON CONFLICT(unipile_account_id) DO UPDATE SET
-        name = excluded.name,
-        email = excluded.email,
-        photo_url = excluded.photo_url,
-        linkedin_url = excluded.linkedin_url,
-        status = 'active',
-        is_active = 1,
-        user_id = COALESCE(accounts.user_id, excluded.user_id)
-    `);
-
-    for (const acc of result.data) {
-      const unipileId = acc.id || acc.account_id;
-      const accName = acc.name || acc.username || acc.display_name || 'LinkedIn Account';
-      const publicId = acc.public_identifier || acc.username || '';
-      const url = publicId ? `https://www.linkedin.com/in/${publicId}` : '';
-
-      // Check if this account already exists for THIS user or by unipileId
-      const existingAccount = db.prepare(`
-        SELECT id, user_id FROM accounts 
-        WHERE unipile_account_id = ? OR (name = ? AND user_id = ?)
-      `).get(unipileId, accName, req.userId);
-
-      if (existingAccount) {
-        db.prepare(`
-          UPDATE accounts SET 
-            unipile_account_id = ?, 
-            name = ?,
-            status = 'active', 
-            is_active = 1, 
-            linkedin_url = COALESCE(NULLIF(?, ''), linkedin_url),
-            user_id = ?,
-            consecutive_failures = 0,
-            next_action_at = NULL
-          WHERE id = ?
-        `).run(unipileId, accName, url, req.userId, existingAccount.id);
-      } else {
-        // Create new account entry strictly scoped to req.userId
-        db.prepare(`
-          INSERT INTO accounts (unipile_account_id, name, email, photo_url, status, is_active, linkedin_url, user_id, warmup_week, warmup_started_at)
-          VALUES (?, ?, ?, ?, 'active', 1, ?, ?, 4, CURRENT_TIMESTAMP)
-        `).run(
-          unipileId,
-          accName,
-          acc.email || acc.username || '',
-          acc.profile_picture_url || acc.photo || '',
-          url,
-          req.userId
-        );
+    // ── Step 2: Refresh existing accounts for THIS user only ──
+    const userAccounts = db.prepare('SELECT * FROM accounts WHERE user_id = ?').all(req.userId);
+    if (apiKey && dsn) {
+      for (const localAcc of userAccounts) {
+        if (!localAcc.unipile_account_id) continue;
+        try {
+          const accRes = await axios.get(`${dsn}/api/v1/accounts/${localAcc.unipile_account_id}`, {
+            headers: { 'X-API-KEY': apiKey },
+            timeout: 8000,
+          });
+          const acc = accRes.data;
+          if (acc) {
+            const accName = acc.name || acc.username || acc.display_name || localAcc.name;
+            const publicId = acc.public_identifier || acc.username || '';
+            const url = publicId ? `https://www.linkedin.com/in/${publicId}` : '';
+            db.prepare(`
+              UPDATE accounts SET
+                name = COALESCE(NULLIF(?, ''), name),
+                email = COALESCE(NULLIF(?, ''), email),
+                photo_url = COALESCE(NULLIF(?, ''), photo_url),
+                linkedin_url = COALESCE(NULLIF(?, ''), linkedin_url),
+                status = 'active',
+                consecutive_failures = 0,
+                next_action_at = NULL
+              WHERE id = ? AND user_id = ?
+            `).run(accName, acc.email || '', acc.profile_picture_url || acc.photo || '', url, localAcc.id, req.userId);
+          }
+        } catch (e) {
+          // Individual account fetch failed — mark as offline if 404
+          if (e?.response?.status === 404) {
+            db.prepare("UPDATE accounts SET status = 'offline' WHERE id = ? AND user_id = ?").run(localAcc.id, req.userId);
+          }
+        }
       }
-      synced++;
     }
 
     const accounts = db.prepare('SELECT * FROM accounts WHERE user_id = ? ORDER BY created_at DESC').all(req.userId);
     
     const io = req.app.get('io');
-    if (io && accounts.length > 0) {
+    if (io && synced > 0 && accounts.length > 0) {
       io.to(`user_${req.userId}`).emit('linkedin_account_connected', { account: accounts[0] });
     }
 
     res.json({ success: true, synced, data: accounts });
   } catch (err) {
+    console.error('[Sync Error]', err.message);
     res.status(500).json({ success: false, error: err.message });
   }
 });

@@ -120,12 +120,12 @@ export default function ConnectLinkedInModal({ onClose, onConnected }) {
       window.open(url, '_blank');
     }
 
-    let initialIds = [];
+    let initialCount = 0;
     try {
       const res = await axios.get('/api/accounts');
       const list = res.data.data || [];
-      initialCountRef.current = list.length;
-      initialIds = list.map(a => a.unipile_account_id);
+      initialCount = list.length;
+      initialCountRef.current = initialCount;
     } catch {
       initialCountRef.current = 0;
     }
@@ -133,12 +133,11 @@ export default function ConnectLinkedInModal({ onClose, onConnected }) {
     setPhase('waiting');
     startStepAnimation(3);
 
-    // Polling sync every 2.5 seconds
+    // Poll using GET /api/accounts (read-only, user-scoped) to detect new accounts
+    // Falls back to /sync only after window is closed to trigger the sync logic
+    let syncTriggered = false;
     pollRef.current = setInterval(async () => {
       try {
-        const res = await axios.post('/api/accounts/sync');
-        const accounts = res.data.data || [];
-
         // Check if window was closed by user after completing login
         const isWindowClosed = windowRef.current && windowRef.current.closed;
         let isRedirectedSuccess = false;
@@ -148,23 +147,30 @@ export default function ConnectLinkedInModal({ onClose, onConnected }) {
           }
         } catch (_) {}
 
-        // If sync returned accounts OR window was closed / redirected
-        if (accounts.length > 0 || isWindowClosed || isRedirectedSuccess) {
-          // If we have active accounts in DB, consider sync successful!
-          if (accounts.length > 0) {
-            stopPolling();
-            try { windowRef.current?.close(); } catch (_) {}
-            setActiveStep(4);
-            const newest = accounts[0];
-            setNewAccount(newest);
-            setPhase('success');
-            onConnected?.();
-          }
+        // If popup was closed or redirected, trigger a single sync to import the new account
+        if ((isWindowClosed || isRedirectedSuccess) && !syncTriggered) {
+          syncTriggered = true;
+          await axios.post('/api/accounts/sync');
+        }
+
+        // Check current accounts (read-only, user-scoped)
+        const res = await axios.get('/api/accounts');
+        const accounts = res.data.data || [];
+
+        // Detect if a new account appeared (more accounts than before)
+        if (accounts.length > initialCountRef.current) {
+          stopPolling();
+          try { windowRef.current?.close(); } catch (_) {}
+          setActiveStep(4);
+          const newest = accounts[0];
+          setNewAccount(newest);
+          setPhase('success');
+          onConnected?.();
         }
       } catch (e) {
-        console.error('Polling sync failed', e);
+        console.error('Polling check failed', e);
       }
-    }, 2500);
+    }, 3000);
   }
 
   // ── Mode 2: 1-Click Cookie (li_at) Connect Flow (3-Second Connection) ──────
@@ -202,9 +208,11 @@ export default function ConnectLinkedInModal({ onClose, onConnected }) {
   }
 
   function manualCheck() {
-    axios.post('/api/accounts/sync').then(res => {
+    // Trigger sync (user-scoped) then check for new accounts
+    axios.post('/api/accounts/sync').then(async () => {
+      const res = await axios.get('/api/accounts');
       const accounts = res.data.data || [];
-      if (accounts.length > 0) {
+      if (accounts.length > (initialCountRef.current || 0)) {
         stopPolling();
         try { windowRef.current?.close(); } catch (_) {}
         setActiveStep(4);

@@ -233,72 +233,142 @@ router.post('/unipile', verifyUnipileSignature, async (req, res) => {
       payload.event === 'account.link.created'
     ) {
       console.log(`[Webhook] Processing Account Event: ${payload.event}`);
-      try {
-        const unipileService = require('../services/unipile');
-        const accResult = await unipileService.getAccounts();
-        if (accResult.success && Array.isArray(accResult.data)) {
-          for (const acc of accResult.data) {
-            const unipileId = acc.id || acc.account_id;
-            const accName = acc.name || acc.username || acc.display_name || 'LinkedIn Account';
-            const publicId = acc.public_identifier || acc.username || '';
-            const url = publicId ? `https://www.linkedin.com/in/${publicId}` : '';
+      
+      const { account_id, status } = payload.data || {};
+      
+      if (account_id) {
+        try {
+          const axios = require('axios');
+          const { getSetting } = require('../config/database');
+          const apiKey = getSetting('UNIPILE_API_KEY');
+          const dsn = getSetting('UNIPILE_DSN');
 
-            // Only update existing accounts by unipile_account_id to preserve correct user_id
-            const existing = db.prepare('SELECT id FROM accounts WHERE unipile_account_id = ?').get(unipileId);
-            if (existing) {
-              db.prepare(`
-                UPDATE accounts SET
-                  name = ?,
-                  email = COALESCE(NULLIF(?, ''), email),
-                  photo_url = COALESCE(NULLIF(?, ''), photo_url),
-                  linkedin_url = COALESCE(NULLIF(?, ''), linkedin_url),
-                  status = 'active'
-                WHERE id = ?
-              `).run(accName, acc.email || '', acc.profile_picture_url || acc.photo || '', url, existing.id);
+          // Fetch ONLY this specific account from Unipile (NOT all accounts)
+          let acc = null;
+          if (apiKey && dsn) {
+            try {
+              const accRes = await axios.get(`${dsn}/api/v1/accounts/${account_id}`, {
+                headers: { 'X-API-KEY': apiKey },
+                timeout: 8000,
+              });
+              acc = accRes.data;
+            } catch (fetchErr) {
+              console.error(`[Webhook] Failed to fetch account ${account_id}:`, fetchErr.message);
             }
           }
 
-          if (io) {
-            io.emit('linkedin_account_connected', { message: 'Account synced via webhook' });
-          }
-        }
-      } catch (e) {
-        console.error('[Webhook] Account sync error:', e);
-      }
+          const unipileId = acc?.id || acc?.account_id || account_id;
+          const accName = acc?.name || acc?.username || acc?.display_name || 'LinkedIn Account';
+          const publicId = acc?.public_identifier || acc?.username || '';
+          const url = publicId ? `https://www.linkedin.com/in/${publicId}` : '';
 
-      const { account_id, status } = payload.data || {};
-      if (account_id) {
-        const internalAccount = db.prepare('SELECT * FROM accounts WHERE unipile_account_id = ?').get(account_id);
-        
-        if (internalAccount) {
-          let newStatus = 'active';
-          if (status === 'OFFLINE' || status === 'DISCONNECTED') newStatus = 'offline';
-          if (status === 'REJECTED' || status === 'BANNED') newStatus = 'restricted';
+          // Check if this account already exists in DB
+          const existing = db.prepare('SELECT id, user_id FROM accounts WHERE unipile_account_id = ?').get(unipileId);
 
-          db.prepare('UPDATE accounts SET status = ?, updated_at = ? WHERE id = ?').run(
-            newStatus, new Date().toISOString(), internalAccount.id
-          );
+          if (existing) {
+            // Update existing account
+            db.prepare(`
+              UPDATE accounts SET
+                name = COALESCE(NULLIF(?, ''), name),
+                email = COALESCE(NULLIF(?, ''), email),
+                photo_url = COALESCE(NULLIF(?, ''), photo_url),
+                linkedin_url = COALESCE(NULLIF(?, ''), linkedin_url),
+                status = 'active'
+              WHERE id = ?
+            `).run(accName, acc?.email || '', acc?.profile_picture_url || acc?.photo || '', url, existing.id);
 
-          if (newStatus === 'restricted' || newStatus === 'offline') {
-            await sendAlert({
-              type: 'restricted',
-              subject: `🚨 Recruiter Node Alert: ${internalAccount.name} is ${newStatus.toUpperCase()}`,
-              message: `Attention required: Account "${internalAccount.name}" status changed to ${status} in Unipile.`,
-              meta: {
-                account_name: internalAccount.name,
-                unipile_account_id: account_id,
-                current_status: status
+            if (io && existing.user_id) {
+              const updatedAcc = db.prepare('SELECT * FROM accounts WHERE id = ?').get(existing.id);
+              io.to(`user_${existing.user_id}`).emit('linkedin_account_connected', { account: updatedAcc });
+            }
+            console.log(`[Webhook] Updated existing account: ${accName} (user_id: ${existing.user_id})`);
+          } else {
+            // NEW account — determine which user this belongs to
+            let userId = null;
+
+            // Strategy 1: Parse user_id from Unipile account name tag (GrowLeadz_User_<id>)
+            const nameMatch = accName.match(/GrowLeadz_User_(\d+)/);
+            if (nameMatch) {
+              userId = parseInt(nameMatch[1], 10);
+              console.log(`[Webhook] Matched user_id ${userId} from account name tag`);
+            }
+
+            // Strategy 2: Check pending_connections table for most recent pending request
+            if (!userId) {
+              const pending = db.prepare(
+                `SELECT user_id FROM pending_connections WHERE status = 'pending' ORDER BY created_at DESC LIMIT 1`
+              ).get();
+              if (pending) {
+                userId = pending.user_id;
+                console.log(`[Webhook] Matched user_id ${userId} from pending_connections`);
               }
-            });
+            }
+
+            if (userId) {
+              // Create the account in DB with correct user_id
+              db.prepare(`
+                INSERT INTO accounts (unipile_account_id, name, email, photo_url, status, is_active, linkedin_url, user_id, warmup_week, warmup_started_at)
+                VALUES (?, ?, ?, ?, 'active', 1, ?, ?, 4, CURRENT_TIMESTAMP)
+              `).run(
+                unipileId,
+                accName,
+                acc?.email || '',
+                acc?.profile_picture_url || acc?.photo || '',
+                url,
+                userId
+              );
+
+              // Mark pending connection as completed
+              db.prepare(
+                `UPDATE pending_connections SET status = 'completed', unipile_account_id = ? WHERE user_id = ? AND status = 'pending'`
+              ).run(unipileId, userId);
+
+              const newAccount = db.prepare('SELECT * FROM accounts WHERE unipile_account_id = ?').get(unipileId);
+              if (io) {
+                io.to(`user_${userId}`).emit('linkedin_account_connected', { account: newAccount });
+              }
+              console.log(`[Webhook] Created NEW account for user ${userId}: ${accName} (${unipileId})`);
+            } else {
+              console.warn(`[Webhook] Could not determine user_id for new Unipile account: ${accName} (${unipileId}). Account NOT created in DB.`);
+            }
           }
 
-          if (io) {
-            io.to('user_' + internalAccount.user_id).emit('account_status_changed', {
-              account_id: internalAccount.id,
-              account_name: internalAccount.name,
-              status: newStatus
-            });
+          // Handle status updates for existing accounts
+          if (existing || db.prepare('SELECT id, user_id FROM accounts WHERE unipile_account_id = ?').get(unipileId)) {
+            const internalAccount = db.prepare('SELECT * FROM accounts WHERE unipile_account_id = ?').get(unipileId);
+            if (internalAccount && status) {
+              let newStatus = 'active';
+              if (status === 'OFFLINE' || status === 'DISCONNECTED') newStatus = 'offline';
+              if (status === 'REJECTED' || status === 'BANNED') newStatus = 'restricted';
+
+              db.prepare('UPDATE accounts SET status = ?, updated_at = ? WHERE id = ?').run(
+                newStatus, new Date().toISOString(), internalAccount.id
+              );
+
+              if (newStatus === 'restricted' || newStatus === 'offline') {
+                await sendAlert({
+                  type: 'restricted',
+                  subject: `🚨 Recruiter Node Alert: ${internalAccount.name} is ${newStatus.toUpperCase()}`,
+                  message: `Attention required: Account "${internalAccount.name}" status changed to ${status} in Unipile.`,
+                  meta: {
+                    account_name: internalAccount.name,
+                    unipile_account_id: account_id,
+                    current_status: status
+                  }
+                });
+              }
+
+              if (io && internalAccount.user_id) {
+                io.to('user_' + internalAccount.user_id).emit('account_status_changed', {
+                  account_id: internalAccount.id,
+                  account_name: internalAccount.name,
+                  status: newStatus
+                });
+              }
+            }
           }
+        } catch (e) {
+          console.error('[Webhook] Account event processing error:', e);
         }
       }
     }

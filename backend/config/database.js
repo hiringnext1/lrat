@@ -233,6 +233,16 @@ function initSchema() {
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
 
+    CREATE TABLE IF NOT EXISTS pending_connections (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      status TEXT DEFAULT 'pending',
+      unipile_account_id TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_pending_connections_user_id ON pending_connections(user_id);
+    CREATE INDEX IF NOT EXISTS idx_pending_connections_status ON pending_connections(status);
     CREATE INDEX IF NOT EXISTS idx_leads_linkedin_member_id ON leads(linkedin_member_id);
     CREATE INDEX IF NOT EXISTS idx_leads_linkedin_url ON leads(linkedin_url);
     CREATE INDEX IF NOT EXISTS idx_leads_campaign_id ON leads(campaign_id);
