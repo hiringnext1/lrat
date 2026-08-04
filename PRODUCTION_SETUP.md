@@ -110,7 +110,7 @@ t.sendMail({ from: 'YOUR_EMAIL@gmail.com', to: 'YOUR_EMAIL@gmail.com', subject: 
 
 1. https://app.unipile.com → Settings → API Keys
    - `UNIPILE_API_KEY` copy karo
-   - `UNIPILE_DSN` confirm karo (probably `https://api6.unipile.com:13337`)
+   - `UNIPILE_DSN` confirm karo (probably `https://api34.unipile.com:16465`)
 
 2. Unipile → Settings → Webhooks → Add Webhook:
    - URL: `https://YOUR_DOMAIN.com/api/webhooks/unipile`
@@ -151,7 +151,7 @@ railway variables set \
   ENCRYPTION_KEY=a63d01be157b9ad79f0e822da4eab74502485c077ec233544204043064774514 \
   FRONTEND_URL=https://your-app.railway.app \
   UNIPILE_API_KEY=your_key \
-  UNIPILE_DSN=https://api6.unipile.com:13337 \
+  UNIPILE_DSN=https://api34.unipile.com:16465 \
   NVIDIA_API_KEY=your_key \
   STRIPE_SECRET_KEY=sk_live_... \
   STRIPE_WEBHOOK_SECRET=whsec_... \
@@ -216,7 +216,7 @@ curl https://YOUR_DOMAIN.com/api/health
 [ ] ENCRYPTION_KEY=a63d01be... ✅ (already generated)
 [ ] FRONTEND_URL=https://... ❌ (domain milne ke baad add karo)
 [ ] UNIPILE_API_KEY=... ❌ (manual step)
-[ ] UNIPILE_DSN=... ✅ (https://api6.unipile.com:13337)
+[ ] UNIPILE_DSN=... ✅ (https://api34.unipile.com:16465)
 [ ] UNIPILE_WEBHOOK_SECRET=... ❌ (deployment ke baad)
 [ ] NVIDIA_API_KEY=... ❌ (manual step)
 [ ] STRIPE_SECRET_KEY=... ❌ (manual step)

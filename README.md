@@ -48,7 +48,7 @@ Edit the `.env` file in the project root:
 
 ```env
 UNIPILE_API_KEY=your_unipile_api_key_here
-UNIPILE_DSN=https://api6.unipile.com:13337
+UNIPILE_DSN=https://api34.unipile.com:16465
 CLAUDE_API_KEY=your_anthropic_api_key_here
 PORT=3001
 FRONTEND_URL=http://localhost:5173
