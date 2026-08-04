@@ -88,6 +88,15 @@ Fixing these is prerequisite to anything billing-, schedule-, or warmup-related 
 - Frontend: `CampaignBuilder.jsx` (2079) and `Landing.jsx` (1709) should be split; auth state lives in `localStorage` (`lrat_token`, `lrat_user`) with client-side-only route guards (server does enforce, so it's cosmetic).
 - Mixed logging: pino (`services/logger.js`) in newer code, raw `console.*` in most routes.
 
+## 5b. LinkedIn connect flow (fixed 2026-08-04, `fa7a599` + `b4eccbf`)
+
+Worth knowing before touching `POST /api/accounts/connect-link` or `routes/webhooks.js`:
+
+- Unipile's **hosted-auth `notify_url` posts a flat body with no `event` field** — `{ status: 'CREATION_SUCCESS', account_id, name }` — unlike the regular webhooks which use `payload.event` + `payload.data`. The handler now normalises both shapes and logs the raw body for any payload without an `event`.
+- The `name` sent when creating the link (`GrowLeadz_User_<id>`) is how the webhook attributes a new account to a user; fallbacks are `pending_connections` then a hardcoded email pattern.
+- The connect modal has three completion paths: socket `linkedin_account_connected`, polling `GET /api/accounts` for a count increase, and `POST /api/accounts/sync`. Popup introspection (`windowRef.current.location`) is unreliable across origins, so the modal now calls `/sync` every ~12s regardless.
+- `success_redirect_url` must point at `/dashboard/accounts?connected=1` — `/accounts` is not a React route, so the popup landed on a blank page and the `connected=1` auto-sync never ran.
+
 ## 6b. Deployment pipeline (verified 2026-08-04)
 
 Railway project `lrat` → service `lrat` → env `production` (workspace "hiringnext1's Projects").
