@@ -48,6 +48,24 @@ function decryptValue(storedValue) {
   }
 }
 
+// Snapshot of the real process environment, captured at module load BEFORE any
+// settings row is merged into process.env. Environment variables are the source
+// of truth for infrastructure config — a stale `settings` row must never win
+// over them (a stale UNIPILE_DSN here silently broke LinkedIn account linking).
+const BOOT_ENV = { ...process.env };
+
+// Values like "placeholder_set_later" / "paste_your_key" are treated as unset,
+// otherwise a leftover placeholder in the environment would shadow a real
+// credential stored in the settings table.
+const PLACEHOLDER_RE = /placeholder|paste_your|your_key_here|^(none|null|undefined|changeme)$/i;
+
+function envValue(key) {
+  const raw = BOOT_ENV[key];
+  if (!raw || !raw.trim()) return null;
+  const value = raw.trim();
+  return PLACEHOLDER_RE.test(value) ? null : value;
+}
+
 const DB_PATH = process.env.DATABASE_PATH || path.join(__dirname, '../db/lrat.db');
 
 let db;
@@ -374,21 +392,10 @@ function initSchema() {
     db.prepare("INSERT INTO settings (key, value) VALUES ('ADMIN_EMAIL', 'freelance.vishal22@gmail.com')").run();
   }
 
-  // Seed default Unipile credentials if missing or using old placeholder
-  const currentUnipileKey = db.prepare("SELECT value FROM settings WHERE key = 'UNIPILE_API_KEY'").get();
-  if (!currentUnipileKey || currentUnipileKey.value.includes('paste_your')) {
-    db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('UNIPILE_API_KEY', 'vVMAwuwx.hnEr/TilENp1n2+cVZY7NPIzsQ/KV1not9KmBKH+oNg=')").run();
-  }
-  const currentUnipileDsn = db.prepare("SELECT value FROM settings WHERE key = 'UNIPILE_DSN'").get();
-  if (!currentUnipileDsn || currentUnipileDsn.value.includes('paste_your') || currentUnipileDsn.value.includes('api43')) {
-    db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('UNIPILE_DSN', 'https://api52.unipile.com:18228')").run();
-  }
-
-  // Seed default working NVIDIA_API_KEY
-  const currentNvidiaKey = db.prepare("SELECT value FROM settings WHERE key = 'NVIDIA_API_KEY'").get();
-  if (!currentNvidiaKey || currentNvidiaKey.value.includes('paste_your') || !currentNvidiaKey.value.startsWith('nvapi-wS3I')) {
-    db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('NVIDIA_API_KEY', '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')").run();
-  }
+  // NOTE: Unipile / NVIDIA credentials are NOT seeded here any more. They come
+  // from environment variables (or the Settings page). Seeding hardcoded keys
+  // overwrote valid credentials on every boot and pinned production to a dead
+  // Unipile instance.
 
   // Seed default Admin user with reset password (Admin#GrowLeadz2026!)
   try {
@@ -477,6 +484,8 @@ function loadSettingsIntoEnv() {
     const database = getDb();
     const rows = database.prepare('SELECT key, value FROM settings').all();
     for (const row of rows) {
+      // A real environment variable always wins over a stored setting
+      if (envValue(row.key)) continue;
       if (row.value && row.value.trim()) {
         // S4: Decrypt sensitive values before loading into env
         const val = SENSITIVE_KEYS.has(row.key) ? decryptValue(row.value.trim()) : row.value.trim();
@@ -489,6 +498,10 @@ function loadSettingsIntoEnv() {
 }
 
 function getSetting(key) {
+  // Environment variable wins over the stored setting (see BOOT_ENV above)
+  const fromEnv = envValue(key);
+  if (fromEnv) return fromEnv;
+
   try {
     const database = getDb();
     const row = database.prepare('SELECT value FROM settings WHERE key = ?').get(key);
@@ -511,6 +524,9 @@ function setSetting(key, value) {
     'INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at'
   ).run(key, storedValue, now);
   process.env[key] = value; // Keep plaintext in env for runtime use
+  // Keep the env-priority lookup in sync so a Settings page change takes effect
+  // immediately. On the next restart the real environment variable wins again.
+  BOOT_ENV[key] = value;
 }
 
 module.exports = { getDb, loadSettingsIntoEnv, getSetting, setSetting };
