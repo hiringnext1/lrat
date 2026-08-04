@@ -25,8 +25,10 @@ router.post('/connect-link', requireActiveSubscription, async (req, res) => {
 
     const baseUrl = process.env.FRONTEND_URL || (process.env.RAILWAY_STATIC_URL ? `https://${process.env.RAILWAY_STATIC_URL}` : 'https://growleadz.co');
     
-    const successUrl = redirect_url || `${baseUrl}/accounts?connected=1`;
-    const failUrl = redirect_url || `${baseUrl}/accounts?connected=0`;
+    // Must match the React route (/dashboard/accounts) — /accounts renders nothing
+    // and never triggers the post-connect sync.
+    const successUrl = redirect_url || `${baseUrl}/dashboard/accounts?connected=1`;
+    const failUrl = redirect_url || `${baseUrl}/dashboard/accounts?connected=0`;
     const notifyUrl = `${baseUrl}/api/webhooks/unipile`;
 
     // Short 10-minute expiry for fresh auth session
