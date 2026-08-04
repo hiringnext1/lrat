@@ -54,7 +54,27 @@ router.post('/unipile', verifyUnipileSignature, async (req, res) => {
   const io = req.app.get('io');
   const db = getDb();
 
-  console.log(`[Webhook] Received Unipile event: ${payload.event}`);
+  // Unipile's hosted-auth notify_url posts a FLAT body with no `event` field:
+  //   { status: 'CREATION_SUCCESS', account_id: '...', name: 'GrowLeadz_User_4' }
+  // Without this normalisation the payload matched no branch, the account was
+  // never created, and the connect modal hung on "Awaiting LinkedIn Login".
+  const hostedAuthStatus = String(payload.status || '').toUpperCase();
+  const isHostedAuthNotification =
+    !payload.event && !!(payload.account_id || payload.data?.account_id);
+  const isHostedAuthSuccess =
+    isHostedAuthNotification &&
+    (hostedAuthStatus === '' ||
+      hostedAuthStatus.includes('SUCCESS') ||
+      hostedAuthStatus === 'OK' ||
+      hostedAuthStatus === 'CONNECTED' ||
+      hostedAuthStatus === 'RECONNECTED');
+
+  console.log(
+    `[Webhook] Received Unipile event: ${payload.event || (isHostedAuthNotification ? `hosted-auth (${hostedAuthStatus || 'no status'})` : 'unknown')}`
+  );
+  if (!payload.event) {
+    console.log('[Webhook] Raw payload:', JSON.stringify(payload).slice(0, 500));
+  }
 
   try {
     // 1. Handle New Message Received (Replies & Chats)
@@ -227,15 +247,20 @@ router.post('/unipile', verifyUnipileSignature, async (req, res) => {
 
     // 3. Handle Account Created / Status Changes / Sync
     if (
-      payload.event === 'account.created' || 
-      payload.event === 'account.connected' || 
+      payload.event === 'account.created' ||
+      payload.event === 'account.connected' ||
       payload.event === 'account.status.updated' ||
-      payload.event === 'account.link.created'
+      payload.event === 'account.link.created' ||
+      isHostedAuthSuccess
     ) {
-      console.log(`[Webhook] Processing Account Event: ${payload.event}`);
-      
-      const { account_id, status } = payload.data || {};
-      
+      console.log(`[Webhook] Processing Account Event: ${payload.event || `hosted-auth ${hostedAuthStatus}`}`);
+
+      // Hosted-auth sends these fields at the top level, webhooks nest them in `data`
+      const account_id = payload.data?.account_id || payload.account_id;
+      const status = payload.data?.status || (payload.event ? payload.status : null);
+      // The `name` we passed when creating the hosted link (GrowLeadz_User_<id>)
+      const notifyName = payload.name || payload.data?.name || '';
+
       if (account_id) {
         try {
           const axios = require('axios');
@@ -258,7 +283,9 @@ router.post('/unipile', verifyUnipileSignature, async (req, res) => {
           }
 
           const unipileId = acc?.id || acc?.account_id || account_id;
-          const accName = acc?.name || acc?.username || acc?.display_name || 'LinkedIn Account';
+          const rawName = acc?.name || acc?.username || acc?.display_name || '';
+          // Don't show the internal GrowLeadz_User_<id> tag as the account name
+          const accName = rawName || (notifyName && !/GrowLeadz_User_/.test(notifyName) ? notifyName : 'LinkedIn Account');
           const publicId = acc?.public_identifier || acc?.username || '';
           const url = publicId ? `https://www.linkedin.com/in/${publicId}` : '';
 
@@ -286,8 +313,9 @@ router.post('/unipile', verifyUnipileSignature, async (req, res) => {
             // NEW account — determine which user this belongs to
             let userId = null;
 
-            // Strategy 1: Parse user_id from Unipile account name tag (GrowLeadz_User_<id>)
-            const nameMatch = accName.match(/GrowLeadz_User_(\d+)/);
+            // Strategy 1: Parse user_id from the GrowLeadz_User_<id> tag — it can
+            // arrive either in the notify payload or on the Unipile account itself
+            const nameMatch = `${notifyName} ${rawName}`.match(/GrowLeadz_User_(\d+)/);
             if (nameMatch) {
               userId = parseInt(nameMatch[1], 10);
               console.log(`[Webhook] Matched user_id ${userId} from account name tag`);

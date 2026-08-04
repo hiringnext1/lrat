@@ -135,9 +135,10 @@ export default function ConnectLinkedInModal({ onClose, onConnected }) {
 
     // Poll using GET /api/accounts (read-only, user-scoped) to detect new accounts
     // Falls back to /sync only after window is closed to trigger the sync logic
-    let syncTriggered = false;
+    let tick = 0;
     pollRef.current = setInterval(async () => {
       try {
+        tick++;
         // Check if window was closed by user after completing login
         const isWindowClosed = windowRef.current && windowRef.current.closed;
         let isRedirectedSuccess = false;
@@ -147,9 +148,10 @@ export default function ConnectLinkedInModal({ onClose, onConnected }) {
           }
         } catch (_) {}
 
-        // If popup was closed or redirected, trigger a single sync to import the new account
-        if ((isWindowClosed || isRedirectedSuccess) && !syncTriggered) {
-          syncTriggered = true;
+        // Sync when the popup signals completion — and every ~12s regardless.
+        // The popup redirect can land on a different origin (or stay open), which
+        // makes the checks above unreliable, so never depend on them alone.
+        if (isWindowClosed || isRedirectedSuccess || tick % 4 === 0) {
           await axios.post('/api/accounts/sync');
         }
 
