@@ -50,14 +50,14 @@ Lead status machine: `pending_connection → connection_sent → connected → j
 | 417-419 | force `working_hours_start='00:00'`, end `'23:59'`, `working_days='[0..6]'` | User-configured campaign schedules are **wiped on each restart** |
 | 455 | `UPDATE accounts SET warmup_week=4 WHERE is_active=1 AND status='active'` | Warmup ramp bypassed; every account jumps to full speed |
 | 466 | `DELETE FROM accounts WHERE is_active=0 AND status='paused'` | `pauseAccountTemporarily()` and the 5-failure auto-pause set exactly `is_active=0, status='paused'` → **a restart deletes paused accounts** (and their `campaign_accounts` rows) |
-| 380/384/390 | seeds hardcoded `UNIPILE_API_KEY`, `UNIPILE_DSN`, `NVIDIA_API_KEY` into `settings` | Live keys committed in source; also overwrite whatever the user set (nvidia key is replaced unless it starts with `nvapi-wS3I`) |
+| ~~380/384/390~~ | ~~seeds hardcoded `UNIPILE_API_KEY`, `UNIPILE_DSN`, `NVIDIA_API_KEY` into `settings`~~ | **FIXED in `9e11b44`** — seeds removed; env vars now win over `settings` rows (`BOOT_ENV` + `envValue()` in `database.js`). This seeding had pinned production to the dead `api52` Unipile instance and broke LinkedIn account linking (`503 errors/no_client_session`) |
 | 399-411 | resets `admin@growleadz.co` / `admin@lrat.com` password to `Admin#GrowLeadz2026!` and `role='admin'` on every boot | Password changes never stick; credential in source |
 
 Fixing these is prerequisite to anything billing-, schedule-, or warmup-related behaving as configured.
 
 ## 4. Security findings
 
-1. **Hardcoded live credentials** in `config/database.js` (Unipile key, NVIDIA key, admin password). Rotate + move to env only. Repo is on GitHub.
+1. **Hardcoded live credentials** in `config/database.js`. Unipile + NVIDIA seeds removed in `9e11b44`; the **admin password reset (`Admin#GrowLeadz2026!`) and the leaked NVIDIA key still need rotating** — both were committed to a GitHub repo. Config precedence is now: real env var → `settings` row → empty, with placeholder values (`placeholder`, `paste_your`, `none`) treated as unset.
 2. **CORS is effectively open** — `server.js:74` and `:90` both `callback(null, true)`; `isOriginAllowed()` (`:65`) is dead code and also ends in `return true`.
 3. **JWT accepted from `?token=` query** (`authMiddleware.js:16`) → tokens leak into proxy/access logs and Referer.
 4. **No `app.set('trust proxy', …)`** while running behind Railway → `express-rate-limit` buckets all users under the proxy IP; login limiter (10/15 min) becomes a global throttle rather than per-IP.
