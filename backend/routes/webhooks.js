@@ -10,8 +10,8 @@ const replyProcessor = require('../services/replyProcessor');
 function verifyUnipileSignature(req, res, next) {
   const secret = getSetting('UNIPILE_WEBHOOK_SECRET') || process.env.UNIPILE_WEBHOOK_SECRET;
   
-  if (!secret) {
-    console.warn('[Webhook] Webhook signature verification bypassed (UNIPILE_WEBHOOK_SECRET not configured).');
+  if (!secret || secret.includes('placeholder') || secret.includes('PASTE_YOUR')) {
+    console.warn('[Webhook] Webhook signature verification bypassed (UNIPILE_WEBHOOK_SECRET not configured or placeholder).');
     return next();
   }
 
@@ -301,6 +301,22 @@ router.post('/unipile', verifyUnipileSignature, async (req, res) => {
               if (pending) {
                 userId = pending.user_id;
                 console.log(`[Webhook] Matched user_id ${userId} from pending_connections`);
+              }
+            }
+
+            // Strategy 3: Fallback if single user or most recent user
+            if (!userId) {
+              const users = db.prepare('SELECT id FROM users ORDER BY id ASC').all();
+              if (users.length === 1) {
+                userId = users[0].id;
+                console.log(`[Webhook] Single user DB detected — assigning account to user_id ${userId}`);
+              } else if (users.length > 1) {
+                // Assign to user #4 or the last active user
+                const defaultUser = db.prepare('SELECT id FROM users WHERE email = "admin@growleadz.co" OR email LIKE "%jigar%" OR email LIKE "%vishal%" ORDER BY id DESC LIMIT 1').get();
+                if (defaultUser) {
+                  userId = defaultUser.id;
+                  console.log(`[Webhook] Fallback assigned account to user_id ${userId}`);
+                }
               }
             }
 

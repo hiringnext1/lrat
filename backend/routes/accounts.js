@@ -370,16 +370,20 @@ router.post('/sync', async (req, res) => {
             continue;
           }
 
-          // New account — only create if it belongs to this user
-          if (belongsToUser) {
+          // New account — assign to this user if belongsToUser OR user has a pending connection OR single user DB
+          const shouldAssign = belongsToUser || pendingRecords.length > 0 || (db.prepare('SELECT COUNT(*) as c FROM users').get()?.c === 1);
+
+          if (shouldAssign) {
             const publicId = acc.public_identifier || acc.username || '';
             const url = publicId ? `https://www.linkedin.com/in/${publicId}` : '';
+            const cleanName = accName.includes('GrowLeadz_User_') ? (acc.username || acc.email || 'LinkedIn Account') : (accName || 'LinkedIn Account');
+
             db.prepare(`
               INSERT INTO accounts (unipile_account_id, name, email, photo_url, status, is_active, linkedin_url, user_id, warmup_week, warmup_started_at)
               VALUES (?, ?, ?, ?, 'active', 1, ?, ?, 4, CURRENT_TIMESTAMP)
             `).run(
               unipileId,
-              accName || 'LinkedIn Account',
+              cleanName,
               acc.email || acc.username || '',
               acc.profile_picture_url || acc.photo || '',
               url,
@@ -391,7 +395,7 @@ router.post('/sync', async (req, res) => {
               db.prepare(`UPDATE pending_connections SET status = 'completed', unipile_account_id = ? WHERE id = ?`).run(unipileId, p.id);
             }
             synced++;
-            console.log(`[Sync] Created new account for user ${req.userId}: ${accName} (${unipileId})`);
+            console.log(`[Sync] Created new account for user ${req.userId}: ${cleanName} (${unipileId})`);
           }
         }
       } catch (e) {
