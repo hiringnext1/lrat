@@ -843,6 +843,10 @@ async function executeFlowNode(db, campaign, lead, node, execMap, nodeMap) {
         console.log(`[Flow] Safety check failed for ${acc.name}: ${safetyCheck.reason}`);
         return;
       }
+      // A/B: the variant is chosen when the invite goes out — every later
+      // message node reads lead.message_variant. Without this, flow campaigns
+      // stayed on 'A' forever and the B templates were never used.
+      const flowVariant = Math.random() < 0.5 ? 'A' : 'B';
       let noteText = '';
       if (node.data?.aiNote) {
         console.log(`[Flow] Generating AI personalized connection note for ${lead.full_name}...`);
@@ -855,7 +859,10 @@ async function executeFlowNode(db, campaign, lead, node, execMap, nodeMap) {
           noteText = `Hi ${firstName}, I came across your profile and would love to connect.`;
         }
       } else {
-        noteText = (node.data?.note || '')
+        const noteTemplate = (flowVariant === 'B' && node.data?.noteB && node.data.noteB.trim())
+          ? node.data.noteB
+          : (node.data?.note || '');
+        noteText = noteTemplate
           .replace(/\{\{first_name\}\}/g, firstName)
           .replace(/\{\{name\}\}/g, firstName)
           .replace(/\{\{full_name\}\}/g, lead.full_name || '')
@@ -865,7 +872,7 @@ async function executeFlowNode(db, campaign, lead, node, execMap, nodeMap) {
       const inviteResult = await unipile.sendConnectionRequest(acc.unipile_account_id, lead.linkedin_member_id, noteText);
       if (inviteResult.success) {
         safety.updateAccountHealth(db, acc, true);
-        db.prepare("UPDATE leads SET status = 'connection_sent', account_id_used = ?, connection_sent_at = ?, updated_at = ? WHERE id = ?").run(acc.id, now, now, lead.id);
+        db.prepare("UPDATE leads SET status = 'connection_sent', account_id_used = ?, connection_sent_at = ?, message_variant = ?, updated_at = ? WHERE id = ?").run(acc.id, now, flowVariant, now, lead.id);
         db.prepare('UPDATE accounts SET today_connections = today_connections + 1, week_connections = week_connections + 1, last_action_at = ? WHERE id = ?').run(now, acc.id);
         db.prepare('UPDATE campaigns SET connections_sent = connections_sent + 1, updated_at = ? WHERE id = ?').run(now, campaign.id);
         const delayMs = randomDelay();
@@ -919,15 +926,21 @@ async function executeFlowNode(db, campaign, lead, node, execMap, nodeMap) {
       console.log(`[Flow] Fetching posts to like for ${lead.full_name}`);
       const postsResult = await unipile.getRecentPosts(acc.unipile_account_id, lead.linkedin_member_id);
       if (postsResult.success && postsResult.data && postsResult.data.length > 0) {
-        const firstPost = postsResult.data[0];
-        const postId = firstPost.id || firstPost.provider_id;
-        if (postId) {
+        // The builder lets the user pick how many recent posts to like
+        const wanted = Math.min(Math.max(parseInt(node.data?.postCount, 10) || 1, 1), 3);
+        const posts = postsResult.data.slice(0, wanted);
+        let liked = 0;
+        for (const post of posts) {
+          const postId = post.id || post.provider_id;
+          if (!postId) continue;
+          if (liked > 0) await new Promise(r => setTimeout(r, 4000)); // don't like posts in one burst
           const likeResult = await unipile.likePost(acc.unipile_account_id, postId);
-          if (likeResult.success) {
-            scheduleNextAction(acc, 'like_post');
-            logActivity(db, { account_id: acc.id, lead_id: lead.id, campaign_id: campaign.id, action_type: 'like_post', status: 'success' });
-            emit('activity_update', { account_id: acc.id, lead_name: lead.full_name, action_type: 'like_post', status: 'success', timestamp: now });
-          }
+          if (likeResult.success) liked++;
+        }
+        if (liked > 0) {
+          scheduleNextAction(acc, 'like_post');
+          logActivity(db, { account_id: acc.id, lead_id: lead.id, campaign_id: campaign.id, action_type: 'like_post', status: 'success', message_preview: `Liked ${liked} post(s)` });
+          emit('activity_update', { account_id: acc.id, lead_name: lead.full_name, action_type: 'like_post', status: 'success', timestamp: now });
         }
       }
       await record();
@@ -1128,8 +1141,12 @@ function startAutomation(socketIO) {
   startupRecovery();
   startHeartbeatCheck();
   scheduleNextConnectionRun();
-  cron.schedule('0 7 * * 1-5', () => { scheduleNextConnectionRun(); }, { timezone: 'Asia/Kolkata' });
-  cron.schedule('*/5 7-20 * * 1-5', () => { runCheckAcceptances(); }, { timezone: 'Asia/Kolkata' });
+  // NOTE: no daily cron kick for scheduleNextConnectionRun() — it re-schedules
+  // itself, so an extra call would start a second parallel timer chain.
+  // Acceptances run every day: campaigns can send 7 days a week, and invites
+  // accepted on a weekend used to sit undetected until Monday, blocking the
+  // whole flow at the post-invite gate.
+  cron.schedule('*/5 7-22 * * *', () => { runCheckAcceptances(); }, { timezone: 'Asia/Kolkata' });
   cron.schedule('*/5 7-22 * * *', () => { runCheckReplies(); }, { timezone: 'Asia/Kolkata' });
   cron.schedule('*/2 * * * *', () => { runLeadEnrichment(); }, { timezone: 'Asia/Kolkata' });
   cron.schedule('*/3 * * * *', () => { runFlowExecution(); }, { timezone: 'Asia/Kolkata' });
