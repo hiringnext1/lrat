@@ -46,10 +46,10 @@ Lead status machine: `pending_connection → connection_sent → connected → j
 
 | Line | Statement | Effect |
 |---|---|---|
-| 331 | `UPDATE users SET plan_type='agency', plan_status='active', plan_accounts_limit=10 WHERE plan_accounts_limit < 10` | Every user becomes a paid agency account → **Stripe/planGuard enforcement is dead** |
-| 417-419 | force `working_hours_start='00:00'`, end `'23:59'`, `working_days='[0..6]'` | User-configured campaign schedules are **wiped on each restart** |
-| 455 | `UPDATE accounts SET warmup_week=4 WHERE is_active=1 AND status='active'` | Warmup ramp bypassed; every account jumps to full speed |
-| 466 | `DELETE FROM accounts WHERE is_active=0 AND status='paused'` | `pauseAccountTemporarily()` and the 5-failure auto-pause set exactly `is_active=0, status='paused'` → **a restart deletes paused accounts** (and their `campaign_accounts` rows) |
+| ~~331~~ | ~~`UPDATE users SET plan_type='agency' … WHERE plan_accounts_limit < 10`~~ | **FIXED in `5531200`** — every user was re-granted a paid agency plan on each boot, so planGuard/Stripe limits meant nothing |
+| ~~417-419~~ | ~~force `working_hours_start='00:00'`, end `'23:59'`, `working_days='[0..6]'`~~ | **FIXED in `5531200`** — the builder defaults to Mon-Fri `[1,2,3,4,5]`, the exact value this migration rewrote, so user schedules were wiped every restart |
+| 455 | `UPDATE accounts SET warmup_week=4 WHERE is_active=1 AND status='active'` | Still present. Warmup ramp bypassed; every account jumps to full speed (all account-creation paths already insert `warmup_week=4`, so this can go once real warmup is wanted) |
+| ~~466~~ | ~~`DELETE FROM accounts WHERE is_active=0 AND status='paused'`~~ | **FIXED in `5531200`** — that is exactly the state `pauseAccountTemporarily()` and the 5-failure auto-pause produce, so a restart during a provider outage deleted live accounts and their `campaign_accounts` rows |
 | ~~380/384/390~~ | ~~seeds hardcoded `UNIPILE_API_KEY`, `UNIPILE_DSN`, `NVIDIA_API_KEY` into `settings`~~ | **FIXED in `9e11b44`** — seeds removed; env vars now win over `settings` rows (`BOOT_ENV` + `envValue()` in `database.js`). This seeding had pinned production to the dead `api52` Unipile instance and broke LinkedIn account linking (`503 errors/no_client_session`) |
 | 399-411 | resets `admin@growleadz.co` / `admin@lrat.com` password to `Admin#GrowLeadz2026!` and `role='admin'` on every boot | Password changes never stick; credential in source |
 
@@ -87,6 +87,20 @@ Fixing these is prerequisite to anything billing-, schedule-, or warmup-related 
 - Duplicated flow logic between `runSendConnections` and `executeFlowNode:'invite'` (invite + error handling copy-pasted).
 - Frontend: `CampaignBuilder.jsx` (2079) and `Landing.jsx` (1709) should be split; auth state lives in `localStorage` (`lrat_token`, `lrat_user`) with client-side-only route guards (server does enforce, so it's cosmetic).
 - Mixed logging: pino (`services/logger.js`) in newer code, raw `console.*` in most routes.
+
+## 5a. Campaign management & flow engine (reviewed 2026-08-06)
+
+Builder → engine mapping is sound: `stepsToFlowJson()` emits `trigger` + a linear node/edge chain, `extractLegacy()` mirrors the trigger settings into the campaign columns the engine actually reads (`working_hours_*`, `working_days`, `daily_limit_per_account`, `account_ids`, `jd_summary`), and `flowJsonToSteps()` round-trips for editing. Node data keys match what `executeFlowNode` reads (`note`/`aiNote`, `message`/`messageB`, `days`/`unit`, `tagName`).
+
+Fixed in `5531200`:
+- **No pacing on non-invite actions** — one flow cycle executed a node per lead, so `message`/`view_profile`/`like_post` could fire dozens of actions from one account in seconds. All outbound actions now share the account's `next_action_at` clock via `safety.canPerformAction()` / `nextActionDelayMs()` (invite 7-10m, message 3-6m, view/like 1-3m; 50 messages/day ceiling; `today_messages` is finally counted).
+- **`data.aiMsg` was never implemented** — the builder's "AI writes this message" option stored no template, so those steps sent an empty message. Now routed through `generateJDMessage` / `generateFollowUp`, and an empty message is never sent (logs a failed activity instead).
+
+Still open:
+- **A/B never runs in flows**: `message_variant` is only assigned in the legacy `runSendConnections` path (`automation.js:341`), so flow campaigns stay on `'A'` forever and `node.data.messageB` is dead.
+- **Weekend stall**: acceptance sync is `*/5 7-20 * * 1-5`, so acceptances on Sat/Sun are only detected Monday — flows block at the post-invite gate until then.
+- `like_post` ignores `data.postCount` and always likes the first post.
+- Legacy `follow_up_1/2_template` + `_days` columns are written by `extractLegacy()` but no runner ever sends them (only the visual flow does follow-ups).
 
 ## 5b. LinkedIn connect flow (fixed 2026-08-04, `fa7a599` + `b4eccbf`)
 
