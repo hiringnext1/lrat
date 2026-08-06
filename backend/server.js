@@ -80,8 +80,27 @@ const io = new Server(server, {
 app.set('io', io);
 
 // ─── S3: Helmet Security Headers ────────────────────────────────────────────
+// Helmet's default CSP is script-src 'self', which silently blocked Google
+// Analytics (and any external image) in production. These directives keep the
+// default policy but allow exactly what the app needs.
+const cspDirectives = {
+  ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+  'script-src': ["'self'", 'https://www.googletagmanager.com'],
+  'connect-src': [
+    "'self'",
+    'https://www.google-analytics.com',
+    'https://*.google-analytics.com',
+    'https://*.googletagmanager.com',
+    'ws:',
+    'wss:',
+  ],
+  // Profile photos come from LinkedIn/Unipile CDNs
+  'img-src': ["'self'", 'data:', 'https:'],
+  'font-src': ["'self'", 'https:', 'data:'],
+};
+
 app.use(helmet({
-  contentSecurityPolicy: isProduction ? undefined : false, // Disable CSP in dev for Vite HMR
+  contentSecurityPolicy: isProduction ? { directives: cspDirectives } : false, // Disabled in dev for Vite HMR
   crossOriginEmbedderPolicy: false, // Allow embedded resources
 }));
 

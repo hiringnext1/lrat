@@ -22,10 +22,9 @@
     <!-- ═══ FONTS (Preconnect first for speed) ════════════════════════════ -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- Loaded non-render-blocking: swaps to screen once downloaded -->
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Sora:wght@300;400;500;600;700;800&display=swap" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Sora:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
-    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Sora:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" /></noscript>
+    <!-- NOTE: no onload="" swap trick here — inline event handlers are blocked
+         by the production CSP (script-src-attr 'none'). -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Sora:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 
     <!-- ═══ OPEN GRAPH (Facebook / LinkedIn) ═════════════════════════════ -->
     <meta property="og:type" content="website" />
@@ -94,16 +93,7 @@
 
     <!-- ═══ GOOGLE ANALYTICS 4 ════════════════════════════════════════════ -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-EF4GY3H0G9"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-EF4GY3H0G9', {
-        page_title: document.title,
-        page_location: window.location.href,
-        send_page_view: true
-      });
-    </script>
+    <script defer src="/ga.js"></script>
 
   </head>
   <body class="bg-[#080C18] text-slate-100 antialiased selection:bg-blue-500 selection:text-white">
