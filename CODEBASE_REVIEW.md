@@ -96,11 +96,15 @@ Fixed in `5531200`:
 - **No pacing on non-invite actions** — one flow cycle executed a node per lead, so `message`/`view_profile`/`like_post` could fire dozens of actions from one account in seconds. All outbound actions now share the account's `next_action_at` clock via `safety.canPerformAction()` / `nextActionDelayMs()` (invite 7-10m, message 3-6m, view/like 1-3m; 50 messages/day ceiling; `today_messages` is finally counted).
 - **`data.aiMsg` was never implemented** — the builder's "AI writes this message" option stored no template, so those steps sent an empty message. Now routed through `generateJDMessage` / `generateFollowUp`, and an empty message is never sent (logs a failed activity instead).
 
+Also fixed in `41306b2`:
+- **A/B in flows**: the invite node now assigns `lead.message_variant` (and uses `node.data.noteB`), so the B templates in message nodes finally run. Previously only the legacy path assigned it.
+- **Weekend stall**: acceptance sync moved to `*/5 7-22 * * *` — it used to be weekdays only, so Sat/Sun acceptances were detected on Monday and every flow blocked at the post-invite gate.
+- **Duplicate timer chains**: the weekday `0 7 * * 1-5` cron re-entered `scheduleNextConnectionRun()`, which already re-schedules itself — each morning added another parallel chain.
+- `like_post` honours `data.postCount` (max 3, spaced).
+
 Still open:
-- **A/B never runs in flows**: `message_variant` is only assigned in the legacy `runSendConnections` path (`automation.js:341`), so flow campaigns stay on `'A'` forever and `node.data.messageB` is dead.
-- **Weekend stall**: acceptance sync is `*/5 7-20 * * 1-5`, so acceptances on Sat/Sun are only detected Monday — flows block at the post-invite gate until then.
-- `like_post` ignores `data.postCount` and always likes the first post.
-- Legacy `follow_up_1/2_template` + `_days` columns are written by `extractLegacy()` but no runner ever sends them (only the visual flow does follow-ups).
+- Legacy `follow_up_1/2_template` + `_days` columns are written by `extractLegacy()` but no runner ever sends them (only the visual flow does follow-ups) — either delete the fields from the UI or add a legacy runner.
+- `condition` nodes cannot branch: `edgeMap[e.source] = e.target` keeps one target per node, so the recorded `branch` is never used. The builder does not expose condition steps, so nothing hits this today.
 
 ## 5b. LinkedIn connect flow (fixed 2026-08-04, `fa7a599` + `b4eccbf`)
 
