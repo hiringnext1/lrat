@@ -346,7 +346,10 @@ function initSchema() {
   // Set default admin role & active multi-account plan limits
   try {
     db.prepare("UPDATE users SET role = 'admin', plan_type = 'agency', plan_status = 'active', plan_accounts_limit = 10 WHERE email IN ('admin@lrat.com', 'admin@growleadz.co')").run();
-    db.prepare("UPDATE users SET plan_type = 'agency', plan_status = 'active', plan_accounts_limit = 10 WHERE plan_accounts_limit < 10").run();
+    // NOTE: the blanket "everyone becomes agency with 10 accounts" update was
+    // removed — it re-granted a paid plan to every user on every boot, which
+    // made planGuard and the Stripe limits meaningless. Existing users keep
+    // whatever plan they already have.
   } catch (_) {}
   // ─────────────────────────────────────────────────────────────────────────────
 
@@ -418,12 +421,14 @@ function initSchema() {
     }).catch(() => {});
   } catch (_) {}
 
-  // Startup metrics synchronization and working hours fix
+  // Startup metrics synchronization
+  //
+  // NOTE: this block used to force every campaign to a 24/7 schedule on each
+  // boot (working_hours_start='00:00', end='23:59', working_days='[0..6]').
+  // The campaign builder's own default is Mon–Fri, so a user's schedule was
+  // silently rewritten every restart. Campaign schedules are user data — they
+  // are never touched here now.
   try {
-    // Force all campaigns to 24/7 schedule — overrides any restrictive hours from old data
-    db.prepare("UPDATE campaigns SET working_hours_start = '00:00'").run();
-    db.prepare("UPDATE campaigns SET working_hours_end = '23:59' WHERE working_hours_end IS NULL OR working_hours_end <= '21:00'").run();
-    db.prepare("UPDATE campaigns SET working_days = '[0,1,2,3,4,5,6]' WHERE working_days = '[1,2,3,4,5]' OR working_days IS NULL OR working_days = ''").run();
     db.prepare("UPDATE leads SET status = 'pending_connection' WHERE connection_sent_at IS NULL AND account_id_used IS NULL AND status = 'connected'").run();
     
     // 🛡️ BUG FIX: Reset leads that were incorrectly auto-marked as 'connection_sent' by the
@@ -468,12 +473,11 @@ function initSchema() {
       console.log(`[Migration] Auto-started warmup (week 4) for ${warmupFixed.changes} active account(s) that had warmup_week=0.`);
     }
 
-    // 🛡️ CLEANUP: Delete stale paused duplicate accounts (is_active=0 AND status='paused')
-    db.prepare("DELETE FROM campaign_accounts WHERE account_id IN (SELECT id FROM accounts WHERE is_active = 0 AND status = 'paused')").run();
-    const staleDeleted = db.prepare("DELETE FROM accounts WHERE is_active = 0 AND status = 'paused'").run();
-    if (staleDeleted.changes > 0) {
-      console.log(`[Migration] Cleaned up ${staleDeleted.changes} stale paused duplicate account entries.`);
-    }
+    // NOTE: a DELETE of every account with (is_active = 0 AND status = 'paused')
+    // used to run here. That is exactly the state pauseAccountTemporarily() and
+    // the 5-consecutive-failure auto-pause put an account in, so any restart
+    // during a provider outage permanently deleted live LinkedIn accounts and
+    // their campaign links. Removed — pauses are temporary by design.
   } catch (e) {
     console.error('[Migration] Stats cleanup error:', e.message);
   }

@@ -754,6 +754,34 @@ async function executeFlowNode(db, campaign, lead, node, execMap, nodeMap) {
 
   const firstName = (lead.full_name || '').split(' ')[0];
 
+  // Every outbound action shares the account's next_action_at clock, so a flow
+  // cycle can never fire a burst of actions from one account. `invite` keeps its
+  // own richer check (daily limits, warmup) in its case below.
+  const THROTTLED_ACTIONS = new Set(['message', 'view_profile', 'like_post']);
+  if (THROTTLED_ACTIONS.has(node.type)) {
+    if (!acc) {
+      console.log(`[Flow] No active account for ${node.type} on ${lead.full_name}`);
+      return;
+    }
+    const actionCheck = safety.canPerformAction(acc, node.type);
+    if (!actionCheck.allowed) {
+      console.log(`[Flow] ${node.type} skipped for ${lead.full_name} — ${acc.name}: ${actionCheck.reason}`);
+      return;
+    }
+  }
+
+  /** Space out this account's next action after a successful one. */
+  function scheduleNextAction(account, actionType, opts = {}) {
+    const nextActionAt = new Date(Date.now() + safety.nextActionDelayMs(actionType)).toISOString();
+    if (opts.countMessage) {
+      db.prepare('UPDATE accounts SET next_action_at = ?, last_action_at = ?, today_messages = COALESCE(today_messages, 0) + 1 WHERE id = ?')
+        .run(nextActionAt, now, account.id);
+    } else {
+      db.prepare('UPDATE accounts SET next_action_at = ?, last_action_at = ? WHERE id = ?')
+        .run(nextActionAt, now, account.id);
+    }
+  }
+
   switch (node.type) {
     case 'delay':
       let prevNode = null;
@@ -871,6 +899,7 @@ async function executeFlowNode(db, campaign, lead, node, execMap, nodeMap) {
       console.log(`[Flow] Viewing profile of ${lead.full_name} via ${acc.name}`);
       const viewResult = await unipile.viewProfile(acc.unipile_account_id, lead.linkedin_member_id);
       if (viewResult.success) {
+        scheduleNextAction(acc, 'view_profile');
         db.prepare("UPDATE leads SET profile_viewed_at = ?, account_id_used = ?, updated_at = ? WHERE id = ?").run(now, acc.id, now, lead.id);
         if (campaign.jd_summary && !lead.fit_score) {
           const score = await aiService.calculateFitScore(lead, campaign.jd_summary, campaign.user_id);
@@ -895,6 +924,7 @@ async function executeFlowNode(db, campaign, lead, node, execMap, nodeMap) {
         if (postId) {
           const likeResult = await unipile.likePost(acc.unipile_account_id, postId);
           if (likeResult.success) {
+            scheduleNextAction(acc, 'like_post');
             logActivity(db, { account_id: acc.id, lead_id: lead.id, campaign_id: campaign.id, action_type: 'like_post', status: 'success' });
             emit('activity_update', { account_id: acc.id, lead_name: lead.full_name, action_type: 'like_post', status: 'success', timestamp: now });
           }
@@ -929,9 +959,35 @@ async function executeFlowNode(db, campaign, lead, node, execMap, nodeMap) {
         .replace(/\{\{full_name\}\}/g, lead.full_name || '')
         .replace(/\{\{company\}\}/g, lead.company || '')
         .replace(/\{\{designation\}\}/g, lead.designation || '');
+
+      // The builder offers "AI writes this message" (data.aiMsg) and stores no
+      // template for it. Without this branch the step sent an empty message.
+      if (node.data?.aiMsg) {
+        const executedMessages = Object.keys(execMap).filter(id => nodeMap[id]?.type === 'message').length;
+        const isFirstAiMessage = !lead.jd_sent_at;
+        console.log(`[Flow] Generating AI ${isFirstAiMessage ? 'pitch' : 'follow-up'} message for ${lead.full_name}...`);
+        const aiRes = isFirstAiMessage
+          ? await aiService.generateJDMessage(lead, campaign.jd_summary || node.data?.jdSummary || 'an opportunity matching your profile', campaign.user_id)
+          : await aiService.generateFollowUp(lead, Math.max(1, executedMessages), campaign.user_id);
+        if (aiRes.success && aiRes.data && aiRes.data.trim()) {
+          text = aiRes.data.trim();
+        }
+      }
+
+      if (!text || !text.trim()) {
+        console.error(`[Flow] Message step "${node.data?.label || node.id}" has no content — skipping ${lead.full_name}`);
+        logActivity(db, {
+          account_id: acc.id, lead_id: lead.id, campaign_id: campaign.id,
+          action_type: 'message', status: 'failed',
+          error_message: 'Message step has no text configured (and AI generation returned nothing)',
+        });
+        return;
+      }
+
       console.log(`[Flow] Sending message to ${lead.full_name} via ${acc.name} (${lead.message_variant === 'B' ? 'Variant B' : 'Variant A'})`);
       const msgResult = await unipile.sendMessage(acc.unipile_account_id, lead.linkedin_member_id, text);
       if (msgResult.success) {
+        scheduleNextAction(acc, 'message', { countMessage: true });
         const isFirstMessage = !lead.jd_sent_at;
         const newStatus = isFirstMessage ? 'jd_sent' : 'follow_up_sent';
         const query = isFirstMessage 

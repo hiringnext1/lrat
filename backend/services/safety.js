@@ -3,6 +3,56 @@ const ABSOLUTE_MAX_WEEKLY = 150;
 const MIN_DELAY_MS = 120000;
 const MAX_ACTIONS_PER_HOUR = 8;
 
+// Messages are less risky than invites but still need a ceiling
+const ABSOLUTE_MAX_DAILY_MESSAGES = 50;
+
+// Spacing between two consecutive actions of an account, per action type.
+// Every action shares one `accounts.next_action_at` clock so an account never
+// fires two things back to back, whatever the mix of actions is.
+const ACTION_DELAY_RANGES = {
+  invite: [7 * 60 * 1000, 10 * 60 * 1000],
+  message: [3 * 60 * 1000, 6 * 60 * 1000],
+  view_profile: [60 * 1000, 3 * 60 * 1000],
+  like_post: [60 * 1000, 3 * 60 * 1000],
+};
+
+/** Randomised delay before this account may act again. */
+function nextActionDelayMs(actionType = 'message') {
+  const [min, max] = ACTION_DELAY_RANGES[actionType] || ACTION_DELAY_RANGES.message;
+  return Math.floor(Math.random() * (max - min) + min);
+}
+
+/**
+ * Gate for non-invite actions (message / view_profile / like_post).
+ *
+ * Invites go through canSendConnection(); these actions used to run with no
+ * gate at all, which let one flow cycle fire an action per lead — dozens of
+ * messages from a single account within seconds.
+ */
+function canPerformAction(account, actionType = 'message') {
+  if (!account) return { allowed: false, reason: 'No account' };
+  if (account.status !== 'active') {
+    return { allowed: false, reason: `Account status is ${account.status}` };
+  }
+  if (!account.is_active) {
+    return { allowed: false, reason: 'Account is disabled' };
+  }
+
+  if (account.next_action_at) {
+    const nextTime = new Date(account.next_action_at).getTime();
+    if (Date.now() < nextTime) {
+      const waitSecs = Math.ceil((nextTime - Date.now()) / 1000);
+      return { allowed: false, reason: `Resting: ${Math.floor(waitSecs / 60)}m ${waitSecs % 60}s left` };
+    }
+  }
+
+  if (actionType === 'message' && (account.today_messages || 0) >= ABSOLUTE_MAX_DAILY_MESSAGES) {
+    return { allowed: false, reason: `Daily message limit reached (${ABSOLUTE_MAX_DAILY_MESSAGES})` };
+  }
+
+  return { allowed: true, reason: 'OK' };
+}
+
 /**
  * Returns a string representing the current time info (HH:MM) in target timezone
  */
@@ -310,6 +360,9 @@ function updateAccountHealth(db, account, isSuccess) {
 module.exports = {
   getEffectiveDailyLimit,
   canSendConnection,
+  canPerformAction,
+  nextActionDelayMs,
+  ABSOLUTE_MAX_DAILY_MESSAGES,
   isWithinWorkingHours,
   isWeekday,
   resetDailyCountsIfNeeded,
