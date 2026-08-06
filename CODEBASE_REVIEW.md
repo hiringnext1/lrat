@@ -97,6 +97,14 @@ Worth knowing before touching `POST /api/accounts/connect-link` or `routes/webho
 - The connect modal has three completion paths: socket `linkedin_account_connected`, polling `GET /api/accounts` for a count increase, and `POST /api/accounts/sync`. Popup introspection (`windowRef.current.location`) is unreliable across origins, so the modal now calls `/sync` every ~12s regardless.
 - `success_redirect_url` must point at `/dashboard/accounts?connected=1` — `/accounts` is not a React route, so the popup landed on a blank page and the `connected=1` auto-sync never ran.
 
+## 5c. Frontend build & SEO (added 2026-08-05)
+
+- `npm run build` in `frontend/` is now **three steps**: client build → SSR build (`src/entry-server.jsx` → `dist-ssr/`) → `scripts/prerender.mjs`, which injects the rendered landing page into `dist/index.html` and saves the untouched shell as `dist/app.html`.
+- `backend/server.js` serves `dist/index.html` (pre-rendered) only on `/`; every other route gets `dist/app.html` so app routes don't flash landing markup. `/login`, `/signup`, `/onboarding`, `/dashboard` get a server-injected `noindex` meta.
+- `main.jsx` uses `hydrateRoot` when the root already has markup, `createRoot` otherwise.
+- **CSP is explicit in `server.js`** (`cspDirectives`). Helmet's default `script-src 'self'` had silently blocked Google Analytics in production and `img-src 'self' data:` blocked LinkedIn profile photos. Any new third-party script/image domain must be added there — and inline `onXxx=` handlers will not run (`script-src-attr 'none'`).
+- Fabricated `aggregateRating` (4.9 / 342 reviews) was removed from the JSON-LD; do not re-add review markup without real, on-page reviews.
+
 ## 6b. Deployment pipeline (verified 2026-08-04)
 
 Railway project `lrat` → service `lrat` → env `production` (workspace "hiringnext1's Projects").
