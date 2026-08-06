@@ -4,28 +4,18 @@
         xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
         http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
 
-  <!-- Homepage — Highest Priority -->
+  <!-- Homepage -->
   <url>
     <loc>https://growleadz.co/</loc>
-    <lastmod>2026-07-26</lastmod>
+    <lastmod>2026-08-05</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
 
-  <!-- Signup Page -->
-  <url>
-    <loc>https://growleadz.co/signup</loc>
-    <lastmod>2026-07-26</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
-
-  <!-- Login Page -->
-  <url>
-    <loc>https://growleadz.co/login</loc>
-    <lastmod>2026-07-26</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
+  <!--
+    /login and /signup were removed on purpose: they are noindex pages with no
+    search value. Add new marketing URLs here as they ship, for example
+    /pricing, /features, /use-cases/..., /vs/..., /blog/...
+  -->
 
 </urlset>

@@ -1,23 +1,19 @@
 # GrowLeadz — robots.txt
 # https://growleadz.co
 
-# Allow all search engines full access
+# Allow all search engines and AI crawlers full access to public pages
 User-agent: *
 Allow: /
 
 # Block backend API routes from indexing
 Disallow: /api/
-Disallow: /api/auth/
-Disallow: /api/billing/
-Disallow: /api/admin/
 
-# Block internal dashboard pages from indexing
+# Block internal app pages from indexing
 Disallow: /dashboard/
 Disallow: /onboarding/
-Disallow: /accounts/
 
-# Crawl-delay to avoid overloading Railway server
-Crawl-delay: 2
+# NOTE: /login and /signup are intentionally crawlable — they carry a noindex
+# meta tag, which crawlers can only act on if they are allowed to fetch the page.
 
 # Sitemap location
 Sitemap: https://growleadz.co/sitemap.xml

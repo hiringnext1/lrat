@@ -196,11 +196,48 @@ app.get('/api/health', (req, res) => {
 // ─── Static Files ────────────────────────────────────────────────────────────
 app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
+// SPA fallback.
+//
+// dist/index.html carries the build-time rendered landing page (for crawlers)
+// and is served by express.static on "/". Every other route gets dist/app.html
+// — the same document with an empty root — so /login or /dashboard never flash
+// the landing markup. Pages with no search value are marked noindex here,
+// because a client-side <meta> tag is unreliable for crawlers.
+const DIST_DIR = path.join(__dirname, '../frontend/dist');
+const NOINDEX_PATHS = ['/login', '/signup', '/onboarding', '/dashboard'];
+const NOINDEX_TAG = '<meta name="robots" content="noindex, nofollow" />';
+
+let appShell = null;
+function getAppShell() {
+  if (appShell === null) {
+    const fs = require('fs');
+    for (const file of ['app.html', 'index.html']) {
+      try {
+        appShell = fs.readFileSync(path.join(DIST_DIR, file), 'utf8');
+        break;
+      } catch (_) {}
+    }
+    if (appShell === null) appShell = '';
+  }
+  return appShell;
+}
+
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api') || req.path.startsWith('/socket.io')) {
     return next();
   }
-  res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
+
+  const shell = getAppShell();
+  if (!shell) {
+    return res.sendFile(path.join(DIST_DIR, 'index.html'));
+  }
+
+  const isNoindex = NOINDEX_PATHS.some(p => req.path === p || req.path.startsWith(`${p}/`));
+  const html = isNoindex
+    ? shell.replace(/<meta name="robots"[^>]*>/, NOINDEX_TAG)
+    : shell;
+
+  res.type('html').send(html);
 });
 
 // ─── S11/R2: Global Error Handler ────────────────────────────────────────────
