@@ -13,10 +13,17 @@ const { getSetting } = require('../config/database');
  * We prioritize the SMTP_PASS if it is a Brevo API key (starts with xsmtpsib-).
  */
 function getBrevoApiKey() {
+  // Brevo has two different credentials:
+  //   xkeysib-…   → HTTP API key  (api.brevo.com/v3, port 443)
+  //   xsmtpsib-…  → SMTP key      (smtp-relay.brevo.com, only valid for SMTP auth)
+  // Sending an xsmtpsib- key to the HTTP API returns "Key not found", which is
+  // exactly the error production was failing with, so only xkeysib- counts here.
+  const dedicated = getSetting('BREVO_API_KEY') || process.env.BREVO_API_KEY;
+  if (dedicated && dedicated.startsWith('xkeysib-')) return dedicated;
+
   const smtpPass = getSetting('SMTP_PASS') || process.env.SMTP_PASS;
-  if (smtpPass && (smtpPass.startsWith('xkeysib-') || smtpPass.startsWith('xsmtpsib-'))) {
-    return smtpPass;
-  }
+  if (smtpPass && smtpPass.startsWith('xkeysib-')) return smtpPass;
+
   return null;
 }
 
@@ -147,8 +154,25 @@ async function sendEmail({ from, fromName, to, subject, html }) {
 async function verifySmtpConnection() {
   const brevoKey = getBrevoApiKey();
   if (brevoKey) {
-    console.log('[Email Service] ✅ Brevo API Key detected. Emails will be sent via HTTP API (Port 443).');
-    return true;
+    // Don't just check the prefix — an expired, deleted or IP-blocked key looks
+    // identical until the first send fails. Production silently dropped every
+    // verification email for days because this only logged "key detected".
+    try {
+      const res = await axios.get('https://api.brevo.com/v3/account', {
+        headers: { 'api-key': brevoKey, accept: 'application/json' },
+        timeout: 10000,
+      });
+      console.log(`[Email Service] ✅ Brevo API key valid (account: ${res.data?.email || 'unknown'}). Sending via HTTP API.`);
+      return true;
+    } catch (err) {
+      const detail = err?.response?.data?.message || err.message;
+      console.error(`[Email Service] ❌ Brevo API key REJECTED: ${detail}`);
+      console.error('[Email Service] ❌ Verification / password-reset emails will NOT be delivered until this is fixed.');
+      if (String(detail).toLowerCase().includes('unrecognised ip')) {
+        console.error('[Email Service] → Brevo has IP authorisation enabled. Add this server\'s IP in Brevo → Security → Authorised IPs, or disable the restriction.');
+      }
+      return false;
+    }
   }
 
   // SMTP Check
