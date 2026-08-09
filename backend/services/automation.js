@@ -404,23 +404,47 @@ async function runLeadEnrichment() {
   lastRunTimes.enrichment = Date.now();
   const db = getDb();
   try {
+    // Only consider leads whose owner actually has a usable account. Without
+    // this, a tenant with leads but no connected LinkedIn account filled every
+    // batch, got skipped without recording an attempt, and starved enrichment
+    // for every other user indefinitely.
     const allLeads = db.prepare(`
-      SELECT * FROM leads 
-      WHERE is_enriched = 0 
-      AND (enrichment_failed = 0 OR enrichment_failed IS NULL)
-      AND status = 'pending_connection'
+      SELECT l.* FROM leads l
+      WHERE l.is_enriched = 0
+      AND (l.enrichment_failed = 0 OR l.enrichment_failed IS NULL)
+      AND l.status = 'pending_connection'
+      AND EXISTS (
+        SELECT 1 FROM accounts a
+        WHERE a.user_id = l.user_id AND a.is_active = 1 AND a.status = 'active'
+      )
     `).all();
 
     if (allLeads.length === 0) return;
 
     // Filter leads based on exponential backoff
-    const leads = allLeads.filter(lead => {
+    const eligible = allLeads.filter(lead => {
       if (!lead.enrichment_attempts || lead.enrichment_attempts === 0) return true;
       const lastAttempt = new Date(lead.updated_at || lead.created_at).getTime();
       const attempts = lead.enrichment_attempts;
       const backoffMs = attempts === 1 ? 5 * 60 * 1000 : 15 * 60 * 1000;
       return Date.now() - lastAttempt >= backoffMs;
-    }).slice(0, 10);
+    });
+
+    // Round-robin across users so one large campaign can't monopolise the batch
+    const byUser = new Map();
+    for (const lead of eligible) {
+      if (!byUser.has(lead.user_id)) byUser.set(lead.user_id, []);
+      byUser.get(lead.user_id).push(lead);
+    }
+    const leads = [];
+    const queues = [...byUser.values()];
+    while (leads.length < 10 && queues.some(q => q.length > 0)) {
+      for (const queue of queues) {
+        if (leads.length >= 10) break;
+        const next = queue.shift();
+        if (next) leads.push(next);
+      }
+    }
 
     if (leads.length === 0) return;
 
