@@ -401,25 +401,30 @@ function initSchema() {
   // overwrote valid credentials on every boot and pinned production to a dead
   // Unipile instance.
 
-  // Seed default Admin user with reset password (Admin#GrowLeadz2026!)
+  // Seed admin accounts — creation only, never overwrite an existing password.
+  //
+  // This block used to reset admin@growleadz.co / admin@lrat.com to a hardcoded
+  // password on EVERY boot, so any password change silently reverted on the next
+  // restart and the credential lived in the repo. New installs can set
+  // ADMIN_INITIAL_PASSWORD; without it the accounts are simply not seeded.
   try {
-    const bcrypt = require('bcryptjs');
-    const defaultAdminHash = '$2a$10$wE99C1oT37KvdFw0lG1r9.hJd0V04L.RygT7u63S5gO1k3e0P5zK2'; // Hash for Admin#GrowLeadz2026!
-    
-    // Hash generator inline check
-    bcrypt.hash('Admin#GrowLeadz2026!', 10).then((h) => {
+    const initialPassword = BOOT_ENV.ADMIN_INITIAL_PASSWORD;
+    if (initialPassword && initialPassword.length >= 8) {
+      const bcrypt = require('bcryptjs');
       const adminEmails = ['admin@growleadz.co', 'admin@lrat.com'];
-      for (const email of adminEmails) {
-        const user = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
-        if (!user) {
-          db.prepare('INSERT INTO users (email, password_hash, name, role, is_verified) VALUES (?, ?, ?, ?, 1)')
-            .run(email, h, 'Admin GrowLeadz', 'admin');
-        } else {
-          db.prepare("UPDATE users SET password_hash = ?, is_verified = 1, role = 'admin' WHERE id = ?")
-            .run(h, user.id);
-        }
+      const missing = adminEmails.filter(
+        (email) => !db.prepare('SELECT id FROM users WHERE email = ?').get(email)
+      );
+      if (missing.length > 0) {
+        bcrypt.hash(initialPassword, 10).then((h) => {
+          for (const email of missing) {
+            db.prepare('INSERT INTO users (email, password_hash, name, role, is_verified) VALUES (?, ?, ?, ?, 1)')
+              .run(email, h, 'Admin GrowLeadz', 'admin');
+            console.log(`[Migration] Created admin account ${email} from ADMIN_INITIAL_PASSWORD.`);
+          }
+        }).catch(() => {});
       }
-    }).catch(() => {});
+    }
   } catch (_) {}
 
   // Startup metrics synchronization
