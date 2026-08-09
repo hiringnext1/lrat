@@ -1125,12 +1125,15 @@ function startHeartbeatCheck() {
 
 function startupRecovery() {
   try {
-    const db = getDb();
+    getDb();
     isRunning = { connections: false, acceptances: false, followups: false, replies: false, enrichment: false };
     console.log('[Automation] Heartbeat & state flags reset completed.');
-    
-    // Recovery of any intermediate/stuck states if any
-    console.log('[Automation] Sourcing startup recovery checks... 0 stuck leads found.');
+
+    // Lead imports run in-process, so a deploy or crash leaves them half-done.
+    // Resume anything still marked 'processing' from its saved cursor.
+    const { resumeInterruptedJobs } = require('./leadImporter');
+    const resumed = resumeInterruptedJobs(io);
+    console.log(`[Automation] Sourcing startup recovery: ${resumed} interrupted import job(s) resumed.`);
   } catch (err) {
     global.console.error('[Automation] Startup recovery error:', err.message);
   }

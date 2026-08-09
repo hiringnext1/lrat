@@ -10,6 +10,7 @@ const { calculateScore, getScoringWeights } = require('../services/leadScoring')
 const path = require('path');
 const os = require('os');
 const { requireActiveSubscription } = require('../middleware/planGuard');
+const leadImporter = require('../services/leadImporter');
 
 const uploadDir = path.join(os.tmpdir(), 'lrat-uploads');
 if (!fs.existsSync(uploadDir)) {
@@ -184,10 +185,11 @@ router.post('/import/url', requireActiveSubscription, async (req, res) => {
 
     const currentUserId = req.userId;
 
-    // Create a database entry in sourcing_jobs
+    // Create a database entry in sourcing_jobs. account_id + target_count are
+    // stored so the job can be resumed after a restart (see services/leadImporter).
     const insertJob = db.prepare(
-      'INSERT INTO sourcing_jobs (user_id, campaign_id, search_url, total_imported, status) VALUES (?, ?, ?, 0, ?)'
-    ).run(currentUserId, campaign_id, search_url, 'processing');
+      'INSERT INTO sourcing_jobs (user_id, campaign_id, search_url, total_imported, status, account_id, target_count) VALUES (?, ?, ?, 0, ?, ?, ?)'
+    ).run(currentUserId, campaign_id, search_url, 'processing', account.id, targetCount);
     const jobId = insertJob.lastInsertRowid;
 
     // Immediate response to UI, now including jobId
@@ -198,176 +200,19 @@ router.post('/import/url', requireActiveSubscription, async (req, res) => {
       job_id: jobId
     });
 
-    // Async execution loop
-    (async () => {
-      try {
-        let currentCursor = null;
-        let totalImported = 0;
-        let hasMore = true;
-        let batchCount = 1;
-
-        console.log(`[Background Import] Starting for Campaign ${campaign_id}, Job ${jobId}`);
-
-        // 🕐 Human-like initial delay: simulate natural page load before starting scroll
-        const initialDelaySecs = Math.floor(Math.random() * (8 - 3 + 1)) + 3;
-        console.log(`[Background Import] Initial human delay: ${initialDelaySecs}s before first fetch...`);
-        await new Promise(resolve => setTimeout(resolve, initialDelaySecs * 1000));
-
-        while (hasMore && totalImported < targetCount) {
-          console.log(`[Background Import] Fetching batch ${batchCount}...`);
-          
-          // 🕐 Pre-call jitter: randomize exact timing of each API call (2-5s)
-          const preFetchJitter = Math.floor(Math.random() * (5 - 2 + 1)) + 2;
-          await new Promise(resolve => setTimeout(resolve, preFetchJitter * 1000));
-
-          const result = await unipile.getProfilesFromSearchURL(search_url, account.unipile_account_id, currentCursor);
-          
-          if (!result.success) {
-            const errMsg = typeof result.error === 'object' ? JSON.stringify(result.error) : (result.error || 'Unipile connection error');
-            console.error('[Background Import] Batch Failed:', errMsg);
-            db.prepare('UPDATE sourcing_jobs SET status = ?, error_message = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
-              .run('failed', errMsg.slice(0, 300), jobId);
-
-            if (io) {
-              io.to('user_' + currentUserId).emit('import_error', { 
-                campaign_id, 
-                job_id: jobId, 
-                error: errMsg.slice(0, 200)
-              });
-            }
-            break;
-          }
-
-          const now = new Date().toISOString();
-          const weights = getScoringWeights();
-          const transaction = db.transaction((profiles) => {
-            let count = 0;
-            const insertLead = db.prepare(
-              `INSERT OR IGNORE INTO leads
-                (full_name, headline, company, designation, location, linkedin_url, linkedin_member_id, profile_photo_url, campaign_id, user_id, fit_score, created_at, updated_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-            );
-
-            const checkDuplicateId = db.prepare('SELECT id FROM leads WHERE linkedin_member_id = ? AND user_id = ?');
-
-            for (const profile of profiles) {
-              const linkedinUrl = profile.profile_url || profile.linkedin_url || profile.url || '';
-              const memberId = profile.member_id || profile.id || '';
-              if (!linkedinUrl || !memberId) continue;
-
-              // Duplicate check per user
-              const existing = checkDuplicateId.get(memberId, currentUserId);
-              if (existing) {
-                continue;
-              }
-
-              const designationStr = profile.job_title || profile.designation || profile.headline || '';
-              const headlineStr = profile.headline || profile.title || '';
-              const companyStr = profile.company_name || profile.company || '';
-              const profileJsonStr = profile.profile_json || (profile.company_size ? JSON.stringify({ company_size: profile.company_size }) : null);
-
-              const score = calculateScore({
-                designation: designationStr,
-                headline: headlineStr,
-                company: companyStr,
-                profile_json: profileJsonStr,
-                reply_received: 0
-              }, weights);
-
-              const res2 = insertLead.run(
-                profile.full_name || profile.name || 'Unknown',
-                headlineStr,
-                companyStr,
-                designationStr,
-                profile.location || '',
-                linkedinUrl,
-                memberId,
-                profile.profile_picture_url || profile.photo || '',
-                campaign_id,
-                currentUserId,
-                score,
-                now,
-                now
-              );
-
-              if (res2.changes > 0) {
-                count++;
-              }
-            }
-
-            if (count > 0) {
-              db.prepare('UPDATE campaigns SET total_leads = total_leads + ? WHERE id = ? AND user_id = ?').run(count, campaign_id, currentUserId);
-            }
-
-            return count;
-          });
-
-          const batchImported = transaction(result.data);
-
-          totalImported += batchImported;
-          currentCursor = result.cursor;
-          
-          console.log(`[Background Import] Batch ${batchCount} finished. Imported ${batchImported} new leads.`);
-
-          // Update the database record with the total imported so far
-          db.prepare('UPDATE sourcing_jobs SET total_imported = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
-            .run(totalImported, jobId);
-          
-          // Emit socket event to notify frontend to refresh, scoped to user room
-          if (io) {
-            io.to('user_' + currentUserId).emit('leads_updated', { 
-              campaign_id, 
-              job_id: jobId,
-              new_leads_count: batchImported,
-              total_so_far: totalImported,
-              status: 'processing'
-            });
-          }
-
-          if (!currentCursor || result.data.length === 0) {
-            hasMore = false;
-            console.log('[Background Import] No more leads available.');
-          }
-
-          if (totalImported < targetCount && hasMore) {
-            // 🕐 Human-like inter-batch delay: simulate human scrolling to next page
-            // Range: 45–90 seconds (much more natural than 15–30s)
-            const minWait = 45;
-            const maxWait = 90;
-            const randomWaitSecs = Math.floor(Math.random() * (maxWait - minWait + 1)) + minWait;
-            console.log(`[Background Import] Inter-batch human delay: waiting ${randomWaitSecs}s before next page fetch (batch ${batchCount + 1})...`);
-            await new Promise(resolve => setTimeout(resolve, randomWaitSecs * 1000));
-            batchCount++;
-          }
-        }
-
-        db.prepare('UPDATE sourcing_jobs SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
-          .run('completed', jobId);
-
-        if (io) {
-          io.to('user_' + currentUserId).emit('leads_updated', { 
-            campaign_id, 
-            job_id: jobId, 
-            status: 'completed', 
-            total: totalImported 
-          });
-        }
-        console.log(`[Background Import] JOB COMPLETED. Total Imported: ${totalImported}`);
-
-      } catch (bgErr) {
-        console.error('[Background Import] Critical Error:', bgErr.message);
-        db.prepare('UPDATE sourcing_jobs SET status = ?, error_message = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
-          .run('failed', bgErr.message, jobId);
-
-        if (io) {
-          io.to('user_' + currentUserId).emit('import_error', { 
-            campaign_id, 
-            job_id: jobId, 
-            error: bgErr.message 
-          });
-        }
-      }
-    })();
+    // Runs in the background; the cursor is persisted after every batch so a
+    // deploy or crash can resume it instead of losing the import.
+    leadImporter.runImportJob({
+      jobId,
+      searchUrl: search_url,
+      unipileAccountId: account.unipile_account_id,
+      campaignId: campaign_id,
+      userId: currentUserId,
+      targetCount,
+      startCursor: null,
+      alreadyImported: 0,
+      io,
+    });
 
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

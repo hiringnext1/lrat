@@ -334,6 +334,13 @@ function initSchema() {
   try { db.exec("ALTER TABLE users ADD COLUMN ai_persona TEXT DEFAULT ''"); } catch (_) {}
 
   // ── Campaign Date Scheduling Columns ─────────────────────────────────────────
+  // ── Resumable lead imports ───────────────────────────────────────────────────
+  // Without these the pagination cursor lived only in memory, so a deploy killed
+  // the import and the job sat on 'processing' forever with no way to continue.
+  try { db.exec("ALTER TABLE sourcing_jobs ADD COLUMN cursor TEXT"); } catch (_) {}
+  try { db.exec("ALTER TABLE sourcing_jobs ADD COLUMN target_count INTEGER DEFAULT 100"); } catch (_) {}
+  try { db.exec("ALTER TABLE sourcing_jobs ADD COLUMN account_id INTEGER"); } catch (_) {}
+
   try { db.exec("ALTER TABLE campaigns ADD COLUMN starts_at TEXT"); } catch (_) {}
   try { db.exec("ALTER TABLE campaigns ADD COLUMN ends_at TEXT"); } catch (_) {}
 
