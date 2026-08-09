@@ -135,6 +135,12 @@ function isWithinWorkingHours(startTime, endTime, timezone = 'Asia/Kolkata') {
   const startMinutes = (isNaN(sh) ? 0 : sh) * 60 + (isNaN(sm) ? 0 : sm);
   const endMinutes = (isNaN(eh) ? 23 : eh) * 60 + (isNaN(em) ? 59 : em);
 
+  // Overnight window (e.g. 09:00 → 03:00 next morning). Without this the
+  // comparison below can never be true and the campaign never runs.
+  if (endMinutes < startMinutes) {
+    return currentMinutes >= startMinutes || currentMinutes <= endMinutes;
+  }
+
   return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
 }
 

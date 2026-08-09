@@ -324,11 +324,15 @@ router.get('/engine-status', (req, res) => {
     });
 
     if (!isAnyCampaignActiveNow) {
-      return res.json({ 
-        success: true, 
-        status: 'SLEEPING', 
-        message: 'Safety Gating (Paused until 07:00 AM IST)',
-        color: 'text-indigo-500' 
+      // Report the campaigns' own next start time instead of a hardcoded hour
+      const nextStart = activeCampaigns
+        .map(c => c.working_hours_start || '09:00')
+        .sort()[0];
+      return res.json({
+        success: true,
+        status: 'SLEEPING',
+        message: `Outside working hours (resumes ${nextStart} IST)`,
+        color: 'text-indigo-500'
       });
     }
 
