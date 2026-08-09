@@ -51,13 +51,13 @@ Lead status machine: `pending_connection → connection_sent → connected → j
 | 455 | `UPDATE accounts SET warmup_week=4 WHERE is_active=1 AND status='active'` | Still present. Warmup ramp bypassed; every account jumps to full speed (all account-creation paths already insert `warmup_week=4`, so this can go once real warmup is wanted) |
 | ~~466~~ | ~~`DELETE FROM accounts WHERE is_active=0 AND status='paused'`~~ | **FIXED in `5531200`** — that is exactly the state `pauseAccountTemporarily()` and the 5-failure auto-pause produce, so a restart during a provider outage deleted live accounts and their `campaign_accounts` rows |
 | ~~380/384/390~~ | ~~seeds hardcoded `UNIPILE_API_KEY`, `UNIPILE_DSN`, `NVIDIA_API_KEY` into `settings`~~ | **FIXED in `9e11b44`** — seeds removed; env vars now win over `settings` rows (`BOOT_ENV` + `envValue()` in `database.js`). This seeding had pinned production to the dead `api52` Unipile instance and broke LinkedIn account linking (`503 errors/no_client_session`) |
-| 399-411 | resets `admin@growleadz.co` / `admin@lrat.com` password to `Admin#GrowLeadz2026!` and `role='admin'` on every boot | Password changes never stick; credential in source |
+| ~~399-411~~ | ~~resets `admin@growleadz.co` / `admin@lrat.com` password to `Admin#GrowLeadz2026!` on every boot~~ | **FIXED 2026-08-09** — admin accounts are now only *created* when missing, from `ADMIN_INITIAL_PASSWORD`; an existing password is never overwritten. Verified in production: a changed password survives a restart and the old hardcoded one is rejected |
 
 Fixing these is prerequisite to anything billing-, schedule-, or warmup-related behaving as configured.
 
 ## 4. Security findings
 
-1. **Hardcoded live credentials** in `config/database.js`. Unipile + NVIDIA seeds removed in `9e11b44`; the **admin password reset (`Admin#GrowLeadz2026!`) and the leaked NVIDIA key still need rotating** — both were committed to a GitHub repo. Config precedence is now: real env var → `settings` row → empty, with placeholder values (`placeholder`, `paste_your`, `none`) treated as unset.
+1. **Hardcoded live credentials** in `config/database.js` — Unipile + NVIDIA seeds removed in `9e11b44`, admin password reset removed 2026-08-09. Still open: the **leaked NVIDIA key needs rotating** (it is in git history), and **`admin@growleadz.co` may still carry the old hardcoded password** — the reset stopped, so whatever that account had is what it keeps. Config precedence is now: real env var → `settings` row → empty, with placeholder values (`placeholder`, `paste_your`, `none`) treated as unset.
 2. **CORS is effectively open** — `server.js:74` and `:90` both `callback(null, true)`; `isOriginAllowed()` (`:65`) is dead code and also ends in `return true`.
 3. **JWT accepted from `?token=` query** (`authMiddleware.js:16`) → tokens leak into proxy/access logs and Referer.
 4. **No `app.set('trust proxy', …)`** while running behind Railway → `express-rate-limit` buckets all users under the proxy IP; login limiter (10/15 min) becomes a global throttle rather than per-IP.
