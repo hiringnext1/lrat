@@ -1870,12 +1870,15 @@ export default function CampaignBuilder() {
           </div>
           <div>
             <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Limit Profile Targets</label>
-            <input 
-              type="number" 
-              value={maxLeads} 
-              onChange={e => setMaxLeads(e.target.value)}
-              className="w-full border border-slate-100 dark:border-slate-800 rounded-2xl px-4 py-3 text-sm font-bold bg-white dark:bg-slate-900 dark:text-slate-200 focus:border-blue-550 outline-none" 
+            <input
+              type="number"
+              min={1}
+              max={1000}
+              value={maxLeads}
+              onChange={e => setMaxLeads(Math.min(Math.max(parseInt(e.target.value) || 1, 1), 1000))}
+              className="w-full border border-slate-100 dark:border-slate-800 rounded-2xl px-4 py-3 text-sm font-bold bg-white dark:bg-slate-900 dark:text-slate-200 focus:border-blue-550 outline-none"
             />
+            <p className="mt-1.5 text-[10px] font-bold text-slate-400 dark:text-slate-500">Max 1000 per import · already-imported people are skipped</p>
           </div>
         </div>
 

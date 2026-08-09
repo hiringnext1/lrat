@@ -12,6 +12,10 @@ const os = require('os');
 const { requireActiveSubscription } = require('../middleware/planGuard');
 const leadImporter = require('../services/leadImporter');
 
+// A LinkedIn people search returns roughly 1000 results, so importing beyond
+// that just pages through nothing. Keep the UI and this value in sync.
+const MAX_LEADS_PER_IMPORT = 1000;
+
 const uploadDir = path.join(os.tmpdir(), 'lrat-uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -159,8 +163,9 @@ router.post('/import/url', requireActiveSubscription, async (req, res) => {
     const db = getDb();
     const { search_url, account_id, campaign_id, max_leads } = req.body;
     const io = req.app.get('io');
-    // Respect the user's requested max_leads (default 100, max 500)
-    const targetCount = Math.min(parseInt(max_leads) || 100, 500);
+    // Respect the user's requested max_leads. The cap used to be 500 while the
+    // UI accepted any number, so asking for 1000 silently imported half.
+    const targetCount = Math.min(Math.max(parseInt(max_leads) || 100, 1), MAX_LEADS_PER_IMPORT);
 
     if (!search_url || !account_id || !campaign_id) {
       return res.status(400).json({ success: false, error: 'search_url, account_id, and campaign_id are required' });
@@ -195,9 +200,10 @@ router.post('/import/url', requireActiveSubscription, async (req, res) => {
     // Immediate response to UI, now including jobId
     res.json({ 
       success: true, 
-      message: 'Lead import started. Profiles will appear in batches of 20 every minute.',
+      message: `Lead import started for up to ${targetCount} leads. Profiles arrive in batches of 20; already-imported people are skipped.`,
       campaign_id,
-      job_id: jobId
+      job_id: jobId,
+      target: targetCount
     });
 
     // Runs in the background; the cursor is persisted after every batch so a

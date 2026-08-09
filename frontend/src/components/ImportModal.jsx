@@ -211,11 +211,13 @@ export default function ImportModal({ onClose, accounts, campaigns, onImported, 
                         </div>
                         
                         <div>
-                          <label className="block text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Max Prospects</label>
-                          <input 
-                            type="number" 
-                            value={maxLeads} 
-                            onChange={e => setMaxLeads(parseInt(e.target.value) || '')}
+                          <label className="block text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Max Prospects <span className="text-slate-300 dark:text-slate-600">(up to 1000)</span></label>
+                          <input
+                            type="number"
+                            min={1}
+                            max={1000}
+                            value={maxLeads}
+                            onChange={e => setMaxLeads(Math.min(Math.max(parseInt(e.target.value) || 1, 1), 1000))}
                             className="w-full bg-slate-50 dark:bg-slate-950/40 border border-transparent dark:border-slate-950 rounded-2xl px-4 py-3 text-xs font-bold focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/10 focus:border-blue-500 outline-none text-slate-700 dark:text-slate-200 transition-all"
                           />
                         </div>
