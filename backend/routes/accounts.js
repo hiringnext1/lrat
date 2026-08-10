@@ -7,6 +7,19 @@ const { requireActiveSubscription } = require('../middleware/planGuard');
 
 router.post('/connect-link', requireActiveSubscription, async (req, res) => {
   try {
+    // Plan limits were defined but never enforced: a Starter customer could
+    // connect as many LinkedIn accounts as they liked.
+    const canAdd = billing.canAddAccount(req.userId);
+    if (!canAdd.allowed) {
+      return res.status(403).json({
+        success: false,
+        error: canAdd.reason || `Your plan allows ${canAdd.limit} LinkedIn account(s).`,
+        upgrade_required: true,
+        current: canAdd.current,
+        limit: canAdd.limit,
+      });
+    }
+
     const { redirect_url } = req.body;
     const apiKey = getSetting('UNIPILE_API_KEY');
     const dsn = getSetting('UNIPILE_DSN');
@@ -164,6 +177,19 @@ router.post('/webhook', async (req, res) => {
 // ⚡ 1-Click Direct Cookie (li_at) Connect Endpoint (3-Second Connect)
 router.post('/connect-cookie', requireActiveSubscription, async (req, res) => {
   try {
+    // Plan limits were defined but never enforced: a Starter customer could
+    // connect as many LinkedIn accounts as they liked.
+    const canAdd = billing.canAddAccount(req.userId);
+    if (!canAdd.allowed) {
+      return res.status(403).json({
+        success: false,
+        error: canAdd.reason || `Your plan allows ${canAdd.limit} LinkedIn account(s).`,
+        upgrade_required: true,
+        current: canAdd.current,
+        limit: canAdd.limit,
+      });
+    }
+
     const { cookie_value } = req.body;
     if (!cookie_value || !cookie_value.trim()) {
       return res.status(400).json({ success: false, error: 'Please enter a valid li_at cookie value' });

@@ -52,9 +52,22 @@ const PLANS = {
     stripe_price_id_monthly: null,
     stripe_price_id_yearly: null,
   },
+  // Not purchasable. A boot migration used to stamp every user with
+  // plan_type='agency', but no such plan existed here — so getPlanLimits()
+  // fell through to the trial and those users were shown "Free Trial" and
+  // capped at 2 campaigns. Defined here so their limits match reality.
+  agency: {
+    label: 'Agency (Internal)',
+    accounts_limit: 10,
+    campaigns_limit: 9999,
+    daily_connections: 25,
+    price_usd_monthly: 0,
+    purchasable: false,
+    stripe_price_id_monthly: null,
+    stripe_price_id_yearly: null,
+  },
 };
 
-// Trial duration: 14 days
 const TRIAL_DAYS = 30;
 
 /**
@@ -67,8 +80,15 @@ function getPlanLimits(planType) {
 /**
  * Get all available plans (for frontend display).
  */
-function getAllPlans() {
-  return PLANS;
+/**
+ * @param {boolean} purchasableOnly - drop internal/grandfathered plans, which
+ *   customers must never see on the pricing page
+ */
+function getAllPlans(purchasableOnly = false) {
+  if (!purchasableOnly) return PLANS;
+  return Object.fromEntries(
+    Object.entries(PLANS).filter(([id, p]) => p.purchasable !== false && !['trial', 'free', 'agency'].includes(id))
+  );
 }
 
 /**

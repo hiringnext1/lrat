@@ -20,53 +20,43 @@ const STATUS_ICONS = {
   incomplete:{ icon: AlertTriangle, color: 'text-amber-500',  label: 'Incomplete' },
 };
 
-const PRICING_PLANS = [
-  {
-    id: 'starter',
-    name: 'Starter Playbook',
-    description: 'For sales & B2B teams',
-    priceUsd: 39,
-    accountsLimit: 1,
+// Marketing copy lives here; price and limits come from /api/billing/plans so
+// the page can never advertise a number the server does not charge.
+// Claims removed: the product does not provide proxies, and there is no SLA.
+const PLAN_COPY = {
+  starter: {
+    description: 'For solo operators & small teams',
     features: [
-      '1 Connected Sender Profile',
-      '25 Daily Connections Cap',
-      'Residential Proxy Setup Support',
-      'Nvidia NIM Llama-3.1 Base AI',
-      'Local SQLite Analytics Sync',
+      'Connect 1 LinkedIn sender',
+      'Human-paced sending with daily caps',
+      'AI-personalised notes & messages',
+      'Unified reply inbox',
+      'CSV & LinkedIn search import',
     ],
   },
-  {
-    id: 'professional',
-    name: 'Professional Engine',
+  professional: {
     description: 'For high-growth agencies',
-    priceUsd: 119,
-    accountsLimit: 3,
     features: [
-      '3 Connected Sender Profiles',
-      'Warmup schedules week-by-week',
-      '100% Gated Profile Views',
-      'Automatic IP proxy rotation',
-      'Multi-Account Campaign Inbox',
-      'Priority Email & Slack Support',
+      'Connect 3 LinkedIn senders',
+      'Warmup ramps for new accounts',
+      'Visual multi-step sequences',
+      'Lead scoring & campaign analytics',
+      'Slack alerts & outbound webhooks',
+      'Priority email support',
     ],
     popular: true,
   },
-  {
-    id: 'enterprise',
-    name: 'Enterprise Cluster',
+  enterprise: {
     description: 'For volume sales teams',
-    priceUsd: 349,
-    accountsLimit: 10,
     features: [
-      '10 Connected Sender Profiles',
-      'Dedicated residential proxy pool',
-      'Fully managed AI prompt models',
-      'Direct REST API export sync',
-      'Custom Playbook automation builder',
-      '24/7 SLA uptime guarantee',
+      'Connect 10 LinkedIn senders',
+      'Unlimited campaigns',
+      'Blacklist & duplication guard',
+      'Full CSV export of every lead',
+      'Priority support',
     ],
   },
-];
+};
 
 function UsageBar({ used, limit, label }) {
   const pct = limit > 0 ? Math.min((used / limit) * 100, 100) : 0;
@@ -92,6 +82,8 @@ export default function Billing() {
   const [portalLoading, setPortalLoading] = useState(false);
   const [billingCycle, setBillingCycle] = useState('monthly');
   const [region, setRegion] = useState('usd');
+  // Plans come from the API; PLAN_COPY only supplies the marketing wording
+  const [apiPlans, setApiPlans] = useState(null);
   const [toast, setToast] = useState(null);
 
   const showToast = (msg, type = 'success') => {
@@ -112,6 +104,9 @@ export default function Billing() {
   const fetchStatus = async () => {
     try {
       setLoading(true);
+      axios.get(`${API}/api/billing/plans`)
+        .then(r => setApiPlans(r.data?.data || null))
+        .catch(() => setApiPlans(null));
       const res = await axios.get(`${API}/api/billing/status`);
       setStatus(res.data.data);
     } catch (err) {
@@ -127,6 +122,19 @@ export default function Billing() {
       setInvoices(res.data.data || []);
     } catch (_) {}
   };
+
+  // Server plans + local copy. Falls back to copy-only if the API is unreachable
+  // so the page still renders something sensible.
+  const planCatalogue = Object.entries(apiPlans || {}).map(([id, plan]) => ({
+    id,
+    name: plan.label,
+    priceUsd: plan.price_usd_monthly,
+    accountsLimit: plan.accounts_limit,
+    campaignsLimit: plan.campaigns_limit,
+    description: PLAN_COPY[id]?.description || '',
+    features: PLAN_COPY[id]?.features || [],
+    popular: PLAN_COPY[id]?.popular || false,
+  }));
 
   const handleCheckout = async (planId) => {
     try {
@@ -285,7 +293,7 @@ export default function Billing() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {PRICING_PLANS.map((p) => {
+          {planCatalogue.map((p) => {
             const isCurrent = plan.type === p.id;
             const basePrice = p.priceUsd;
             const displayPrice = billingCycle === 'yearly' ? Math.round(basePrice * 0.8) : basePrice;

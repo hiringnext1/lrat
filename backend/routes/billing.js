@@ -53,7 +53,9 @@ router.get('/status', authenticateJWT, (req, res) => {
           accounts: { used: accountsUsed, limit: user.plan_accounts_limit || planLimits.accounts_limit },
           campaigns: { used: campaignsUsed, limit: planLimits.campaigns_limit },
         },
-        limits: planLimits,
+        // The per-user override wins for accounts, so report the same number
+        // here that canAddAccount() actually enforces
+        limits: { ...planLimits, accounts_limit: user.plan_accounts_limit || planLimits.accounts_limit },
         hasStripe: !!user.stripe_customer_id,
       },
     });
@@ -358,8 +360,9 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
 // ─── GET /api/billing/plans ───────────────────────────────────────────────────
 // Public endpoint — returns all plan definitions for frontend pricing display
 router.get('/plans', (req, res) => {
-  const plans = billing.getAllPlans();
-  res.json({ success: true, data: plans });
+  // Only the plans a customer can actually buy — the billing page renders
+  // straight from this, so internal/grandfathered plans must not appear.
+  res.json({ success: true, data: billing.getAllPlans(true) });
 });
 
 module.exports = router;
