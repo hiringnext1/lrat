@@ -11,7 +11,6 @@ import GrowLeadsLogo from './GrowLeadsLogo';
 export default function Sidebar() {
   const location = useLocation();
   const [unreadCount, setUnreadCount] = useState(0);
-  const [connected, setConnected] = useState(socket.connected);
 
   let user = {};
   try {
@@ -22,20 +21,14 @@ export default function Sidebar() {
   const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
-    const onConnect = () => setConnected(true);
-    const onDisconnect = () => setConnected(false);
     const onInboxUpdated = () => fetchUnread();
 
-    socket.on('connect', onConnect);
-    socket.on('disconnect', onDisconnect);
     socket.on('new_reply', onInboxUpdated);
     window.addEventListener('inbox_updated', onInboxUpdated);
 
     fetchUnread();
 
     return () => {
-      socket.off('connect', onConnect);
-      socket.off('disconnect', onDisconnect);
       socket.off('new_reply', onInboxUpdated);
       window.removeEventListener('inbox_updated', onInboxUpdated);
     };
@@ -81,11 +74,8 @@ export default function Sidebar() {
     <aside className="w-[220px] flex-shrink-0 flex flex-col h-screen sticky top-0 text-left overflow-hidden select-none" style={{ background: '#0D1221', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
 
       {/* Logo */}
-      <div className="px-5 py-5 border-b border-white/6 flex items-center justify-between">
+      <div className="px-5 py-5 border-b border-white/6 flex items-center">
         <GrowLeadsLogo size="md" />
-        <div className="flex items-center gap-1">
-          <span className={`w-2 h-2 rounded-full ${connected ? 'bg-emerald-400 animate-pulse' : 'bg-slate-600'}`} title={connected ? 'Connected' : 'Offline'} />
-        </div>
       </div>
 
       {/* Nav Section Label */}
