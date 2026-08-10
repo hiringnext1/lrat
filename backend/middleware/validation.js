@@ -41,6 +41,16 @@ const resetPasswordSchema = z.object({
   new_password: z.string().min(6, 'Password must be at least 6 characters').max(128, 'Password too long'),
 });
 
+const changePasswordSchema = z.object({
+  current_password: z.string().min(1, 'Current password is required').max(128),
+  new_password: z.string().min(6, 'New password must be at least 6 characters').max(128),
+});
+
+const deleteAccountSchema = z.object({
+  password: z.string().min(1, 'Password is required').max(128),
+  confirm: z.literal('DELETE', { message: 'Type DELETE to confirm' }),
+});
+
 const profileUpdateSchema = z.object({
   name: z.string().max(100).trim().optional().nullable(),
   company_name: z.string().max(200).trim().optional().nullable(),
@@ -106,5 +116,7 @@ module.exports = {
   resetPasswordSchema,
   profileUpdateSchema,
   onboardingCompleteSchema,
+  changePasswordSchema,
+  deleteAccountSchema,
   validate,
 };

@@ -290,7 +290,7 @@ router.post('/import/csv', upload.single('file'), requireActiveSubscription, (re
       .on('data', (row) => results.push(row))
       .on('end', () => {
         const now = new Date().toISOString();
-        const weights = getScoringWeights();
+        const weights = getScoringWeights(req.userId);
         const transaction = db.transaction((rows) => {
           let imported = 0;
           let duplicates = 0;
@@ -680,7 +680,7 @@ router.delete('/:id', requireActiveSubscription, (req, res) => {
 router.post('/recalculate', requireActiveSubscription, (req, res) => {
   try {
     const db = getDb();
-    const weights = getScoringWeights();
+    const weights = getScoringWeights(req.userId);
     const leads = db.prepare('SELECT id, designation, headline, company, profile_json, reply_received FROM leads WHERE user_id = ?').all(req.userId);
     
     let updatedCount = 0;

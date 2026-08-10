@@ -1,6 +1,6 @@
 const { getDb } = require('../config/database');
 const aiService = require('./nvidia');
-const { calculateScore } = require('./leadScoring');
+const { calculateScore, getScoringWeights } = require('./leadScoring');
 const { sendAlert } = require('./notifications');
 const integrations = require('./integrations');
 
@@ -55,7 +55,7 @@ async function processIncomingReply(lead, messageText, io) {
   const score = calculateScore({
     ...lead,
     reply_received: 1
-  });
+  }, getScoringWeights(lead.user_id));
 
   db.prepare(
     `UPDATE leads SET 

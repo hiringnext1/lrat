@@ -1,30 +1,44 @@
 const express = require('express');
 const router = express.Router();
-const { getSetting, setSetting } = require('../config/database');
-const axios = require('axios');
+const { getDb } = require('../config/database');
 
-const KEYS = [
-  'UNIPILE_API_KEY', 'UNIPILE_DSN', 'UNIPILE_WEBHOOK_SECRET', 'NVIDIA_API_KEY',
-  'ALERT_SLACK_WEBHOOK', 'ALERT_EMAIL_RECIPIENT',
-  'RESEND_API_KEY', 'RESEND_FROM_EMAIL',
-  'BREVO_API_KEY',
-  'SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'SENDER_EMAIL',
-  'LEAD_SCORING_WEIGHTS'
-];
+/**
+ * Per-user settings.
+ *
+ * This route used to read and write the PLATFORM's credentials (Unipile,
+ * NVIDIA, SMTP…) from the shared `settings` table while being mounted behind
+ * authenticateJWT only. Any signed-up customer could therefore repoint the
+ * platform's Unipile DSN — breaking every other tenant — or point SMTP at a
+ * server they controlled and collect other users' password-reset codes.
+ *
+ * Those keys now live in routes/admin.js (admin-only). What is left here is
+ * genuinely the signed-in user's own configuration.
+ */
+
+const DEFAULT_SCORING_WEIGHTS = {
+  seniority: { executive: 40, manager: 30, senior: 20, junior: 10 },
+  companySize: { large: 30, medium: 20, small: 10 },
+  responsiveness: { replied: 30 },
+};
 
 router.get('/', (req, res) => {
   try {
-    const data = {};
-    for (const key of KEYS) {
-      const val = getSetting(key);
-      // Mask API keys, secrets, passwords and webhook URLs
-      if ((key.includes('API_KEY') || key.includes('SECRET') || key.includes('PASS') || key.includes('WEBHOOK')) && val) {
-        data[key] = val.length > 6 ? '•'.repeat(val.length - 6) + val.slice(-6) : '••••••';
-      } else {
-        data[key] = val;
-      }
+    const db = getDb();
+    const row = db.prepare('SELECT lead_scoring_weights FROM users WHERE id = ?').get(req.userId);
+
+    let weights = null;
+    if (row?.lead_scoring_weights) {
+      try { weights = JSON.parse(row.lead_scoring_weights); } catch (_) {}
     }
-    res.json({ success: true, data });
+
+    res.json({
+      success: true,
+      data: {
+        // Kept as a JSON string for backwards compatibility with the existing UI
+        LEAD_SCORING_WEIGHTS: JSON.stringify(weights || DEFAULT_SCORING_WEIGHTS),
+        is_default: !weights,
+      },
+    });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -32,93 +46,37 @@ router.get('/', (req, res) => {
 
 router.put('/', (req, res) => {
   try {
-    const updated = [];
-    for (const key of KEYS) {
-      if (req.body[key] !== undefined && req.body[key] !== null) {
-        const val = String(req.body[key]).trim();
-        if (val && !val.startsWith('•')) {
-          setSetting(key, val);
-          updated.push(key);
+    const db = getDb();
+    const { LEAD_SCORING_WEIGHTS } = req.body;
+
+    if (LEAD_SCORING_WEIGHTS === undefined) {
+      return res.status(400).json({ success: false, error: 'Nothing to update' });
+    }
+
+    // Validate before storing: bad weights would silently score every lead 0
+    let parsed;
+    try {
+      parsed = typeof LEAD_SCORING_WEIGHTS === 'string' ? JSON.parse(LEAD_SCORING_WEIGHTS) : LEAD_SCORING_WEIGHTS;
+    } catch (_) {
+      return res.status(400).json({ success: false, error: 'Scoring weights must be valid JSON' });
+    }
+    for (const group of ['seniority', 'companySize', 'responsiveness']) {
+      if (!parsed?.[group] || typeof parsed[group] !== 'object') {
+        return res.status(400).json({ success: false, error: `Scoring weights are missing "${group}"` });
+      }
+      for (const [key, value] of Object.entries(parsed[group])) {
+        if (typeof value !== 'number' || value < 0 || value > 100) {
+          return res.status(400).json({ success: false, error: `${group}.${key} must be a number between 0 and 100` });
         }
       }
     }
-    res.json({ success: true, updated, message: `${updated.length} setting(s) saved` });
+
+    db.prepare('UPDATE users SET lead_scoring_weights = ? WHERE id = ?')
+      .run(JSON.stringify(parsed), req.userId);
+
+    res.json({ success: true, message: 'Scoring weights saved' });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-router.post('/test-unipile', async (req, res) => {
-  try {
-    const apiKey = getSetting('UNIPILE_API_KEY');
-    const dsn = getSetting('UNIPILE_DSN');
-
-    if (!apiKey || !dsn) {
-      return res.json({ success: false, error: 'Unipile API Key and DSN are required' });
-    }
-
-    const response = await axios.get(`${dsn}/api/v1/accounts`, {
-      headers: { 'X-API-KEY': apiKey },
-      timeout: 8000,
-    });
-
-    const items = response.data?.items || response.data?.accounts || response.data || [];
-    const linkedinCount = Array.isArray(items)
-      ? items.filter((a) => a.type === 'LINKEDIN' || a.provider === 'LINKEDIN').length
-      : 0;
-
-    res.json({ success: true, message: `Connected! Found ${linkedinCount} LinkedIn account(s) in Unipile.` });
-  } catch (err) {
-    const detail = err?.response?.data?.message || err?.response?.data || err.message;
-    res.json({ success: false, error: `Connection failed: ${typeof detail === 'object' ? JSON.stringify(detail) : detail}` });
-  }
-});
-
-router.post('/test-nvidia', async (req, res) => {
-  try {
-    const apiKey = getSetting('NVIDIA_API_KEY');
-    if (!apiKey) return res.json({ success: false, error: 'Nvidia API Key is required' });
-
-    const response = await axios.post(
-      'https://integrate.api.nvidia.com/v1/chat/completions',
-      {
-        model: 'meta/llama-3.1-70b-instruct',
-        max_tokens: 10,
-        messages: [{ role: 'user', content: 'Reply with OK' }],
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        timeout: 10000,
-      }
-    );
-
-    res.json({ success: true, message: 'Nvidia API connected successfully!' });
-  } catch (err) {
-    const detail = err?.response?.data?.error?.message || err?.response?.data?.message || err.message;
-    res.json({ success: false, error: `Connection failed: ${detail}` });
-  }
-});
-router.post('/test-smtp', async (req, res) => {
-  try {
-    const { verifySmtpConnection } = require('../services/emailService');
-    const smtpUser = getSetting('SMTP_USER') || process.env.SMTP_USER;
-    const smtpPass = getSetting('SMTP_PASS') || process.env.SMTP_PASS;
-
-    if (!smtpUser || !smtpPass) {
-      return res.json({ success: false, error: 'SMTP_USER and SMTP_PASS are not configured. Set them in Settings or .env file.' });
-    }
-
-    const ok = await verifySmtpConnection();
-    if (ok) {
-      res.json({ success: true, message: `SMTP connected successfully! Emails will be sent from ${smtpUser}` });
-    } else {
-      res.json({ success: false, error: `SMTP connection failed. Check credentials for ${smtpUser}. Ensure Gmail 2-Step Verification is ON and you are using an App Password.` });
-    }
-  } catch (err) {
-    res.json({ success: false, error: `SMTP test failed: ${err.message}` });
   }
 });
 

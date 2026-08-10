@@ -4,6 +4,8 @@ const { getDb } = require('../config/database');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const backup = require('../services/backup');
+const { getSetting, setSetting } = require('../config/database');
+const axios = require('axios');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'lrat-secret-key-2025';
 
@@ -241,6 +243,67 @@ router.get('/backups/:file', (req, res) => {
     res.download(match.path, match.file);
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ─── Platform credentials (admin only) ───────────────────────────────────────
+// These belong to the platform, not to any one customer. They lived on
+// /api/settings behind plain authenticateJWT, which let any signed-up user
+// rewrite them — including SMTP, which would have handed them other users'
+// password-reset codes.
+const PLATFORM_KEYS = [
+  'UNIPILE_API_KEY', 'UNIPILE_DSN', 'UNIPILE_WEBHOOK_SECRET', 'NVIDIA_API_KEY',
+  'ALERT_SLACK_WEBHOOK', 'ALERT_EMAIL_RECIPIENT',
+  'BREVO_API_KEY', 'RESEND_API_KEY', 'RESEND_FROM_EMAIL',
+  'SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS', 'SENDER_EMAIL',
+];
+
+router.get('/platform-settings', (req, res) => {
+  try {
+    const data = {};
+    for (const key of PLATFORM_KEYS) {
+      const val = getSetting(key);
+      if ((key.includes('API_KEY') || key.includes('SECRET') || key.includes('PASS')) && val) {
+        data[key] = val.length > 6 ? '•'.repeat(Math.min(val.length - 6, 24)) + val.slice(-6) : '••••••';
+      } else {
+        data[key] = val || '';
+      }
+    }
+    res.json({ success: true, data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.put('/platform-settings', (req, res) => {
+  try {
+    const updated = [];
+    for (const key of PLATFORM_KEYS) {
+      if (req.body[key] === undefined || req.body[key] === null) continue;
+      const val = String(req.body[key]).trim();
+      if (!val || val.startsWith('•')) continue; // masked value came back unchanged
+      setSetting(key, val);
+      updated.push(key);
+    }
+    res.json({ success: true, updated, message: `${updated.length} setting(s) saved` });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/platform-settings/test-unipile', async (req, res) => {
+  try {
+    const apiKey = getSetting('UNIPILE_API_KEY');
+    const dsn = getSetting('UNIPILE_DSN');
+    if (!apiKey || !dsn) return res.json({ success: false, error: 'Unipile API key and DSN are required' });
+
+    const response = await axios.get(`${dsn}/api/v1/accounts`, {
+      headers: { 'X-API-KEY': apiKey }, timeout: 15000,
+    });
+    const items = response.data?.items || [];
+    res.json({ success: true, message: `Connected — ${items.length} account(s) in the workspace` });
+  } catch (err) {
+    res.json({ success: false, error: err?.response?.data?.message || err.message });
   }
 });
 

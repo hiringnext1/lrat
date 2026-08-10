@@ -1,4 +1,4 @@
-const { getSetting } = require('../config/database');
+const { getDb } = require('../config/database');
 
 const DEFAULT_WEIGHTS = {
   seniority: {
@@ -17,20 +17,24 @@ const DEFAULT_WEIGHTS = {
   }
 };
 
-function getScoringWeights() {
+/**
+ * Scoring weights belong to a user. They used to live in a single global
+ * settings row, so one customer's tuning silently rescored every other
+ * customer's leads.
+ */
+function getScoringWeights(userId = null) {
+  if (!userId) return DEFAULT_WEIGHTS;
   try {
-    const raw = getSetting('LEAD_SCORING_WEIGHTS');
-    if (raw) {
-      return JSON.parse(raw);
-    }
+    const row = getDb().prepare('SELECT lead_scoring_weights FROM users WHERE id = ?').get(userId);
+    if (row?.lead_scoring_weights) return JSON.parse(row.lead_scoring_weights);
   } catch (e) {
-    console.error('[Scoring] Failed to parse custom weights, using defaults:', e.message);
+    console.error(`[Scoring] Could not load weights for user ${userId}, using defaults:`, e.message);
   }
   return DEFAULT_WEIGHTS;
 }
 
 function calculateScore(lead, weights = null) {
-  const activeWeights = weights || getScoringWeights();
+  const activeWeights = weights || DEFAULT_WEIGHTS;
   let score = 0;
 
   // 1. Evaluate Seniority (Max Seniority Weight)

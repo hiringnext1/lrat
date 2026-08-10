@@ -80,7 +80,7 @@ async function runImportJob({
       }
 
       const now = new Date().toISOString();
-      const weights = getScoringWeights();
+      const weights = getScoringWeights(userId);
 
       const transaction = db.transaction((profiles) => {
         let count = 0;

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Save, User, Building2, Globe, Mail, Briefcase, CheckCircle, AlertCircle, Loader, Settings as SettingsIcon, Slack, Zap, Bell, Sliders } from 'lucide-react';
+import { Save, User, Building2, Globe, Mail, Briefcase, CheckCircle, AlertCircle, Loader, Settings as SettingsIcon, Slack, Zap, Bell, Sliders, Lock, Download, Trash2, ShieldAlert } from 'lucide-react';
 import axios from 'axios';
 
 export default function Settings() {
@@ -25,6 +25,52 @@ export default function Settings() {
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState({ type: '', text: '' });
   const [loading, setLoading] = useState(true);
+
+  // Security + account controls
+  const [pw, setPw] = useState({ current_password: '', new_password: '', confirm: '' });
+  const [pwState, setPwState] = useState({ busy: false, msg: '', type: '' });
+  const [del, setDel] = useState({ open: false, password: '', confirm: '', busy: false, error: '' });
+
+  async function changePassword() {
+    if (pw.new_password !== pw.confirm) return setPwState({ busy: false, msg: 'New passwords do not match', type: 'error' });
+    if (pw.new_password.length < 6) return setPwState({ busy: false, msg: 'New password must be at least 6 characters', type: 'error' });
+    setPwState({ busy: true, msg: '', type: '' });
+    try {
+      const res = await axios.post('/api/auth/change-password', {
+        current_password: pw.current_password, new_password: pw.new_password,
+      });
+      setPwState({ busy: false, msg: res.data?.message || 'Password updated', type: 'success' });
+      setPw({ current_password: '', new_password: '', confirm: '' });
+    } catch (e) {
+      setPwState({ busy: false, msg: e.response?.data?.error || 'Could not change password', type: 'error' });
+    }
+  }
+
+  async function exportData() {
+    try {
+      const res = await axios.get('/api/auth/export', { responseType: 'blob' });
+      const url = URL.createObjectURL(new Blob([res.data], { type: 'application/json' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `growleadz-export-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setSaveMsg({ type: 'error', text: 'Export failed' });
+    }
+  }
+
+  async function deleteAccount() {
+    setDel(d => ({ ...d, busy: true, error: '' }));
+    try {
+      await axios.delete('/api/auth/account', { data: { password: del.password, confirm: del.confirm } });
+      localStorage.removeItem('lrat_token');
+      localStorage.removeItem('lrat_user');
+      window.location.href = '/';
+    } catch (e) {
+      setDel(d => ({ ...d, busy: false, error: e.response?.data?.error || 'Could not delete account' }));
+    }
+  }
 
   useEffect(() => {
     setLoading(true);
@@ -489,6 +535,131 @@ export default function Settings() {
               </label>
             </div>
 
+          </div>
+        </div>
+
+
+        {/* ═══ SECURITY ═══════════════════════════════════════════════ */}
+        <div className="bg-white dark:bg-slate-900/60 rounded-[32px] p-6 border border-slate-100 dark:border-slate-800/80">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 flex items-center justify-center">
+              <Lock size={15} className="text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <h2 className="text-sm font-extrabold text-slate-800 dark:text-slate-100">Password</h2>
+              <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">Change the password you sign in with</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {[
+              { key: 'current_password', label: 'Current password' },
+              { key: 'new_password', label: 'New password' },
+              { key: 'confirm', label: 'Confirm new password' },
+            ].map(f => (
+              <div key={f.key}>
+                <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">{f.label}</label>
+                <input
+                  type="password"
+                  autoComplete={f.key === 'current_password' ? 'current-password' : 'new-password'}
+                  value={pw[f.key]}
+                  onChange={e => setPw(p => ({ ...p, [f.key]: e.target.value }))}
+                  className="w-full border border-slate-100 dark:border-slate-800 rounded-2xl px-4 py-3 text-sm font-bold bg-white dark:bg-slate-900 dark:text-slate-200 focus:border-blue-500 outline-none"
+                />
+              </div>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-3 mt-4">
+            <button
+              onClick={changePassword}
+              disabled={pwState.busy || !pw.current_password || !pw.new_password}
+              className="flex items-center gap-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 px-5 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest disabled:opacity-50 transition-all active:scale-95"
+            >
+              {pwState.busy ? <Loader size={13} className="animate-spin" /> : <Lock size={13} strokeWidth={2.5} />}
+              Update password
+            </button>
+            {pwState.msg && (
+              <span className={`text-[10px] font-black uppercase tracking-wider ${pwState.type === 'success' ? 'text-emerald-500' : 'text-rose-400'}`}>
+                {pwState.msg}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* ═══ YOUR DATA ══════════════════════════════════════════════ */}
+        <div className="bg-white dark:bg-slate-900/60 rounded-[32px] p-6 border border-slate-100 dark:border-slate-800/80">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+              <Download size={15} className="text-slate-600 dark:text-slate-300" />
+            </div>
+            <div>
+              <h2 className="text-sm font-extrabold text-slate-800 dark:text-slate-100">Your data</h2>
+              <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">Download everything, or close your account</p>
+            </div>
+          </div>
+
+          <button
+            onClick={exportData}
+            className="flex items-center gap-2 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 px-5 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
+          >
+            <Download size={13} strokeWidth={2.5} />
+            Export my data (JSON)
+          </button>
+          <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-2">Profile, LinkedIn accounts, campaigns, leads and activity history.</p>
+
+          <div className="mt-6 pt-5 border-t border-rose-100 dark:border-rose-900/30">
+            <div className="flex items-center gap-2 mb-2">
+              <ShieldAlert size={14} className="text-rose-500" />
+              <h3 className="text-xs font-black text-rose-500 uppercase tracking-wider">Danger zone</h3>
+            </div>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed mb-3">
+              Deleting your account removes your campaigns, leads, activity history and disconnects your LinkedIn
+              accounts. This cannot be undone — export your data first if you may want it.
+            </p>
+
+            {!del.open ? (
+              <button
+                onClick={() => setDel(d => ({ ...d, open: true }))}
+                className="flex items-center gap-2 border border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 px-5 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all"
+              >
+                <Trash2 size={13} strokeWidth={2.5} />
+                Delete my account
+              </button>
+            ) : (
+              <div className="space-y-3 bg-rose-50/50 dark:bg-rose-950/10 border border-rose-100 dark:border-rose-900/30 rounded-2xl p-4">
+                <input
+                  type="password"
+                  placeholder="Your password"
+                  value={del.password}
+                  onChange={e => setDel(d => ({ ...d, password: e.target.value }))}
+                  className="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm bg-white dark:bg-slate-900 dark:text-slate-200 outline-none"
+                />
+                <input
+                  placeholder="Type DELETE to confirm"
+                  value={del.confirm}
+                  onChange={e => setDel(d => ({ ...d, confirm: e.target.value }))}
+                  className="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm bg-white dark:bg-slate-900 dark:text-slate-200 outline-none"
+                />
+                {del.error && <p className="text-[11px] font-bold text-rose-500">{del.error}</p>}
+                <div className="flex gap-2">
+                  <button
+                    onClick={deleteAccount}
+                    disabled={del.busy || del.confirm !== 'DELETE' || !del.password}
+                    className="flex items-center gap-2 bg-rose-600 hover:bg-rose-700 text-white px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest disabled:opacity-50 transition-all"
+                  >
+                    {del.busy ? <Loader size={13} className="animate-spin" /> : <Trash2 size={13} strokeWidth={2.5} />}
+                    Permanently delete
+                  </button>
+                  <button
+                    onClick={() => setDel({ open: false, password: '', confirm: '', busy: false, error: '' })}
+                    className="px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

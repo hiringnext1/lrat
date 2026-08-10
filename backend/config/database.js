@@ -332,6 +332,9 @@ function initSchema() {
   try { db.exec("ALTER TABLE users ADD COLUMN business_type TEXT DEFAULT 'general'"); } catch (_) {}
   try { db.exec("ALTER TABLE users ADD COLUMN business_context TEXT DEFAULT ''"); } catch (_) {}
   try { db.exec("ALTER TABLE users ADD COLUMN ai_persona TEXT DEFAULT ''"); } catch (_) {}
+  // Lead scoring used to be one global setting, so one customer's weights
+  // silently rescored every other customer's leads.
+  try { db.exec("ALTER TABLE users ADD COLUMN lead_scoring_weights TEXT"); } catch (_) {}
 
   // ── Campaign Date Scheduling Columns ─────────────────────────────────────────
   // ── Resumable lead imports ───────────────────────────────────────────────────

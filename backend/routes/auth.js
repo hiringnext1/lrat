@@ -10,6 +10,8 @@ const {
   signupSchema, loginSchema, verifySignupSchema,
   resendVerificationSchema, forgotPasswordSchema, resetPasswordSchema,
   profileUpdateSchema, onboardingCompleteSchema, validate,
+  changePasswordSchema,
+  deleteAccountSchema,
 } = require('../middleware/validation');
 
 const log = createLogger('Auth');
@@ -500,6 +502,108 @@ router.post('/onboarding/complete', authenticateJWT, validate(onboardingComplete
       message: 'Onboarding completed successfully',
       user: updatedUser
     });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+
+// ─── Change password (signed in) ─────────────────────────────────────────────
+// Until now the only way to change a password was the forgot-password email
+// flow, which is not something a signed-in user should have to go through.
+router.post('/change-password', authenticateJWT, validate(changePasswordSchema), async (req, res) => {
+  try {
+    const db = getDb();
+    const { current_password, new_password } = req.body;
+
+    const user = db.prepare('SELECT id, password_hash FROM users WHERE id = ?').get(req.userId);
+    if (!user) return res.status(404).json({ success: false, error: 'User not found' });
+
+    const valid = await bcrypt.compare(current_password, user.password_hash);
+    if (!valid) return res.status(400).json({ success: false, error: 'Current password is incorrect' });
+
+    if (current_password === new_password) {
+      return res.status(400).json({ success: false, error: 'New password must be different' });
+    }
+
+    const hash = await bcrypt.hash(new_password, 10);
+    db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(hash, req.userId);
+
+    log.info({ userId: req.userId }, 'Password changed');
+    res.json({ success: true, message: 'Password updated' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ─── Export my data ──────────────────────────────────────────────────────────
+// The privacy policy promises users can export their data; this is that.
+router.get('/export', authenticateJWT, (req, res) => {
+  try {
+    const db = getDb();
+    const uid = req.userId;
+
+    const profile = db.prepare(
+      `SELECT id, email, name, company_name, company_website, designation, timezone,
+              business_type, business_context, ai_persona, plan_type, plan_status,
+              created_at FROM users WHERE id = ?`
+    ).get(uid);
+    if (!profile) return res.status(404).json({ success: false, error: 'User not found' });
+
+    const payload = {
+      exported_at: new Date().toISOString(),
+      profile,
+      accounts: db.prepare('SELECT id, name, email, linkedin_url, status, warmup_week, created_at FROM accounts WHERE user_id = ?').all(uid),
+      campaigns: db.prepare('SELECT * FROM campaigns WHERE user_id = ?').all(uid),
+      leads: db.prepare('SELECT * FROM leads WHERE user_id = ?').all(uid),
+      activity_log: db.prepare('SELECT * FROM activity_log WHERE user_id = ? ORDER BY id DESC LIMIT 5000').all(uid),
+      blacklist: db.prepare('SELECT * FROM blacklist WHERE user_id = ?').all(uid),
+    };
+
+    res.setHeader('Content-Disposition', `attachment; filename="growleadz-export-${uid}-${Date.now()}.json"`);
+    res.setHeader('Content-Type', 'application/json');
+    res.send(JSON.stringify(payload, null, 2));
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ─── Delete my account ───────────────────────────────────────────────────────
+// Also promised in the privacy policy. Requires the password and an explicit
+// confirmation, because everything below is unrecoverable.
+router.delete('/account', authenticateJWT, validate(deleteAccountSchema), async (req, res) => {
+  try {
+    const db = getDb();
+    const uid = req.userId;
+
+    const user = db.prepare('SELECT id, email, password_hash FROM users WHERE id = ?').get(uid);
+    if (!user) return res.status(404).json({ success: false, error: 'User not found' });
+
+    const valid = await bcrypt.compare(req.body.password, user.password_hash);
+    if (!valid) return res.status(400).json({ success: false, error: 'Password is incorrect' });
+
+    // Release the LinkedIn connections at the provider too, so the customer
+    // stops occupying seats we would keep paying for. Best effort by design:
+    // a provider outage must not block someone from deleting their account.
+    const accounts = db.prepare('SELECT unipile_account_id FROM accounts WHERE user_id = ?').all(uid);
+    const unipile = require('../services/unipile');
+    for (const acc of accounts) {
+      if (!acc.unipile_account_id) continue;
+      try { await unipile.deleteAccount(acc.unipile_account_id); } catch (_) {}
+    }
+
+    const wipe = db.transaction(() => {
+      db.prepare('DELETE FROM campaign_accounts WHERE account_id IN (SELECT id FROM accounts WHERE user_id = ?)').run(uid);
+      db.prepare('DELETE FROM campaign_accounts WHERE campaign_id IN (SELECT id FROM campaigns WHERE user_id = ?)').run(uid);
+      for (const table of ['leads', 'campaigns', 'accounts', 'activity_log', 'blacklist', 'sourcing_jobs', 'pending_connections', 'billing_events']) {
+        try { db.prepare(`DELETE FROM ${table} WHERE user_id = ?`).run(uid); } catch (_) {}
+      }
+      db.prepare('DELETE FROM users WHERE id = ?').run(uid);
+    });
+    wipe();
+
+    log.warn({ userId: uid, email: user.email }, 'Account deleted by user');
+    res.json({ success: true, message: 'Your account and all associated data have been deleted' });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
