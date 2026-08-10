@@ -348,11 +348,19 @@ export default function Dashboard() {
     return true;
   }).slice(0, 10);
 
+  // Same source the sidebar uses for the signed-in user
+  let currentUser = {};
+  try {
+    const raw = localStorage.getItem('lrat_user');
+    if (raw && raw !== 'undefined') currentUser = JSON.parse(raw);
+  } catch (e) { console.error('Failed to parse user from localStorage:', e); }
+
   const greeting = () => {
     const h = new Date().getHours();
-    if (h < 12) return '☀️ Good Morning';
-    if (h < 18) return '☕ Good Afternoon';
-    return '🌙 Good Evening';
+    const timeOfDay = h < 12 ? '☀️ Good Morning' : h < 18 ? '☕ Good Afternoon' : '🌙 Good Evening';
+    // Greet by first name; fall back to the plain greeting if we don't have one
+    const firstName = (currentUser?.name || '').trim().split(' ')[0];
+    return firstName ? `${timeOfDay}, ${firstName}` : timeOfDay;
   };
 
   const engineActive = engine.status === 'ACTIVE';
@@ -382,12 +390,12 @@ export default function Dashboard() {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         {/* Left: Greeting + Title */}
         <div>
-          <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-1">{greeting()}</p>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{greeting()}</p>
           <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-3 font-display">
             <div className="w-8 h-8 rounded-xl bg-blue-500/15 flex items-center justify-center">
               <LayoutDashboard size={16} className="text-blue-400" />
             </div>
-            Command Center
+            Dashboard
           </h1>
         </div>
 
