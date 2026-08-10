@@ -131,6 +131,7 @@ function getLeadProgress(lead, steps) {
       state: 'waiting_acceptance',
       since: lead.connection_sent_at || execMap[steps[inviteIdx].node_id].executed_at || null,
       next: nextStage ? nextStage.label : null,
+      next_stage_id: nextStage ? nextStage.node_id : null,
       index: stagesUpTo(inviteIdx),
       total,
     };
@@ -174,6 +175,7 @@ function getLeadProgress(lead, steps) {
       since: base ? new Date(base).toISOString() : null,
       until: base ? new Date(base + waitMs).toISOString() : null,
       next: nextLabel,
+      next_stage_id: nextStage ? nextStage.node_id : null,
       index: stagesUpTo(lastIdx),
       total,
     };
@@ -185,6 +187,7 @@ function getLeadProgress(lead, steps) {
     state: 'ready',
     since: lastStep ? execMap[lastStep.node_id].executed_at : (lead.updated_at || lead.created_at || null),
     next: (nextStageAfter(lastIdx + 1) || {}).label || null,
+    next_stage_id: (nextStageAfter(lastIdx + 1) || {}).node_id || null,
     index: stagesUpTo(lastIdx + 1),
     total,
   };

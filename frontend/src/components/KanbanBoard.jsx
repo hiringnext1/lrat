@@ -19,6 +19,63 @@ function daysSince(dateStr) {
   return diff >= 0 ? diff : 0;
 }
 
+
+function shortAgo(iso) {
+  if (!iso) return null;
+  const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+  if (!Number.isFinite(mins) || mins < 0) return null;
+  if (mins < 60) return `${mins}m`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h`;
+  return `${Math.floor(hrs / 24)}d`;
+}
+
+function shortUntil(iso) {
+  if (!iso) return null;
+  const mins = Math.ceil((new Date(iso).getTime() - Date.now()) / 60000);
+  if (!Number.isFinite(mins)) return null;
+  if (mins <= 0) return 'due';
+  if (mins < 60) return `${mins}m`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h`;
+  return `${Math.floor(hrs / 24)}d`;
+}
+
+/** What the engine is doing with this lead right now. */
+function StepBadge({ step }) {
+  if (!step) return null;
+
+  if (step.state === 'waiting_acceptance') {
+    const since = shortAgo(step.since);
+    return (
+      <div className="flex items-center gap-1 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20 border border-amber-100/50 dark:border-amber-900/30" title="Invite sent, waiting for them to accept">
+        <Clock size={9} strokeWidth={2.5} />
+        <span>Awaiting {since ? `· ${since}` : ''}</span>
+      </div>
+    );
+  }
+
+  if (step.state === 'waiting_delay') {
+    const left = shortUntil(step.until);
+    return (
+      <div className="flex items-center gap-1 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-100/50 dark:border-indigo-900/30" title={step.next ? `Next: ${step.next}` : 'Waiting'}>
+        <Clock size={9} strokeWidth={2.5} />
+        <span>{step.next || 'Next'}{left ? ` · ${left}` : ''}</span>
+      </div>
+    );
+  }
+
+  if (step.state === 'ready' && step.label) {
+    return (
+      <div className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-850" title="Queued — waiting for this account's next slot">
+        Next: {step.label}
+      </div>
+    );
+  }
+
+  return null;
+}
+
 function LeadCard({ lead, index, onClick }) {
   const lastAction = lead.follow_up_1_sent_at || lead.jd_sent_at || lead.accepted_at || lead.connection_sent_at || lead.created_at;
   const days = daysSince(lastAction);
@@ -73,7 +130,7 @@ function LeadCard({ lead, index, onClick }) {
                 <MessageSquare size={9} fill="currentColor" />
                 <span>Replied</span>
               </div>
-            ) : null}
+            ) : <StepBadge step={lead.current_step} />}
           </div>
         </div>
       )}
@@ -81,10 +138,52 @@ function LeadCard({ lead, index, onClick }) {
   );
 }
 
-export default function KanbanBoard({ leads, onUpdate, onLeadClick }) {
+// Always shown, whatever the sequence looks like — and the only columns a lead
+// can be dragged into, because moving someone into the middle of a sequence
+// would skip or repeat steps the engine has already run.
+const TERMINAL_COLUMNS = [
+  { id: 'replied', label: 'Replied', color: 'bg-emerald-50/50 text-emerald-655 border-emerald-100/50 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/20' },
+  { id: 'shortlisted', label: 'Qualified', color: 'bg-green-50/50 text-green-600 border-green-100/50 dark:bg-green-950/20 dark:text-green-400 dark:border-green-900/20' },
+  { id: 'not_interested', label: 'Excluded', color: 'bg-rose-50/50 text-rose-600 border-rose-100/50 dark:bg-rose-950/20 dark:text-rose-450 dark:border-rose-900/20' },
+];
+
+const STAGE_COLOR = 'bg-slate-50 text-slate-600 border-slate-100 dark:bg-slate-900/40 dark:text-slate-400 dark:border-slate-800';
+
+/**
+ * @param {Array} steps  campaign sequence from GET /api/campaigns/:id — when
+ *                       provided the board mirrors that campaign's own steps,
+ *                       otherwise it falls back to the generic status columns.
+ */
+export default function KanbanBoard({ leads, onUpdate, onLeadClick, steps = null }) {
+  const stageSteps = (steps || []).filter(s => s.is_stage && s.type !== 'end');
+  const dynamic = stageSteps.length > 0;
+
+  const columns = dynamic
+    ? [
+        ...stageSteps.map(s => ({ id: s.node_id, label: s.label, color: STAGE_COLOR, sequence: true })),
+        { id: '__done', label: 'Completed', color: STAGE_COLOR, sequence: true },
+        ...TERMINAL_COLUMNS,
+      ]
+    : COLUMNS;
+
   const grouped = {};
-  for (const col of COLUMNS) {
-    grouped[col.id] = leads.filter((l) => l.status === col.id);
+  for (const col of columns) grouped[col.id] = [];
+
+  if (dynamic) {
+    for (const lead of leads) {
+      const step = lead.current_step;
+      // Terminal states win — a replied lead belongs in Replied, not mid-sequence
+      const terminal = TERMINAL_COLUMNS.find(c => c.id === lead.status);
+      if (terminal) { grouped[terminal.id].push(lead); continue; }
+      if (!step || step.state === 'no_flow') { grouped[columns[0].id].push(lead); continue; }
+      if (step.state === 'done') { grouped.__done.push(lead); continue; }
+      // A lead inside a delay belongs to the step it is waiting for
+      const target = step.state === 'waiting_delay' ? step.next_stage_id : step.stage_id;
+      if (target && grouped[target]) grouped[target].push(lead);
+      else grouped[columns[0].id].push(lead);
+    }
+  } else {
+    for (const col of columns) grouped[col.id] = leads.filter((l) => l.status === col.id);
   }
 
   async function onDragEnd(result) {
@@ -92,6 +191,8 @@ export default function KanbanBoard({ leads, onUpdate, onLeadClick }) {
     const leadId = parseInt(result.draggableId);
     const newStatus = result.destination.droppableId;
     if (result.source.droppableId === newStatus) return;
+    // Sequence columns are engine-owned; only the manual outcomes are droppable
+    if (!TERMINAL_COLUMNS.some(c => c.id === newStatus)) return;
 
     try {
       await axios.put(`/api/leads/${leadId}/status`, { status: newStatus });
@@ -104,7 +205,7 @@ export default function KanbanBoard({ leads, onUpdate, onLeadClick }) {
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <div className="flex gap-5 overflow-x-auto pb-6 scrollbar-hide" style={{ minHeight: 'calc(100vh - 280px)' }}>
-        {COLUMNS.map((col) => (
+        {columns.map((col) => (
           <div key={col.id} className="flex-shrink-0 w-64 flex flex-col">
             
             {/* Column Label Header */}
@@ -115,7 +216,7 @@ export default function KanbanBoard({ leads, onUpdate, onLeadClick }) {
               </span>
             </div>
             
-            <Droppable droppableId={col.id}>
+            <Droppable droppableId={col.id} isDropDisabled={!!col.sequence}>
               {(provided, snapshot) => (
                 <div
                   ref={provided.innerRef}

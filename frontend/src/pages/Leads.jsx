@@ -22,6 +22,8 @@ export default function Leads() {
   const [sentimentFilter, setSentimentFilter] = useState('');
   const [enrichedFilter, setEnrichedFilter] = useState('');
   const [selectedLeadId, setSelectedLeadId] = useState(null);
+  // Sequence of the campaign currently filtered on — drives the Kanban columns
+  const [campaignSteps, setCampaignSteps] = useState(null);
 
   useEffect(() => {
     fetchLeads(); fetchCampaigns(); fetchAccounts();
@@ -29,6 +31,15 @@ export default function Leads() {
     socket.on('leads_updated', refresh);
     return () => socket.off('leads_updated', refresh);
   }, [search, statusFilter, campaignFilter, sentimentFilter, enrichedFilter]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!campaignFilter) { setCampaignSteps(null); return; }
+    axios.get(`/api/campaigns/${campaignFilter}`)
+      .then(res => { if (!cancelled) setCampaignSteps(res.data?.data?.steps || null); })
+      .catch(() => { if (!cancelled) setCampaignSteps(null); });
+    return () => { cancelled = true; };
+  }, [campaignFilter]);
 
   async function fetchLeads() {
     try {
@@ -172,7 +183,7 @@ export default function Leads() {
             <LeadTable leads={leads} onUpdate={fetchLeads} onDelete={fetchLeads} campaigns={campaigns} campaignId={campaignFilter} onLeadClick={setSelectedLeadId} />
           </GlassCard>
         ) : (
-          <KanbanBoard leads={leads} onUpdate={fetchLeads} onLeadClick={setSelectedLeadId} />
+          <KanbanBoard leads={leads} onUpdate={fetchLeads} onLeadClick={setSelectedLeadId} steps={campaignSteps} />
         )}
       </div>
 
