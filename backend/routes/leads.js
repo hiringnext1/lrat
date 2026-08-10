@@ -11,6 +11,7 @@ const path = require('path');
 const os = require('os');
 const { requireActiveSubscription } = require('../middleware/planGuard');
 const leadImporter = require('../services/leadImporter');
+const flowProgress = require('../services/flowProgress');
 
 // A LinkedIn people search returns roughly 1000 results, so importing beyond
 // that just pages through nothing. Keep the UI and this value in sync.
@@ -72,6 +73,8 @@ router.get('/', (req, res) => {
     const offsetVal = (parseInt(page) - 1) * limitVal;
     
     const leads = db.prepare(sql).all(...params, limitVal, offsetVal);
+    // Additive: where each lead sits in its campaign sequence (read-only)
+    flowProgress.attachProgress(db, leads);
     res.json({ success: true, data: leads, total, page: parseInt(page), limit: limitVal });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { getDb } = require('../config/database');
 const { requireActiveSubscription } = require('../middleware/planGuard');
+const flowProgress = require('../services/flowProgress');
 
 router.get('/', (req, res) => {
   try {
@@ -154,7 +155,9 @@ router.get('/:id', (req, res) => {
 
     const leadCount = db.prepare('SELECT COUNT(*) as c FROM leads WHERE campaign_id = ? AND user_id = ?').get(req.params.id, req.userId).c;
 
-    res.json({ success: true, data: { ...campaign, accounts, lead_count: leadCount } });
+    // Additive: ordered, human-readable sequence steps for the CRM board
+    const steps = flowProgress.buildSteps(campaign.flow_json);
+    res.json({ success: true, data: { ...campaign, accounts, lead_count: leadCount, steps } });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
