@@ -3,6 +3,7 @@ const router = express.Router();
 const { getDb } = require('../config/database');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const backup = require('../services/backup');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'lrat-secret-key-2025';
 
@@ -198,6 +199,46 @@ router.post('/users/:id/impersonate', (req, res) => {
 
     const token = jwt.sign({ userId: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
     res.json({ success: true, token, user });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ─── Database backups ────────────────────────────────────────────────────────
+// Admin-only: a snapshot contains every customer's data, so these must never be
+// reachable without the isAdmin middleware that guards this whole router.
+
+// GET list of available snapshots
+router.get('/backups', (req, res) => {
+  try {
+    const backups = backup.listBackups().map(({ file, size_bytes, created_at }) => ({
+      file, size_bytes, size_mb: +(size_bytes / 1048576).toFixed(2), created_at,
+    }));
+    res.json({ success: true, data: backups });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST take a snapshot right now (e.g. before a risky change)
+router.post('/backups', async (req, res) => {
+  try {
+    const result = await backup.createSnapshot('manual');
+    if (!result) return res.status(500).json({ success: false, error: 'Backup failed — check server logs' });
+    res.json({ success: true, data: result, message: `Backup created (${result.users} users, ${result.leads} leads)` });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET download a snapshot — the only way to get a copy off this server today
+router.get('/backups/:file', (req, res) => {
+  try {
+    const requested = req.params.file;
+    // Serve only files this service created; never build a path from user input
+    const match = backup.listBackups().find(b => b.file === requested);
+    if (!match) return res.status(404).json({ success: false, error: 'Backup not found' });
+    res.download(match.path, match.file);
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

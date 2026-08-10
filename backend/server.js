@@ -383,6 +383,12 @@ server.listen(PORT, '0.0.0.0', () => {
   } catch (cronErr) {
     log.error({ err: cronErr }, 'Failed to initialize digest scheduler');
   }
+
+  try {
+    require('./services/backup').startBackupSchedule();
+  } catch (backupErr) {
+    log.error({ err: backupErr }, 'Failed to initialize backup schedule');
+  }
 });
 
 module.exports = { app, io };
