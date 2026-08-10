@@ -47,6 +47,9 @@ const cases = [
   ['pehla msg gaya, follow-up 1 ka wait', { status: 'jd_sent', accepted_at: ago(50), flow_executions: execs(['view-1', 200], ['delay-view-1', 190], ['like-1', 185], ['inv-1', 180], ['delay-inv-1', 45], ['msg-1', 40]) }, 'waiting_delay', 'Waiting for follow-up 1'],
   ['follow-up 2 bhi gaya, sequence khatam', { status: 'follow_up_sent', flow_executions: execs(['view-1', 400], ['delay-view-1', 390], ['like-1', 380], ['inv-1', 370], ['delay-inv-1', 300], ['msg-1', 290], ['delay-msg-1', 200], ['msg-2', 190], ['delay-msg-2', 100], ['msg-3', 90], ['end-1', 89]) }, 'done', 'Sequence complete'],
   ['ROBUSTNESS: beech ka delay record missing', { status: 'jd_sent', accepted_at: ago(50), flow_executions: execs(['view-1', 200], ['like-1', 185], ['inv-1', 180], ['msg-1', 40]) }, 'waiting_delay', 'Waiting for follow-up 1'],
+  ['LEGACY: invite gaya par flow record nahi (status sent)', { status: 'connection_sent', connection_sent_at: ago(72), account_id_used: 1, flow_executions: '[]' }, 'waiting_acceptance', 'Waiting for acceptance'],
+  ['LEGACY: connected par flow record nahi', { status: 'connected', accepted_at: ago(3), connection_sent_at: ago(72), account_id_used: 1, flow_executions: '[]' }, 'waiting_delay', 'Waiting for first message'],
+  ['LEGACY: pehla msg gaya par record nahi', { status: 'jd_sent', jd_sent_at: ago(10), accepted_at: ago(40), connection_sent_at: ago(90), account_id_used: 1, flow_executions: '[]' }, 'waiting_delay', 'Waiting for follow-up 1'],
   ['reply aa gaya', { status: 'replied', reply_received_at: ago(1), flow_executions: execs(['inv-1', 100]) }, 'closed', 'Replied'],
   ['not interested', { status: 'not_interested', flow_executions: '[]' }, 'closed', 'Not interested'],
 ];

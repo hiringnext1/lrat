@@ -108,12 +108,38 @@ function getLeadProgress(lead, steps) {
   const execMap = {};
   safeParse(lead.flow_executions, []).forEach(e => { execMap[e.node_id] = e; });
 
+  // flow_executions is not the only proof a step ran. Leads invited by the
+  // legacy sender (or imported before the flow existed) carry no execution
+  // record at all, and without this they were reported as "next: connection
+  // request" while already sitting in Connected.
+  const pastInvite = !!(lead.connection_sent_at || lead.account_id_used)
+    || ['connected', 'jd_sent', 'follow_up_sent'].includes(lead.status);
+  let firstMessageSeen = false;
+
+  const executed = (step) => {
+    if (execMap[step.node_id]) return execMap[step.node_id];
+    if (step.type === 'invite' && pastInvite) {
+      return { node_id: step.node_id, executed_at: lead.connection_sent_at || lead.updated_at, implied: true };
+    }
+    // The first message node is provably done when jd_sent_at is set; later
+    // follow-ups can only be told apart by their own execution records.
+    if (step.type === 'message' && !firstMessageSeen && lead.jd_sent_at) {
+      return { node_id: step.node_id, executed_at: lead.jd_sent_at, implied: true };
+    }
+    return null;
+  };
+
   // Work from the FURTHEST step the lead actually reached, not the first gap.
   // A missing intermediate record (flow edited, older lead) would otherwise
   // park the lead on a step it is long past.
   let lastIdx = -1;
   for (let i = 0; i < steps.length; i++) {
-    if (execMap[steps[i].node_id]) lastIdx = i;
+    const done = executed(steps[i]);
+    if (done) {
+      execMap[steps[i].node_id] = done; // so the delay base time can use it
+      lastIdx = i;
+    }
+    if (steps[i].type === 'message') firstMessageSeen = true;
   }
 
   const stagesUpTo = (i) => steps.slice(0, i + 1).filter(s => s.is_stage && s.type !== 'end').length;
