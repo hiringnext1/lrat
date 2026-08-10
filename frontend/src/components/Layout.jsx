@@ -1,5 +1,6 @@
 import { Outlet, useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
+import NotificationBell from './NotificationBell';
 import PlanBanner from './PlanBanner';
 import { useEffect, useState } from 'react';
 import socket from '../socket';
@@ -198,6 +199,14 @@ export default function Layout() {
       <style dangerouslySetInnerHTML={{ __html: `@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');` }} />
       <Sidebar />
       <main className="flex-1 overflow-y-auto relative flex flex-col">
+        {/* Thin top bar: the bell has to be reachable from every page, not just
+            the dashboard, because that is where problems surface. */}
+        <div
+          className="sticky top-0 z-40 flex items-center justify-end px-6 py-2 border-b border-white/6"
+          style={{ background: 'rgba(8,12,24,0.85)', backdropFilter: 'blur(8px)' }}
+        >
+          <NotificationBell />
+        </div>
         <PlanBanner />
         <div className="flex-1">
           <Outlet />

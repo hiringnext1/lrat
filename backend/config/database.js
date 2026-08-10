@@ -290,6 +290,10 @@ function initSchema() {
   try { db.exec("ALTER TABLE leads ADD COLUMN ai_draft_reply TEXT"); } catch (_) {}
   try { db.exec("ALTER TABLE leads ADD COLUMN ai_draft_status TEXT DEFAULT 'none'"); } catch (_) {}
   try { db.exec("ALTER TABLE accounts ADD COLUMN user_id INTEGER"); } catch (_) {}
+  // routes/webhooks.js writes accounts.updated_at when a provider status change
+  // arrives, but the column was never created — so that UPDATE threw and the
+  // status change was swallowed by the surrounding try/catch.
+  try { db.exec("ALTER TABLE accounts ADD COLUMN updated_at TEXT"); } catch (_) {}
   try { db.exec("ALTER TABLE campaigns ADD COLUMN user_id INTEGER"); } catch (_) {}
   try { db.exec("ALTER TABLE leads ADD COLUMN user_id INTEGER"); } catch (_) {}
   try { db.exec("ALTER TABLE activity_log ADD COLUMN user_id INTEGER"); } catch (_) {}
@@ -335,6 +339,8 @@ function initSchema() {
   // Lead scoring used to be one global setting, so one customer's weights
   // silently rescored every other customer's leads.
   try { db.exec("ALTER TABLE users ADD COLUMN lead_scoring_weights TEXT"); } catch (_) {}
+  // When the user last opened the notification bell — anything newer is unread
+  try { db.exec("ALTER TABLE users ADD COLUMN notifications_seen_at TEXT"); } catch (_) {}
 
   // ── Campaign Date Scheduling Columns ─────────────────────────────────────────
   // ── Resumable lead imports ───────────────────────────────────────────────────

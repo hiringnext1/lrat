@@ -46,6 +46,7 @@ const automationRouter = require('./routes/automation');
 const billingRouter = require('./routes/billing');
 const adminRouter = require('./routes/admin');
 const blacklistRouter = require('./routes/blacklist');
+const notificationsRouter = require('./routes/notifications');
 const authenticateJWT = require('./middleware/authMiddleware');
 const isAdmin = require('./middleware/adminMiddleware');
 
@@ -182,6 +183,7 @@ app.use('/api/automation', authenticateJWT, automationRouter);
 // S5: Stripe webhook route — uses rawBody from verify() above
 app.use('/api/billing', billingRouter);
 app.use('/api/blacklist', authenticateJWT, blacklistRouter);
+app.use('/api/notifications', authenticateJWT, notificationsRouter);
 app.use('/api/admin', authenticateJWT, isAdmin, adminRouter);
 
 // ─── Health Check (enhanced) ─────────────────────────────────────────────────
