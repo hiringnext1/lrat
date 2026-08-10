@@ -232,6 +232,13 @@ async function runSendConnections() {
 
     for (const campaign of activeCampaigns) {
       await logStorage.run({ userId: campaign.user_id }, async () => {
+        // A campaign with a visual flow is owned by runFlowExecution(). This
+        // legacy sender used to invite its leads as well, firing the connection
+        // request before the flow's warm-up steps (profile view, post like) had
+        // run — so those steps were skipped and everything looked simultaneous.
+        const flow = safeJsonParse(campaign.flow_json, {});
+        if (flow.nodes && flow.nodes.length > 0) return;
+
         const scheduleCheck = isCampaignScheduled(campaign, db);
         if (!scheduleCheck.active) {
           console.log(`[Scheduler] Skipping campaign ${campaign.name}: ${scheduleCheck.reason}`);
