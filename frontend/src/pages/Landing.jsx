@@ -1203,7 +1203,7 @@ function Pricing() {
           ))}
         </div>
 
-        {/* Money-back guarantee */}
+        {/* Offer reassurance strip */}
         <FadeIn delay={0.3}>
           <div className="mt-10 text-center flex flex-wrap items-center justify-center gap-6 text-slate-400 text-xs font-semibold">
             <span className="flex items-center gap-1.5">
@@ -1212,7 +1212,7 @@ function Pricing() {
             </span>
             <span className="flex items-center gap-1.5">
               <Lock size={14} className="text-blue-400" />
-              Stripe 256-Bit Encrypted Checkout
+              Encrypted checkout
             </span>
             <span className="flex items-center gap-1.5">
               <CheckCircle size={14} className="text-indigo-400" />
@@ -1251,8 +1251,8 @@ function FAQs() {
       a: "No coding required. The onboarding wizard walks you through connecting your LinkedIn accounts, setting up your first campaign, and configuring safety settings in under 15 minutes. Our support team is available to help with any setup questions.",
     },
     {
-      q: "Is there a free trial?",
-      a: "Yes! You can start with a 7-day free trial on the Professional plan — no credit card required. You'll have full access to all features so you can see real results before committing.",
+      q: "How does the $5 first month work?",
+      a: "Your first 30 days are $5 with full Starter features — no long-term contract, and you can cancel in one click from the billing page at any time.",
     },
   ];
 
@@ -1351,7 +1351,7 @@ function FinalCTA() {
                     id="final-cta-primary-btn"
                     className="w-full sm:w-auto bg-white hover:bg-slate-100 text-blue-700 px-10 py-4 rounded-xl font-black text-sm uppercase tracking-wider shadow-xl transition-all hover:scale-105 active:scale-95 flex items-center gap-2 group"
                   >
-                    Start Generating Leads Free
+                    Claim 1st Month @ $5
                     <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                   </button>
                 </Link>
@@ -1366,7 +1366,7 @@ function FinalCTA() {
               </div>
 
               <div className="flex items-center justify-center gap-6 pt-2 flex-wrap">
-                {['No credit card', '7-day free trial', '30-day guarantee', 'Cancel anytime'].map((t, i) => (
+                {['First month $5', '30 days full access', 'Cancel anytime', 'No long-term contract'].map((t, i) => (
                   <div key={i} className="flex items-center gap-1.5 text-white/60 text-xs font-medium">
                     <Check size={12} className="text-white/80" />
                     {t}

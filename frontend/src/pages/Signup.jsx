@@ -86,7 +86,7 @@ function FeaturePanel() {
       </div>
 
       <div className="relative z-10 flex flex-wrap gap-2">
-        {['No Credit Card Required', '30-Day Trial', 'Cancel Anytime'].map((t, i) => (
+        {['30 Days for $5', 'Setup in 10 minutes', 'Cancel Anytime'].map((t, i) => (
           <div key={i} className="flex items-center gap-1.5 text-[10px] text-slate-400 font-medium bg-white/5 border border-white/8 px-3 py-1.5 rounded-full">
             <Check size={11} className="text-emerald-400" />
             {t}
