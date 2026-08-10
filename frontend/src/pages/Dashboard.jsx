@@ -258,6 +258,8 @@ export default function Dashboard() {
   const [selectedCampaign, setSelectedCampaign] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [engine, setEngine] = useState({ status: 'LOADING', data: null });
+  // Live work queue — /api/automation/engine-status, user-scoped
+  const [queue, setQueue] = useState({ pending_connections: 0, pending_enrichment: 0, accountIssues: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [syncing, setSyncing] = useState(false);
@@ -273,7 +275,7 @@ export default function Dashboard() {
     try {
       const q = selectedCampaign ? `?campaign_id=${selectedCampaign}` : '';
       const qd = selectedCampaign ? `&campaign_id=${selectedCampaign}` : '';
-      const [over, daily, trendRes, logs, status, accs, camps] = await Promise.all([
+      const [over, daily, trendRes, logs, status, accs, camps, ops] = await Promise.all([
         axios.get('/api/analytics/overview' + q),
         axios.get('/api/analytics/daily?days=7' + qd),
         axios.get('/api/analytics/trends' + q),
@@ -281,6 +283,7 @@ export default function Dashboard() {
         axios.get('/api/analytics/engine-status'),
         axios.get('/api/analytics/accounts'),
         axios.get('/api/analytics/campaigns'),
+        axios.get('/api/automation/engine-status'),
       ]);
       if (over.data?.success) setStats(over.data.data);
       if (daily.data?.success) setDailySparkData(daily.data.data.map(d => d.connections_sent));
@@ -289,6 +292,13 @@ export default function Dashboard() {
       if (status.data?.status) setEngine(status.data);
       if (accs.data?.success) setAccounts(accs.data.data);
       if (camps.data?.success) setCampaigns(camps.data.data);
+      if (ops.data?.success) {
+        setQueue({
+          pending_connections: ops.data.data?.queued?.pending_connections ?? 0,
+          pending_enrichment: ops.data.data?.queued?.pending_enrichment ?? 0,
+          accountIssues: ops.data.data?.accountIssues || [],
+        });
+      }
       setError(null);
     } catch (e) {
       setError('Failed to load live data. Check connection.');
@@ -679,6 +689,41 @@ export default function Dashboard() {
                     <NextTimer targetDate={stats.next_action_at} isPaused={stats.active_accounts === 0 || stats.active_campaigns === 0} />
                   </div>
                 )}
+              </div>
+            )}
+          </GlassCard>
+
+          {/* Work Queue */}
+          <GlassCard className="p-5">
+            <h2 className="text-[11px] font-black text-white uppercase tracking-widest flex items-center gap-2 mb-4">
+              <Clock size={13} className="text-blue-400" />
+              Work Queue
+            </h2>
+
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { label: 'Ready to send', val: queue.pending_connections, hint: 'waiting for their turn' },
+                { label: 'Being enriched', val: queue.pending_enrichment, hint: 'fetching profile details' },
+              ].map(({ label, val, hint }) => (
+                <div key={label} className="p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{label}</p>
+                  <p className="text-lg font-black text-white mt-1" style={{ fontVariantNumeric: 'tabular-nums' }}>{val}</p>
+                  <p className="text-[9px] text-slate-500 mt-0.5">{hint}</p>
+                </div>
+              ))}
+            </div>
+
+            {queue.accountIssues.length > 0 && (
+              <div className="mt-4 pt-3 border-t border-white/6 space-y-2">
+                <p className="text-[9px] font-bold text-amber-400 uppercase tracking-widest">Senders needing attention</p>
+                {queue.accountIssues.slice(0, 4).map((acc, i) => (
+                  <div key={i} className="flex items-center justify-between text-[10px]">
+                    <span className="text-slate-300 font-medium truncate">{acc.name}</span>
+                    <span className="text-amber-400 font-bold uppercase tracking-wider text-[9px]">
+                      {acc.status === 'active' ? `health ${acc.health_score}` : acc.status}
+                    </span>
+                  </div>
+                ))}
               </div>
             )}
           </GlassCard>
