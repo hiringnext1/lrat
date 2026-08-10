@@ -25,6 +25,9 @@ const STATUS_ICONS = {
 // Claims removed: the product does not provide proxies, and there is no SLA.
 const PLAN_COPY = {
   starter: {
+    name: 'Starter Playbook',
+    priceUsd: 39,
+    accountsLimit: 1,
     description: 'For solo operators & small teams',
     features: [
       'Connect 1 LinkedIn sender',
@@ -35,6 +38,9 @@ const PLAN_COPY = {
     ],
   },
   professional: {
+    name: 'Professional Engine',
+    priceUsd: 119,
+    accountsLimit: 3,
     description: 'For high-growth agencies',
     features: [
       'Connect 3 LinkedIn senders',
@@ -47,6 +53,9 @@ const PLAN_COPY = {
     popular: true,
   },
   enterprise: {
+    name: 'Enterprise Cluster',
+    priceUsd: 349,
+    accountsLimit: 10,
     description: 'For volume sales teams',
     features: [
       'Connect 10 LinkedIn senders',
@@ -123,18 +132,23 @@ export default function Billing() {
     } catch (_) {}
   };
 
-  // Server plans + local copy. Falls back to copy-only if the API is unreachable
-  // so the page still renders something sensible.
-  const planCatalogue = Object.entries(apiPlans || {}).map(([id, plan]) => ({
-    id,
-    name: plan.label,
-    priceUsd: plan.price_usd_monthly,
-    accountsLimit: plan.accounts_limit,
-    campaignsLimit: plan.campaigns_limit,
-    description: PLAN_COPY[id]?.description || '',
-    features: PLAN_COPY[id]?.features || [],
-    popular: PLAN_COPY[id]?.popular || false,
-  }));
+  // PLAN_COPY is the base so the plans always render, even before the API
+  // responds or if it fails; server values overwrite price and limits as soon
+  // as they arrive, so the page can never advertise a price the server does
+  // not charge.
+  const planCatalogue = Object.entries(PLAN_COPY).map(([id, copy]) => {
+    const server = apiPlans?.[id];
+    return {
+      id,
+      name: server?.label || copy.name,
+      priceUsd: server?.price_usd_monthly ?? copy.priceUsd,
+      accountsLimit: server?.accounts_limit ?? copy.accountsLimit,
+      campaignsLimit: server?.campaigns_limit,
+      description: copy.description,
+      features: copy.features,
+      popular: copy.popular || false,
+    };
+  });
 
   const handleCheckout = async (planId) => {
     try {
