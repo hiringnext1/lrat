@@ -12,6 +12,20 @@
     <priority>1.0</priority>
   </url>
 
+  <url>
+    <loc>https://growleadz.co/terms</loc>
+    <lastmod>2026-08-09</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+
+  <url>
+    <loc>https://growleadz.co/privacy</loc>
+    <lastmod>2026-08-09</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+
   <!--
     /login and /signup were removed on purpose: they are noindex pages with no
     search value. Add new marketing URLs here as they ship, for example

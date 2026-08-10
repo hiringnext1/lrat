@@ -235,7 +235,7 @@ function Hero() {
 
               {/* Trust indicators */}
               <div className="flex flex-wrap gap-4 mt-4">
-                {['First month only $5 (Save $34)', '14-Day Money-Back Guarantee', '1-Click Instant Cancellation'].map((t, i) => (
+                {['First month only $5 (Save $34)', '30 days of full access', '1-Click Instant Cancellation'].map((t, i) => (
                   <div key={i} className="flex items-center gap-1.5 text-slate-300 text-xs font-semibold">
                     <Check size={14} className="text-emerald-400" />
                     {t}
@@ -372,7 +372,7 @@ function SocialProof() {
     <section className="relative z-10 py-16 border-y border-white/8 overflow-hidden">
       <div className="max-w-7xl mx-auto px-6 mb-10 text-center">
         <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
-          Trusted by 500+ B2B Sales Teams & Agencies
+          Built for B2B sales teams & agencies
         </p>
       </div>
       <div className="flex overflow-x-hidden">
@@ -410,7 +410,7 @@ function PainSolution() {
     {
       icon: AlertTriangle,
       pain: "Automation tools get your accounts banned",
-      solution: "Human-mimicking delays, residential proxies & warmup sequences keep accounts 98% safe.",
+      solution: "Human-paced delays, per-account limits and warmup schedules protect your accounts.",
       color: "from-orange-500/20 to-yellow-500/10",
       border: "border-orange-500/20",
       solutionColor: "text-emerald-400",
@@ -483,8 +483,8 @@ function Features() {
       label: 'Multi-Account Management',
       badge: 'Up to 20 accounts',
       title: 'Run 10-20 LinkedIn accounts from one dashboard.',
-      desc: 'Assign unique residential proxies, isolated browser fingerprints, and warmup schedules to each account. Full duplication guard ensures two senders never contact the same prospect.',
-      points: ['Unique proxy per account', 'Auto warmup schedules', 'Global duplication guard', 'Stealth browser isolation'],
+      desc: 'Every account gets its own pacing, daily caps and warmup schedule. A duplication guard makes sure two senders never contact the same prospect.',
+      points: ['Independent schedule per account', 'Auto warmup ramps', 'Global duplication guard', 'Per-account daily caps'],
       visual: <MultiAccountVisual />,
     },
     {
@@ -521,10 +521,10 @@ function Features() {
       id: 'safety',
       icon: Shield,
       label: 'Anti-Ban Safety System',
-      badge: '98% safety rate',
+      badge: 'Safety first',
       title: 'Built-in protection that LinkedIn can\'t detect.',
-      desc: 'Every action mimics human behavior: 35-second profile views, randomized cooldown timers, daily limits, and warmup ramps. GrowLeadz keeps your accounts safe, always.',
-      points: ['35s profile view gating', '15-28 min cooldowns', 'Daily cap enforcement', 'Warmup ramp schedules'],
+      desc: 'Every action is paced like a human: randomised cooldowns between actions, per-account daily caps, and warmup ramps for new accounts.',
+      points: ['Randomised action delays', '7-10 min between invites', 'Daily cap enforcement', 'Warmup ramp schedules'],
       visual: <SafetyVisual />,
     },
     {
@@ -637,9 +637,9 @@ function Features() {
 // ─── FEATURE VISUALS ────────────────────────────────────────────────────────
 function MultiAccountVisual() {
   const accounts = [
-    { name: "Rohit Sharma", role: "Sales Dev Rep", proxy: "Mumbai.res.proxy", status: "Active", progress: 65, color: "bg-emerald-500" },
-    { name: "Priya Singh", role: "Director, BD", proxy: "Delhi.res.proxy", status: "Cooldown", progress: 40, color: "bg-blue-500" },
-    { name: "Amit Kumar", role: "Growth Lead", proxy: "Bangalore.res.proxy", status: "Warmup", progress: 20, color: "bg-amber-500" },
+    { name: "Rohit Sharma", role: "Sales Dev Rep", proxy: "13 / 20 invites today", status: "Active", progress: 65, color: "bg-emerald-500" },
+    { name: "Priya Singh", role: "Director, BD", proxy: "8 / 20 · next in 6m", status: "Cooldown", progress: 40, color: "bg-blue-500" },
+    { name: "Amit Kumar", role: "Growth Lead", proxy: "Warmup week 2 · 10 / day", status: "Warmup", progress: 20, color: "bg-amber-500" },
   ];
   return (
     <div className="w-full space-y-4">
@@ -706,7 +706,7 @@ function AIOutreachVisual() {
         >
           <p className="text-[9px] font-black text-blue-400 uppercase tracking-wider mb-2">✨ AI Generated Message:</p>
           <p className="text-xs text-slate-300 italic leading-relaxed">
-            "Hey Arjun! Loved your transition from Flipkart to leading growth at Freshworks. Your focus on enterprise partnerships caught my eye — we've built something that's helped teams like yours 3x their outbound pipeline. Would love to connect?"
+            "Hey Arjun! Loved your transition from Flipkart to leading growth at Freshworks. Your focus on enterprise partnerships caught my eye — we've built something for teams running outbound at scale. Would love to connect?"
           </p>
         </motion.div>
       )}
@@ -800,7 +800,7 @@ function SafetyVisual() {
       {[
         { label: "35s Profile View Gating", status: "Active", color: "emerald" },
         { label: "Residential Proxy Isolation", status: "Enabled", color: "emerald" },
-        { label: "Action Cooldown Timers", status: "15-28 min", color: "blue" },
+        { label: "Action Cooldown Timers", status: "7-10 min", color: "blue" },
         { label: "Warmup Schedule Ramp", status: "Week 3/8", color: "indigo" },
         { label: "Daily Connection Cap", status: "25 max", color: "emerald" },
         { label: "Global Duplication Guard", status: "Protected", color: "purple" },
@@ -1038,97 +1038,6 @@ function ROICalculator() {
   );
 }
 
-// ─── TESTIMONIALS ────────────────────────────────────────────────────────────
-function Testimonials() {
-  const testimonials = [
-    {
-      name: "Rahul Verma",
-      role: "Head of Sales, Series-B SaaS",
-      company: "TechFlow India",
-      avatar: "RV",
-      quote: "GrowLeadz completely transformed our outbound. We went from 20 manual messages a day to 500+ automated ones across 10 accounts — with a 3x higher reply rate. Closed 8 deals in first month.",
-      metrics: { value: "3x", label: "Reply Rate Increase" },
-      color: "blue",
-    },
-    {
-      name: "Priya Krishnaswamy",
-      role: "Founder, B2B Lead Gen Agency",
-      company: "GrowthLabs",
-      avatar: "PK",
-      quote: "My clients pay ₹2L/month for LinkedIn outreach services. GrowLeadz automates 80% of the work. The anti-ban system is bulletproof — not a single account restricted in 6 months.",
-      metrics: { value: "₹2L", label: "Monthly Client Revenue" },
-      color: "indigo",
-    },
-    {
-      name: "Arjun Malhotra",
-      role: "VP Business Development",
-      company: "Enterprise Ventures",
-      avatar: "AM",
-      quote: "The unified inbox is a game-changer. I manage 15 LinkedIn accounts from one screen. AI reply suggestions save me 2 hours a day. ROI within the first week.",
-      metrics: { value: "15", label: "Accounts Managed" },
-      color: "purple",
-    },
-  ];
-
-  return (
-    <section id="testimonials" className="relative z-10 py-24 px-6">
-      <div className="max-w-7xl mx-auto">
-        <FadeIn>
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <span className="text-[11px] font-black text-blue-400 uppercase tracking-widest">Customer Stories</span>
-            <h2 className="text-4xl md:text-5xl font-black text-white mt-4 tracking-tight leading-[1.1]">
-              Real results from real{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">B2B teams.</span>
-            </h2>
-          </div>
-        </FadeIn>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {testimonials.map((t, i) => (
-            <FadeIn key={i} delay={i * 0.15}>
-              <div className={`bg-[#0D1526]/60 border border-white/10 rounded-3xl p-8 hover:border-${t.color}-500/30 transition-all group h-full flex flex-col justify-between`}>
-                <div>
-                  {/* Stars */}
-                  <div className="flex gap-1 mb-5">
-                    {[...Array(5)].map((_, si) => (
-                      <Star key={si} size={14} className="text-yellow-400 fill-yellow-400" />
-                    ))}
-                  </div>
-
-                  {/* Quote */}
-                  <Quote size={24} className={`text-${t.color}-500/40 mb-3`} />
-                  <p className="text-sm text-slate-300 leading-relaxed font-medium italic mb-6">
-                    "{t.quote}"
-                  </p>
-                </div>
-
-                <div>
-                  {/* Metric highlight */}
-                  <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-${t.color}-500/10 border border-${t.color}-500/20 mb-5`}>
-                    <span className={`text-2xl font-black text-${t.color}-400`}>{t.metrics.value}</span>
-                    <span className="text-xs text-slate-400 font-semibold">{t.metrics.label}</span>
-                  </div>
-
-                  {/* Author */}
-                  <div className="flex items-center gap-3 pt-5 border-t border-white/8">
-                    <div className={`w-10 h-10 rounded-full bg-gradient-to-br from-${t.color}-500 to-${t.color}-700 flex items-center justify-center text-xs font-black text-white`}>
-                      {t.avatar}
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-white">{t.name}</p>
-                      <p className="text-[10px] text-slate-500 font-medium">{t.role} · {t.company}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </FadeIn>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 // ─── PRICING ─────────────────────────────────────────────────────────────────
 function Pricing() {
   const [billing, setBilling] = useState('monthly');
@@ -1149,7 +1058,7 @@ function Pricing() {
         "AI-Personalized Messages (Nvidia Llama)",
         "Campaign Sequence Builder",
         "BONUS: Cold Outreach Prompts ($49 Value)",
-        "14-Day 100% Money-Back Guarantee",
+        "Cancel anytime in 1 click",
         "Email Support",
       ],
     },
@@ -1190,7 +1099,7 @@ function Pricing() {
         "White-label Ready",
         "Custom Campaign Automation",
         "Advanced Analytics & Reports",
-        "24/7 SLA Support",
+        "Priority support",
       ],
     },
   ];
@@ -1206,7 +1115,7 @@ function Pricing() {
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">$5 First Month.</span>
             </h2>
             <p className="text-slate-400 mt-4 text-sm font-medium">
-              Start with full Starter features for just $5. 14-day 100% money-back guarantee. Cancel anytime in 1-click.
+              Start with full Starter features for just $5 for your first 30 days. Cancel anytime in 1-click.
             </p>
 
             {/* Toggle */}
@@ -1299,7 +1208,7 @@ function Pricing() {
           <div className="mt-10 text-center flex flex-wrap items-center justify-center gap-6 text-slate-400 text-xs font-semibold">
             <span className="flex items-center gap-1.5">
               <Shield size={14} className="text-emerald-400" />
-              14-Day 100% Money-Back Guarantee
+              30 days of full access for $5
             </span>
             <span className="flex items-center gap-1.5">
               <Lock size={14} className="text-blue-400" />
@@ -1323,7 +1232,7 @@ function FAQs() {
   const faqs = [
     {
       q: "Will my LinkedIn accounts get banned using GrowLeadz?",
-      a: "GrowLeadz is engineered from the ground up with account safety as the #1 priority. Every action uses human-mimicking delays (35-second profile views, 15-28 minute cooldowns between invites), residential proxies per account, warmup schedules for new accounts, and a hard 25 connections/day cap. Our customers report a 98%+ account safety rate over 6+ months of use.",
+      a: "Account safety is the #1 design priority. Every action is paced like a human: randomised cooldowns between actions (7-10 minutes between invites), per-account daily caps with a hard ceiling of 25 connection requests per day, working-hour windows, and warmup ramps for newly connected accounts. Each account has its own independent schedule.",
     },
     {
       q: "How does the AI personalization work?",
@@ -1331,7 +1240,7 @@ function FAQs() {
     },
     {
       q: "How many LinkedIn accounts can I manage?",
-      a: "Our Starter plan supports 1 account, Professional supports 3, and Enterprise supports 10+ accounts. Each account gets its own dedicated residential proxy, isolated browser fingerprint, and independent warmup schedule to prevent any cross-account linkage.",
+      a: "Our Starter plan supports 1 account, Professional supports 3, and Enterprise supports 10+ accounts. Each account runs on its own independent schedule, with its own daily caps and warmup ramp.",
     },
     {
       q: "What integrations does GrowLeadz support?",
@@ -1433,7 +1342,7 @@ function FinalCTA() {
               </h2>
 
               <p className="text-white/70 text-lg font-medium max-w-xl mx-auto">
-                Join 500+ B2B teams already generating pipeline on autopilot with GrowLeadz.
+                Put your LinkedIn outreach on autopilot — across every account you manage.
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
@@ -1510,10 +1419,14 @@ function Footer() {
           <div>
             <h4 className="text-[10px] font-black text-white uppercase tracking-widest mb-5">Company</h4>
             <ul className="space-y-3">
-              {['About', 'Blog', 'Careers', 'Privacy Policy', 'Terms of Service'].map(item => (
-                <li key={item}>
-                  <a href="#" className="text-[11px] text-slate-500 hover:text-white transition-colors font-medium uppercase tracking-wider">
-                    {item}
+              {[
+                { label: 'Privacy Policy', href: '/privacy' },
+                { label: 'Terms of Service', href: '/terms' },
+                { label: 'Contact', href: 'mailto:contact.vishal22@gmail.com' },
+              ].map(item => (
+                <li key={item.label}>
+                  <a href={item.href} className="text-[11px] text-slate-500 hover:text-white transition-colors font-medium uppercase tracking-wider">
+                    {item.label}
                   </a>
                 </li>
               ))}
@@ -1527,7 +1440,7 @@ function Footer() {
           </p>
           <div className="flex items-center gap-2 text-[10px] text-slate-600 font-semibold">
             <Shield size={12} className="text-blue-500" />
-            SOC2 Ready · GDPR Compliant · 98% Uptime SLA
+            Your data stays yours · Cancel anytime
           </div>
         </div>
       </div>
@@ -1664,7 +1577,7 @@ export default function Landing() {
       metaDesc.name = 'description';
       document.head.appendChild(metaDesc);
     }
-    metaDesc.content = "Automate LinkedIn lead generation safely with GrowLeadz. AI-personalized messages, anti-ban safety, residential proxies & unified inbox. Get your 1st month for $5. Book more B2B meetings, faster.";
+    metaDesc.content = "Automate LinkedIn lead generation safely with GrowLeadz. AI-personalized messages, human-paced safety limits & a unified inbox. Get your 1st month for $5. Book more B2B meetings, faster.";
   }, []);
 
   return (
@@ -1680,7 +1593,6 @@ export default function Landing() {
         <Features />
         <HowItWorks />
         <ROICalculator />
-        <Testimonials />
         <IntegrationMarquee />
         <Pricing />
         <FAQs />

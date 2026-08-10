@@ -17,6 +17,7 @@ import Admin from './pages/Admin';
 import AdvancedAnalytics from './pages/AdvancedAnalytics';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import { Terms, Privacy } from './pages/Legal';
 import axios from 'axios';
 
 // Configure Axios request and response interceptors
@@ -95,6 +96,8 @@ export default function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/privacy" element={<Privacy />} />
         <Route 
           path="/onboarding" 
           element={

@@ -22,7 +22,7 @@ function requireActiveSubscription(req, res, next) {
 
     if (!billing.isSubscriptionActive(user)) {
       const reason = billing.isTrialExpired(user)
-        ? 'Your 14-day free trial has expired. Please upgrade to continue.'
+        ? 'Your 30-day trial has expired. Please upgrade to continue.'
         : 'Your subscription is inactive. Please renew your plan to continue.';
 
       return res.status(402).json({

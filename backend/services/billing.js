@@ -55,7 +55,7 @@ const PLANS = {
 };
 
 // Trial duration: 14 days
-const TRIAL_DAYS = 14;
+const TRIAL_DAYS = 30;
 
 /**
  * Get plan limits for a given plan type.

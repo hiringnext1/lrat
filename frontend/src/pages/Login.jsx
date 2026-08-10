@@ -63,15 +63,12 @@ function InputField({ id, label, type = 'text', value, onChange, placeholder, ic
 
 // ─── SOCIAL PROOF SIDEBAR ───────────────────────────────────────────────────
 function SocialProofPanel({ title, subtitle }) {
+  // Facts about the product, not customer counts we cannot evidence
   const stats = [
-    { value: "500+", label: "B2B Teams" },
-    { value: "3x", label: "More Replies" },
-    { value: "98%", label: "Safety Rate" },
-    { value: "40hrs", label: "Saved/Month" },
-  ];
-  const testimonials = [
-    { text: "Went from 20 manual messages/day to 500+ automated. Closed 8 deals in first month.", name: "Rahul V.", role: "Head of Sales" },
-    { text: "My agency earns ₹2L/month from LinkedIn outreach. GrowLeadz automates 80% of the work.", name: "Priya K.", role: "Agency Founder" },
+    { value: "10+", label: "Accounts / workspace" },
+    { value: "25/day", label: "Per-account cap" },
+    { value: "AI", label: "Personalised copy" },
+    { value: "1", label: "Unified inbox" },
   ];
 
   return (
@@ -105,24 +102,19 @@ function SocialProofPanel({ title, subtitle }) {
           ))}
         </div>
 
-        {/* Testimonial */}
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-3">
-          <p className="text-sm text-slate-300 italic leading-relaxed">"{testimonials[0].text}"</p>
-          <div className="flex items-center gap-2 pt-2 border-t border-white/8">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-[10px] font-black text-white">
-              {testimonials[0].name.charAt(0)}
-            </div>
-            <div>
-              <p className="text-xs font-bold text-white">{testimonials[0].name}</p>
-              <p className="text-[10px] text-slate-400">{testimonials[0].role}</p>
-            </div>
-          </div>
+        {/* How the safety layer works — verifiable, unlike a testimonial */}
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-2">
+          <p className="text-[10px] font-black text-blue-300 uppercase tracking-widest">Built-in account safety</p>
+          <p className="text-sm text-slate-300 leading-relaxed">
+            Randomised delays between every action, per-account daily caps, working-hour windows and warmup ramps for
+            newly connected accounts — each account on its own independent schedule.
+          </p>
         </div>
       </div>
 
       {/* Trust badges */}
       <div className="relative z-10 flex flex-wrap gap-2">
-        {['No Credit Card', '7-Day Free Trial', '30-Day Guarantee'].map((t, i) => (
+        {['No Credit Card', '30 Days for $5', 'Cancel Anytime'].map((t, i) => (
           <div key={i} className="flex items-center gap-1.5 text-[10px] text-slate-400 font-medium bg-white/5 border border-white/8 px-3 py-1.5 rounded-full">
             <Check size={11} className="text-emerald-400" />
             {t}
@@ -213,7 +205,7 @@ export default function Login() {
       {/* Left: Social Proof */}
       <SocialProofPanel
         title="Turn LinkedIn into your #1 B2B pipeline machine."
-        subtitle="Join 500+ sales teams automating outreach, booking meetings, and closing deals — on autopilot."
+        subtitle="Automate LinkedIn outreach across every account you manage — safely, on autopilot."
       />
 
       {/* Right: Form */}

@@ -86,7 +86,7 @@ function FeaturePanel() {
       </div>
 
       <div className="relative z-10 flex flex-wrap gap-2">
-        {['No Credit Card Required', '7-Day Free Trial', 'Cancel Anytime'].map((t, i) => (
+        {['No Credit Card Required', '30-Day Trial', 'Cancel Anytime'].map((t, i) => (
           <div key={i} className="flex items-center gap-1.5 text-[10px] text-slate-400 font-medium bg-white/5 border border-white/8 px-3 py-1.5 rounded-full">
             <Check size={11} className="text-emerald-400" />
             {t}
@@ -214,7 +214,10 @@ export default function Signup() {
                 </form>
 
                 <p className="text-[10px] text-slate-400 text-center mt-4 leading-relaxed">
-                  By signing up you agree to our Terms of Service & Privacy Policy.
+                  By signing up you agree to our{' '}
+                  <Link to="/terms" className="text-slate-300 hover:text-white underline underline-offset-2">Terms of Service</Link>
+                  {' '}&{' '}
+                  <Link to="/privacy" className="text-slate-300 hover:text-white underline underline-offset-2">Privacy Policy</Link>.
                 </p>
 
                 <div className="mt-6 pt-6 border-t border-white/8 text-center">
