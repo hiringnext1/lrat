@@ -26,12 +26,38 @@ textarea {
   letter-spacing: 0.01em;
 }
 
-body {
-  @apply bg-gray-50 text-gray-900 text-[14px] leading-relaxed;
+/* `html body` (and the class on <body> in index.html) both need beating, so the
+   selectors below are deliberately more specific than a bare `body`. */
+html body {
+  @apply text-slate-100 text-[14px] leading-relaxed;
+  background-color: #080c18;
 }
 
-.dark body {
-  @apply bg-gray-900 text-gray-100;
+html.dark body {
+  @apply text-slate-100;
+  background-color: #080c18;
+}
+
+/* ── Browser autofill ─────────────────────────────────────────────────────
+   Chrome/Edge paint their own light background on autofilled inputs while our
+   text stays light, which made the signup and login fields unreadable the
+   moment the browser filled them in. The inset shadow repaints the field. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-text-fill-color: #f1f5f9 !important;
+  caret-color: #f1f5f9;
+  -webkit-box-shadow: 0 0 0 1000px #111827 inset !important;
+  box-shadow: 0 0 0 1000px #111827 inset !important;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+/* Native controls (scrollbars, date/select popups, spinners) follow the app */
+:root {
+  color-scheme: dark;
 }
 
 /* ── Sora for all Headings — Premium Display Font ────────────────────────── */

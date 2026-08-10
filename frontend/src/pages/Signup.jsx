@@ -23,7 +23,7 @@ function InputField({ id, label, type = 'text', value, onChange, placeholder, ic
   const isPassword = type === 'password';
   return (
     <div>
-      <label htmlFor={id} className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">{label}</label>
+      <label htmlFor={id} className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">{label}</label>
       <div className="relative">
         {Icon && (
           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -213,12 +213,12 @@ export default function Signup() {
                   </button>
                 </form>
 
-                <p className="text-[10px] text-slate-600 text-center mt-4 leading-relaxed">
+                <p className="text-[10px] text-slate-400 text-center mt-4 leading-relaxed">
                   By signing up you agree to our Terms of Service & Privacy Policy.
                 </p>
 
                 <div className="mt-6 pt-6 border-t border-white/8 text-center">
-                  <p className="text-sm text-slate-500 font-medium">
+                  <p className="text-sm text-slate-400 font-medium">
                     Already have an account?{' '}
                     <Link to="/login" className="text-blue-400 hover:text-blue-300 font-bold transition-colors">
                       Sign In →
@@ -244,7 +244,7 @@ export default function Signup() {
                 <form onSubmit={handleVerify} className="space-y-5">
                   <ErrorBox />
                   <div>
-                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 text-center">Verification Code</label>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 text-center">Verification Code</label>
                     <input
                       id="verify-code"
                       type="text"
@@ -276,7 +276,7 @@ export default function Signup() {
                     <RefreshCw size={12} className={resendCooldown > 0 ? 'animate-spin' : ''} />
                     {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend Code'}
                   </button>
-                  <button type="button" onClick={() => setStep('signup')} className="text-[10px] text-slate-500 hover:text-slate-300 font-bold uppercase tracking-widest transition-colors">
+                  <button type="button" onClick={() => setStep('signup')} className="text-[10px] text-slate-400 hover:text-slate-200 font-bold uppercase tracking-widest transition-colors">
                     ← Edit Registration
                   </button>
                 </div>

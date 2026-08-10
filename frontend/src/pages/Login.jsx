@@ -25,7 +25,7 @@ function InputField({ id, label, type = 'text', value, onChange, placeholder, ic
   const isPassword = type === 'password';
   return (
     <div>
-      <label htmlFor={id} className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
+      <label htmlFor={id} className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
         {label}
       </label>
       <div className="relative">
@@ -114,7 +114,7 @@ function SocialProofPanel({ title, subtitle }) {
             </div>
             <div>
               <p className="text-xs font-bold text-white">{testimonials[0].name}</p>
-              <p className="text-[10px] text-slate-500">{testimonials[0].role}</p>
+              <p className="text-[10px] text-slate-400">{testimonials[0].role}</p>
             </div>
           </div>
         </div>
@@ -301,7 +301,7 @@ export default function Login() {
                 <form onSubmit={handleResetPassword} className="space-y-4">
                   <ErrorBox />
                   <div>
-                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">6-Digit Recovery Code</label>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">6-Digit Recovery Code</label>
                     <input
                       id="resetCode"
                       type="text"

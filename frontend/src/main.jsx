@@ -3,10 +3,13 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
 
-const savedTheme = localStorage.getItem('theme');
-if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-  document.documentElement.classList.add('dark');
-}
+// GrowLeadz is a dark product: the landing page, auth screens and most of the
+// dashboard are written dark-only, while ~17 files carry light styles with
+// `dark:` overrides. Deriving the theme from the OS meant light-mode visitors
+// got white panels with inherited near-white text — invisible copy on signup,
+// onboarding and settings. Until every screen has a real light theme, the dark
+// class is always on so both styles resolve to the same look.
+document.documentElement.classList.add('dark');
 
 const container = document.getElementById('root');
 const app = (
