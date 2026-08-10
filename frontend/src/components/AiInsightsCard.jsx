@@ -10,8 +10,8 @@ export default function AiInsightsCard({ insights = [], loading = false }) {
           <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3" />
         </div>
         <div className="space-y-3">
-          <div className="h-16 bg-slate-150 dark:bg-slate-800 rounded-xl" />
-          <div className="h-16 bg-slate-150 dark:bg-slate-800 rounded-xl" />
+          <div className="h-16 bg-slate-100 dark:bg-slate-800 rounded-xl" />
+          <div className="h-16 bg-slate-100 dark:bg-slate-800 rounded-xl" />
         </div>
       </div>
     );
@@ -29,11 +29,11 @@ export default function AiInsightsCard({ insights = [], loading = false }) {
               <Brain size={18} className="animate-pulse" />
             </div>
             <div>
-              <span className="text-[10px] font-black text-slate-400 dark:text-slate-555 uppercase tracking-widest block">Machine Learning</span>
+              <span className="text-[10px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest block">Machine Learning</span>
               <h3 className="text-base font-extrabold text-slate-900 dark:text-white leading-tight">AI-Powered Sourcing Insights</h3>
             </div>
           </div>
-          <span className="flex items-center gap-1 text-[9px] font-black px-2 py-0.5 bg-gradient-to-r from-purple-500/10 to-indigo-500/10 text-purple-600 dark:text-purple-450 border border-purple-100 dark:border-purple-900/40 rounded-full">
+          <span className="flex items-center gap-1 text-[9px] font-black px-2 py-0.5 bg-gradient-to-r from-purple-500/10 to-indigo-500/10 text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/40 rounded-full">
             <Sparkles size={10} />
             GEN-AI ACTIVE
           </span>
@@ -84,7 +84,7 @@ export default function AiInsightsCard({ insights = [], loading = false }) {
       </div>
 
       <div className="mt-5 pt-3 border-t border-slate-100/50 dark:border-slate-800/40 flex items-center justify-between">
-        <span className="text-[9px] text-slate-400 dark:text-slate-550 font-bold flex items-center gap-1">
+        <span className="text-[9px] text-slate-400 dark:text-slate-500 font-bold flex items-center gap-1">
           <TrendingUp size={10} /> Updated real-time based on template conversions
         </span>
       </div>

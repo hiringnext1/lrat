@@ -118,7 +118,7 @@ export default function AccountCard({ account, onUpdate, onOpenLogs, onOpenReaut
 
         <button
           onClick={() => onOpenLogs && onOpenLogs(account)}
-          className="p-2 text-slate-350 hover:text-blue-600 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all opacity-40 group-hover:opacity-100 mr-1"
+          className="p-2 text-slate-300 hover:text-blue-600 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl transition-all opacity-40 group-hover:opacity-100 mr-1"
           title="View Live Node Logs"
         >
           <Terminal size={15} />
@@ -126,7 +126,7 @@ export default function AccountCard({ account, onUpdate, onOpenLogs, onOpenReaut
 
         <button 
           onClick={handleDelete} 
-          className="p-2 text-slate-350 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-xl transition-all opacity-40 group-hover:opacity-100"
+          className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-xl transition-all opacity-40 group-hover:opacity-100"
           title="Delete account node"
         >
           <Trash2 size={15} />
@@ -154,15 +154,15 @@ export default function AccountCard({ account, onUpdate, onOpenLogs, onOpenReaut
       {/* Metrics Row */}
       <div className="px-6 py-4.5 grid grid-cols-3 gap-4 bg-slate-50/50 dark:bg-slate-900/30 border-b border-slate-50 dark:border-slate-800/80">
         <div className="text-center">
-          <p className="text-xl font-black text-slate-850 dark:text-slate-100 leading-none">{account.today_connections || 0}</p>
+          <p className="text-xl font-black text-slate-800 dark:text-slate-100 leading-none">{account.today_connections || 0}</p>
           <p className="text-[9px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1.5">Sent Today</p>
         </div>
         <div className="text-center border-x border-slate-100 dark:border-slate-800/80">
-          <p className="text-xl font-black text-slate-850 dark:text-slate-100 leading-none">{account.week_connections || 0}</p>
+          <p className="text-xl font-black text-slate-800 dark:text-slate-100 leading-none">{account.week_connections || 0}</p>
           <p className="text-[9px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1.5">This Week</p>
         </div>
         <div className="text-center">
-          <p className="text-xl font-black text-slate-850 dark:text-slate-100 leading-none">{account.health_score || 0}%</p>
+          <p className="text-xl font-black text-slate-800 dark:text-slate-100 leading-none">{account.health_score || 0}%</p>
           <p className="text-[9px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1.5">Node Health</p>
         </div>
       </div>
@@ -198,7 +198,7 @@ export default function AccountCard({ account, onUpdate, onOpenLogs, onOpenReaut
         {/* Connection Throttle Limit */}
         <div className={`space-y-3.5 transition-all duration-300 ${warmupWeek < 3 ? 'opacity-40 pointer-events-none' : ''}`}>
           <div className="flex justify-between items-end">
-            <label className="text-[10px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+            <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
               <Zap size={13} className="text-amber-500" /> Throttle Limits
             </label>
             <span className="text-xs font-black text-blue-600 dark:text-blue-400">
@@ -221,7 +221,7 @@ export default function AccountCard({ account, onUpdate, onOpenLogs, onOpenReaut
 
         {/* Warmup Level Selector */}
         <div className="space-y-3">
-          <label className="text-[10px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+          <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
             <Activity size={13} className="text-emerald-500" /> Auto-Warmup Mode
           </label>
           
@@ -234,7 +234,7 @@ export default function AccountCard({ account, onUpdate, onOpenLogs, onOpenReaut
                 className={`py-2 rounded-xl text-[10px] font-black transition-all ${
                   warmupWeek === w 
                     ? 'bg-blue-600 dark:bg-blue-500 text-white shadow-md shadow-blue-500/20' 
-                    : 'text-slate-400 hover:text-slate-650 hover:bg-slate-100/60 dark:hover:bg-slate-800/60'
+                    : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100/60 dark:hover:bg-slate-800/60'
                 }`}
               >
                 Lvl {w}
@@ -242,7 +242,7 @@ export default function AccountCard({ account, onUpdate, onOpenLogs, onOpenReaut
             ))}
           </div>
           
-          <p className="text-[10px] text-slate-400 dark:text-slate-550 font-medium italic mt-1.5 leading-relaxed">
+          <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium italic mt-1.5 leading-relaxed">
             {warmupWeek === 1 && 'Level 1: Auto-locked 5 connections/day (Safe start)'}
             {warmupWeek === 2 && 'Level 2: Auto-locked 10 connections/day (Active Warmup)'}
             {warmupWeek === 3 && `Level 3: Custom Throttle up to 15 (Active: ${Math.min(customLimit, 15)})`}
@@ -258,7 +258,7 @@ export default function AccountCard({ account, onUpdate, onOpenLogs, onOpenReaut
 
         {/* Pulse Check Timing */}
         <div className="space-y-1.5 pt-3.5 border-t border-slate-50 dark:border-slate-800/80">
-          <label className="text-[10px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
+          <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
             <Clock size={13} className="text-blue-500" /> Last Active Queue Check
           </label>
           <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 italic">
@@ -287,7 +287,7 @@ export default function AccountCard({ account, onUpdate, onOpenLogs, onOpenReaut
         <button 
           onClick={saveLimit}
           disabled={updating || (customLimit === account.daily_limit && warmupWeek === account.warmup_week)}
-          className="px-5 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl text-[9px] font-black uppercase tracking-widest shadow-md hover:bg-slate-850 dark:hover:bg-slate-100 disabled:opacity-30 disabled:pointer-events-none transition-all flex items-center gap-1.5"
+          className="px-5 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl text-[9px] font-black uppercase tracking-widest shadow-md hover:bg-slate-800 dark:hover:bg-slate-100 disabled:opacity-30 disabled:pointer-events-none transition-all flex items-center gap-1.5"
         >
           {updating ? <RefreshCw size={11} className="animate-spin" /> : <Save size={11} />}
           <span>Save</span>

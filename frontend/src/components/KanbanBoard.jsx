@@ -8,9 +8,9 @@ const COLUMNS = [
   { id: 'connected', label: 'Connected', color: 'bg-indigo-50/50 text-indigo-600 border-indigo-100/50 dark:bg-indigo-950/20 dark:text-indigo-400 dark:border-indigo-900/20' },
   { id: 'jd_sent', label: 'Pitch Sent', color: 'bg-purple-50/50 text-purple-600 border-purple-100/50 dark:bg-purple-950/20 dark:text-purple-400 dark:border-purple-900/20' },
   { id: 'follow_up_sent', label: 'Follow-up', color: 'bg-amber-50/50 text-amber-600 border-amber-100/50 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/20' },
-  { id: 'replied', label: 'Replied', color: 'bg-emerald-50/50 text-emerald-655 border-emerald-100/50 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/20' },
+  { id: 'replied', label: 'Replied', color: 'bg-emerald-50/50 text-emerald-700 border-emerald-100/50 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/20' },
   { id: 'shortlisted', label: 'Qualified', color: 'bg-green-50/50 text-green-600 border-green-100/50 dark:bg-green-950/20 dark:text-green-400 dark:border-green-900/20' },
-  { id: 'not_interested', label: 'Excluded', color: 'bg-rose-50/50 text-rose-600 border-rose-100/50 dark:bg-rose-950/20 dark:text-rose-450 dark:border-rose-900/20' },
+  { id: 'not_interested', label: 'Excluded', color: 'bg-rose-50/50 text-rose-600 border-rose-100/50 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/20' },
 ];
 
 function daysSince(dateStr) {
@@ -67,7 +67,7 @@ function StepBadge({ step }) {
 
   if (step.state === 'ready' && step.label) {
     return (
-      <div className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-850" title="Queued — waiting for this account's next slot">
+      <div className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800" title="Queued — waiting for this account's next slot">
         Next: {step.label}
       </div>
     );
@@ -88,14 +88,14 @@ function LeadCard({ lead, index, onClick }) {
           {...provided.draggableProps}
           {...provided.dragHandleProps}
           onClick={() => onClick?.(lead.id)}
-          className={`group bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 rounded-2xl p-4 shadow-[0_4px_15px_rgb(0,0,0,0.005)] cursor-grab active:cursor-grabbing transition-all hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-md ${
+          className={`group bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 shadow-[0_4px_15px_rgb(0,0,0,0.005)] cursor-grab active:cursor-grabbing transition-all hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-md ${
             snapshot.isDragging 
               ? 'shadow-xl ring-4 ring-blue-500/10 border-blue-500 scale-[1.02] z-50' 
               : ''
           }`}
         >
           <div className="flex items-start gap-3 text-left">
-            <div className="w-9 h-9 rounded-full bg-slate-50 dark:bg-slate-850 shrink-0 overflow-hidden border border-slate-100 dark:border-slate-700">
+            <div className="w-9 h-9 rounded-full bg-slate-50 dark:bg-slate-800 shrink-0 overflow-hidden border border-slate-100 dark:border-slate-700">
               {lead.profile_photo_url ? (
                 <img src={lead.profile_photo_url} alt="" className="w-full h-full object-cover" />
               ) : (
@@ -106,19 +106,19 @@ function LeadCard({ lead, index, onClick }) {
             </div>
             
             <div className="min-w-0 flex-1">
-              <h4 className="font-bold text-slate-850 dark:text-slate-150 text-[13px] truncate group-hover:text-blue-600 dark:group-hover:text-blue-450 transition-colors leading-snug">
+              <h4 className="font-bold text-slate-800 dark:text-slate-100 text-[13px] truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors leading-snug">
                 {lead.full_name}
               </h4>
               <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 truncate mt-0.5">{lead.designation || 'Prospect'}</p>
             </div>
           </div>
 
-          <div className="mt-3.5 pt-3 border-t border-slate-50 dark:border-slate-850/50 flex items-center justify-between">
+          <div className="mt-3.5 pt-3 border-t border-slate-50 dark:border-slate-800/50 flex items-center justify-between">
             {days !== null ? (
               <div className={`flex items-center gap-1 text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider ${
                 days <= 2 
                   ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20' 
-                  : 'text-slate-500 bg-slate-50 dark:bg-slate-850 dark:text-slate-400'
+                  : 'text-slate-500 bg-slate-50 dark:bg-slate-800 dark:text-slate-400'
               }`}>
                 <Clock size={10} strokeWidth={2.5} />
                 <span>{days === 0 ? 'Today' : `${days}d`}</span>
@@ -126,7 +126,7 @@ function LeadCard({ lead, index, onClick }) {
             ) : <div />}
             
             {lead.reply_received ? (
-              <div className="flex items-center gap-1 text-[9px] text-emerald-605 dark:text-emerald-400 font-black uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/20 px-2 py-0.5 rounded-md border border-emerald-100/50 dark:border-emerald-900/30">
+              <div className="flex items-center gap-1 text-[9px] text-emerald-600 dark:text-emerald-400 font-black uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/20 px-2 py-0.5 rounded-md border border-emerald-100/50 dark:border-emerald-900/30">
                 <MessageSquare size={9} fill="currentColor" />
                 <span>Replied</span>
               </div>
@@ -142,9 +142,9 @@ function LeadCard({ lead, index, onClick }) {
 // can be dragged into, because moving someone into the middle of a sequence
 // would skip or repeat steps the engine has already run.
 const TERMINAL_COLUMNS = [
-  { id: 'replied', label: 'Replied', color: 'bg-emerald-50/50 text-emerald-655 border-emerald-100/50 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/20' },
+  { id: 'replied', label: 'Replied', color: 'bg-emerald-50/50 text-emerald-700 border-emerald-100/50 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/20' },
   { id: 'shortlisted', label: 'Qualified', color: 'bg-green-50/50 text-green-600 border-green-100/50 dark:bg-green-950/20 dark:text-green-400 dark:border-green-900/20' },
-  { id: 'not_interested', label: 'Excluded', color: 'bg-rose-50/50 text-rose-600 border-rose-100/50 dark:bg-rose-950/20 dark:text-rose-450 dark:border-rose-900/20' },
+  { id: 'not_interested', label: 'Excluded', color: 'bg-rose-50/50 text-rose-600 border-rose-100/50 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/20' },
 ];
 
 const STAGE_COLOR = 'bg-slate-50 text-slate-600 border-slate-100 dark:bg-slate-900/40 dark:text-slate-400 dark:border-slate-800';

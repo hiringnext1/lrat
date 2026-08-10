@@ -120,7 +120,7 @@ export default function Settings() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-3 bg-[#fbfcfd] dark:bg-slate-950 min-h-screen">
-        <div className="w-8 h-8 border-3 border-blue-650 dark:border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-3 border-blue-600 dark:border-blue-500 border-t-transparent rounded-full animate-spin" />
         <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 animate-pulse">Syncing profile details...</p>
       </div>
     );
@@ -136,7 +136,7 @@ export default function Settings() {
       <div className="bg-white dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80 rounded-[32px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.01)] flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
         <div>
           <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight flex items-center gap-2.5">
-            <SettingsIcon className="text-slate-700 dark:text-slate-350" size={28} strokeWidth={2.5} />
+            <SettingsIcon className="text-slate-700 dark:text-slate-300" size={28} strokeWidth={2.5} />
             Account & Workspace Settings
           </h1>
           <p className="text-xs text-slate-400 font-semibold uppercase mt-0.5 tracking-wider">Manage your personal profile, company details, and external integrations</p>
@@ -147,28 +147,28 @@ export default function Settings() {
         
         {/* Personal Details Section */}
         <div className="bg-white dark:bg-slate-900 rounded-[28px] border border-slate-100 dark:border-slate-800 p-6 space-y-5 shadow-[0_4px_15px_rgb(0,0,0,0.002)] animate-in fade-in duration-300">
-          <div className="pb-3.5 border-b border-slate-50 dark:border-slate-850/50 flex items-center gap-2">
+          <div className="pb-3.5 border-b border-slate-50 dark:border-slate-800/50 flex items-center gap-2">
             <User size={18} className="text-blue-600" />
             <div>
-              <h2 className="text-sm font-extrabold text-slate-850 dark:text-slate-150">Personal Profile</h2>
+              <h2 className="text-sm font-extrabold text-slate-800 dark:text-slate-100">Personal Profile</h2>
               <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 font-bold uppercase tracking-wider">Your personal settings and application role</p>
             </div>
           </div>
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="block text-xs font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest">Full Name</label>
+              <label className="block text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Full Name</label>
               <input
                 type="text"
                 value={form.name}
                 onChange={(e) => setField('name', e.target.value)}
                 placeholder="Enter your full name"
-                className="w-full border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3 text-xs font-semibold bg-slate-50 dark:bg-slate-950/40 text-slate-800 dark:text-slate-200 outline-none focus:ring-4 focus:ring-blue-100/30 focus:border-blue-500 transition-all placeholder:text-slate-350"
+                className="w-full border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3 text-xs font-semibold bg-slate-50 dark:bg-slate-950/40 text-slate-800 dark:text-slate-200 outline-none focus:ring-4 focus:ring-blue-100/30 focus:border-blue-500 transition-all placeholder:text-slate-300"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="block text-xs font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest">Email Address</label>
+              <label className="block text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Email Address</label>
               <div className="relative">
                 <input
                   type="email"
@@ -182,21 +182,21 @@ export default function Settings() {
             </div>
 
             <div className="space-y-2">
-              <label className="block text-xs font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest">Designation / Role</label>
+              <label className="block text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Designation / Role</label>
               <div className="relative">
                 <input
                   type="text"
                   value={form.designation}
                   onChange={(e) => setField('designation', e.target.value)}
                   placeholder="e.g. Talent Acquisition Specialist, Founder"
-                  className="w-full border border-slate-200 dark:border-slate-800 rounded-2xl pl-10 pr-4 py-3 text-xs font-semibold bg-slate-50 dark:bg-slate-950/40 text-slate-800 dark:text-slate-200 outline-none focus:ring-4 focus:ring-blue-100/30 focus:border-blue-500 transition-all placeholder:text-slate-350"
+                  className="w-full border border-slate-200 dark:border-slate-800 rounded-2xl pl-10 pr-4 py-3 text-xs font-semibold bg-slate-50 dark:bg-slate-950/40 text-slate-800 dark:text-slate-200 outline-none focus:ring-4 focus:ring-blue-100/30 focus:border-blue-500 transition-all placeholder:text-slate-300"
                 />
                 <Briefcase size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="block text-xs font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest">Timezone</label>
+              <label className="block text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Timezone</label>
               <div className="relative">
                 <select
                   value={form.timezone}
@@ -225,35 +225,35 @@ export default function Settings() {
 
         {/* Company Details Section */}
         <div className="bg-white dark:bg-slate-900 rounded-[28px] border border-slate-100 dark:border-slate-800 p-6 space-y-5 shadow-[0_4px_15px_rgb(0,0,0,0.002)] animate-in fade-in duration-300">
-          <div className="pb-3.5 border-b border-slate-50 dark:border-slate-850/50 flex items-center gap-2">
+          <div className="pb-3.5 border-b border-slate-50 dark:border-slate-800/50 flex items-center gap-2">
             <Building2 size={18} className="text-blue-600" />
             <div>
-              <h2 className="text-sm font-extrabold text-slate-850 dark:text-slate-150">Company Profile</h2>
+              <h2 className="text-sm font-extrabold text-slate-800 dark:text-slate-100">Company Profile</h2>
               <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 font-bold uppercase tracking-wider">Configure your organization and workspace brand</p>
             </div>
           </div>
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="block text-xs font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest">Company Name</label>
+              <label className="block text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Company Name</label>
               <input
                 type="text"
                 value={form.company_name}
                 onChange={(e) => setField('company_name', e.target.value)}
                 placeholder="Enter company name"
-                className="w-full border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3 text-xs font-semibold bg-slate-50 dark:bg-slate-950/40 text-slate-800 dark:text-slate-200 outline-none focus:ring-4 focus:ring-blue-100/30 focus:border-blue-500 transition-all placeholder:text-slate-350"
+                className="w-full border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3 text-xs font-semibold bg-slate-50 dark:bg-slate-950/40 text-slate-800 dark:text-slate-200 outline-none focus:ring-4 focus:ring-blue-100/30 focus:border-blue-500 transition-all placeholder:text-slate-300"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="block text-xs font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest">Company Website</label>
+              <label className="block text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Company Website</label>
               <div className="relative">
                 <input
                   type="text"
                   value={form.company_website}
                   onChange={(e) => setField('company_website', e.target.value)}
                   placeholder="https://example.com"
-                  className="w-full border border-slate-200 dark:border-slate-800 rounded-2xl pl-10 pr-4 py-3 text-xs font-semibold bg-slate-50 dark:bg-slate-950/40 text-slate-800 dark:text-slate-200 outline-none focus:ring-4 focus:ring-blue-100/30 focus:border-blue-500 transition-all placeholder:text-slate-350"
+                  className="w-full border border-slate-200 dark:border-slate-800 rounded-2xl pl-10 pr-4 py-3 text-xs font-semibold bg-slate-50 dark:bg-slate-950/40 text-slate-800 dark:text-slate-200 outline-none focus:ring-4 focus:ring-blue-100/30 focus:border-blue-500 transition-all placeholder:text-slate-300"
                 />
                 <Globe size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
               </div>
@@ -263,17 +263,17 @@ export default function Settings() {
 
         {/* Lead Scoring Rules Section */}
         <div className="bg-white dark:bg-slate-900 rounded-[28px] border border-slate-100 dark:border-slate-800 p-6 space-y-5 shadow-[0_4px_15px_rgb(0,0,0,0.002)] animate-in fade-in duration-300">
-          <div className="pb-3.5 border-b border-slate-50 dark:border-slate-850/50 flex items-center gap-2">
+          <div className="pb-3.5 border-b border-slate-50 dark:border-slate-800/50 flex items-center gap-2">
             <Sliders className="text-blue-600 animate-pulse" size={18} />
             <div>
-              <h2 className="text-sm font-extrabold text-slate-855 dark:text-slate-150">Lead Fit Scoring weights</h2>
-              <p className="text-[10px] text-slate-405 dark:text-slate-500 mt-0.5 font-bold uppercase tracking-wider">Configure point weights to automatically calculate lead fit (0-100)</p>
+              <h2 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">Lead Fit Scoring weights</h2>
+              <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 font-bold uppercase tracking-wider">Configure point weights to automatically calculate lead fit (0-100)</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Seniority column */}
-            <div className="space-y-3 p-4 border border-slate-100 dark:border-slate-805/80 rounded-2xl bg-slate-50/50 dark:bg-slate-950/20">
+            <div className="space-y-3 p-4 border border-slate-100 dark:border-slate-800/80 rounded-2xl bg-slate-50/50 dark:bg-slate-950/20">
               <h3 className="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider">Seniority Weights</h3>
               <div className="space-y-2">
                 <div>
@@ -316,7 +316,7 @@ export default function Settings() {
             </div>
 
             {/* Company size column */}
-            <div className="space-y-3 p-4 border border-slate-100 dark:border-slate-805/80 rounded-2xl bg-slate-50/50 dark:bg-slate-950/20">
+            <div className="space-y-3 p-4 border border-slate-100 dark:border-slate-800/80 rounded-2xl bg-slate-50/50 dark:bg-slate-950/20">
               <h3 className="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider">Company Size Weights</h3>
               <div className="space-y-2">
                 <div>
@@ -350,7 +350,7 @@ export default function Settings() {
             </div>
 
             {/* Responsiveness column */}
-            <div className="space-y-3 p-4 border border-slate-100 dark:border-slate-805/80 rounded-2xl bg-slate-50/50 dark:bg-slate-950/20">
+            <div className="space-y-3 p-4 border border-slate-100 dark:border-slate-800/80 rounded-2xl bg-slate-50/50 dark:bg-slate-950/20">
               <h3 className="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider">Responsiveness</h3>
               <div className="space-y-2">
                 <div>
@@ -364,7 +364,7 @@ export default function Settings() {
                 </div>
               </div>
               <div className="mt-4 p-3 rounded-xl bg-blue-50/40 dark:bg-slate-900 border border-blue-100/50 dark:border-slate-800/80">
-                <p className="text-[10px] text-blue-650 dark:text-blue-400 font-bold leading-normal">
+                <p className="text-[10px] text-blue-600 dark:text-blue-400 font-bold leading-normal">
                   💡 Leads with scores &ge; 80 will automatically be marked as "Hot Leads" in your inbox pipeline.
                 </p>
               </div>
@@ -374,10 +374,10 @@ export default function Settings() {
 
         {/* Webhooks & Alerts Integrations Section */}
         <div className="bg-white dark:bg-slate-900 rounded-[28px] border border-slate-100 dark:border-slate-800 p-6 space-y-6 shadow-[0_4px_15px_rgb(0,0,0,0.002)] animate-in fade-in duration-300">
-          <div className="pb-3.5 border-b border-slate-50 dark:border-slate-850/50 flex items-center gap-2">
+          <div className="pb-3.5 border-b border-slate-50 dark:border-slate-800/50 flex items-center gap-2">
             <Zap size={18} className="text-blue-600" />
             <div>
-              <h2 className="text-sm font-extrabold text-slate-850 dark:text-slate-150">Workflow Integrations & Alerts</h2>
+              <h2 className="text-sm font-extrabold text-slate-800 dark:text-slate-100">Workflow Integrations & Alerts</h2>
               <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 font-bold uppercase tracking-wider">Connect slack channels, CRMs, and email reports</p>
             </div>
           </div>
@@ -385,13 +385,13 @@ export default function Settings() {
           <div className="space-y-6">
             
             {/* 1. Slack Alert Integration */}
-            <div className="p-5 border border-slate-150 dark:border-slate-800 rounded-2xl bg-slate-50/50 dark:bg-slate-950/20 space-y-4">
+            <div className="p-5 border border-slate-100 dark:border-slate-800 rounded-2xl bg-slate-50/50 dark:bg-slate-950/20 space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Slack size={18} className="text-[#E01E5A]" />
                   <div className="text-left">
                     <h3 className="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider">Slack Alerts</h3>
-                    <p className="text-[9px] text-slate-450 dark:text-slate-500 font-bold uppercase">Send positive prospect replies directly to Slack</p>
+                    <p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase">Send positive prospect replies directly to Slack</p>
                   </div>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
@@ -407,26 +407,26 @@ export default function Settings() {
 
               {form.slack_alerts_enabled && (
                 <div className="space-y-2 pt-1 animate-in slide-in-from-top-2 duration-200">
-                  <label className="block text-[9px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest">Slack Webhook URL</label>
+                  <label className="block text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Slack Webhook URL</label>
                   <input
                     type="text"
                     value={form.slack_webhook_url}
                     onChange={(e) => setField('slack_webhook_url', e.target.value)}
                     placeholder="https://hooks.slack.com/services/..."
-                    className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-xs font-semibold bg-white dark:bg-slate-950/40 text-slate-800 dark:text-slate-200 outline-none focus:ring-4 focus:ring-blue-100/30 focus:border-blue-500 transition-all placeholder:text-slate-350"
+                    className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-xs font-semibold bg-white dark:bg-slate-950/40 text-slate-800 dark:text-slate-200 outline-none focus:ring-4 focus:ring-blue-100/30 focus:border-blue-500 transition-all placeholder:text-slate-300"
                   />
                 </div>
               )}
             </div>
 
             {/* 2. Zapier/Make Webhook Integration */}
-            <div className="p-5 border border-slate-150 dark:border-slate-800 rounded-2xl bg-slate-50/50 dark:bg-slate-950/20 space-y-4">
+            <div className="p-5 border border-slate-100 dark:border-slate-800 rounded-2xl bg-slate-50/50 dark:bg-slate-950/20 space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Zap size={18} className="text-[#ff4a00]" />
                   <div className="text-left">
                     <h3 className="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider">Outbound Webhooks (CRM/Zapier)</h3>
-                    <p className="text-[9px] text-slate-450 dark:text-slate-500 font-bold uppercase">Trigger external triggers for CRM syncing</p>
+                    <p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase">Trigger external triggers for CRM syncing</p>
                   </div>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
@@ -443,18 +443,18 @@ export default function Settings() {
               {form.webhook_enabled && (
                 <div className="space-y-4 pt-1 animate-in slide-in-from-top-2 duration-200">
                   <div className="space-y-2">
-                    <label className="block text-[9px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest">Webhook Endpoint URL</label>
+                    <label className="block text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Webhook Endpoint URL</label>
                     <input
                       type="text"
                       value={form.webhook_url}
                       onChange={(e) => setField('webhook_url', e.target.value)}
                       placeholder="https://hooks.zapier.com/hooks/catch/..."
-                      className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-xs font-semibold bg-white dark:bg-slate-950/40 text-slate-800 dark:text-slate-200 outline-none focus:ring-4 focus:ring-blue-100/30 focus:border-blue-500 transition-all placeholder:text-slate-350"
+                      className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-xs font-semibold bg-white dark:bg-slate-950/40 text-slate-800 dark:text-slate-200 outline-none focus:ring-4 focus:ring-blue-100/30 focus:border-blue-500 transition-all placeholder:text-slate-300"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block text-[9px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest">Trigger Condition</label>
+                    <label className="block text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Trigger Condition</label>
                     <select
                       value={form.webhook_trigger_type}
                       onChange={(e) => setField('webhook_trigger_type', e.target.value)}
@@ -470,12 +470,12 @@ export default function Settings() {
             </div>
 
             {/* 3. Daily Email Digest Integration */}
-            <div className="p-5 border border-slate-150 dark:border-slate-800 rounded-2xl bg-slate-50/50 dark:bg-slate-950/20 flex items-center justify-between">
+            <div className="p-5 border border-slate-100 dark:border-slate-800 rounded-2xl bg-slate-50/50 dark:bg-slate-950/20 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Bell size={18} className="text-blue-600" />
                 <div className="text-left">
                   <h3 className="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider">Daily Email Summary</h3>
-                  <p className="text-[9px] text-slate-450 dark:text-slate-500 font-bold uppercase">Receive daily performance statistics recap emails</p>
+                  <p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase">Receive daily performance statistics recap emails</p>
                 </div>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
@@ -506,7 +506,7 @@ export default function Settings() {
         </button>
         
         {saveMsg.text && (
-          <span className={`text-[10px] font-black uppercase tracking-wider flex items-center gap-1 ${saveMsg.type === 'success' ? 'text-emerald-650' : 'text-rose-500'}`}>
+          <span className={`text-[10px] font-black uppercase tracking-wider flex items-center gap-1 ${saveMsg.type === 'success' ? 'text-emerald-600' : 'text-rose-500'}`}>
             {saveMsg.type === 'success' ? <CheckCircle size={12} strokeWidth={2.5} /> : <AlertCircle size={12} strokeWidth={2.5} />}
             {saveMsg.text}
           </span>

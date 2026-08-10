@@ -347,7 +347,7 @@ export default function Onboarding() {
             </div>
 
             {error && (
-              <div className="p-4 bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 rounded-2xl text-[11px] font-bold text-rose-600 dark:text-rose-450 uppercase tracking-wide">
+              <div className="p-4 bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 rounded-2xl text-[11px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wide">
                 {error}
               </div>
             )}
@@ -366,7 +366,7 @@ export default function Onboarding() {
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="block w-full pl-10 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/55 rounded-2xl text-slate-850 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="block w-full pl-10 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/55 rounded-2xl text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     placeholder="Enter your name"
                   />
                 </div>
@@ -386,7 +386,7 @@ export default function Onboarding() {
                       required
                       value={companyName}
                       onChange={(e) => setCompanyName(e.target.value)}
-                      className="block w-full pl-10 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/55 rounded-2xl text-slate-850 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="block w-full pl-10 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/55 rounded-2xl text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                       placeholder="e.g. Acme Corp"
                     />
                   </div>
@@ -404,7 +404,7 @@ export default function Onboarding() {
                       type="text"
                       value={designation}
                       onChange={(e) => setDesignation(e.target.value)}
-                      className="block w-full pl-10 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/55 rounded-2xl text-slate-855 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="block w-full pl-10 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/55 rounded-2xl text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                       placeholder="e.g. Founder"
                     />
                   </div>
@@ -423,7 +423,7 @@ export default function Onboarding() {
                     type="url"
                     value={companyWebsite}
                     onChange={(e) => setCompanyWebsite(e.target.value)}
-                    className="block w-full pl-10 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/55 rounded-2xl text-slate-855 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="block w-full pl-10 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/55 rounded-2xl text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     placeholder="https://acme.com"
                   />
                 </div>
@@ -456,7 +456,7 @@ export default function Onboarding() {
             </div>
 
             {error && (
-              <div className="p-4 bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 rounded-2xl text-[11px] font-bold text-rose-600 dark:text-rose-450 uppercase tracking-wide">
+              <div className="p-4 bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 rounded-2xl text-[11px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wide">
                 {error}
               </div>
             )}
@@ -478,7 +478,7 @@ export default function Onboarding() {
                         className={`flex flex-col items-center justify-center p-4 rounded-2xl border text-center transition-all ${
                           isSelected 
                             ? 'border-blue-600 bg-blue-50/40 dark:bg-blue-950/15 text-blue-600 dark:text-blue-400 ring-2 ring-blue-500/20 shadow-sm'
-                            : 'border-slate-200 dark:border-slate-800 text-slate-650 dark:text-slate-400 bg-slate-50/50 dark:bg-slate-900/20 hover:bg-slate-50 dark:hover:bg-slate-900/40'
+                            : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 bg-slate-50/50 dark:bg-slate-900/20 hover:bg-slate-50 dark:hover:bg-slate-900/40'
                         }`}
                       >
                         <IconComponent size={20} className="mb-2" />
@@ -496,10 +496,10 @@ export default function Onboarding() {
                 <textarea
                   value={businessContext}
                   onChange={(e) => setBusinessContext(e.target.value)}
-                  className="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/55 rounded-2xl text-slate-850 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all h-24 resize-none"
+                  className="block w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/55 rounded-2xl text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all h-24 resize-none"
                   placeholder="Paste details of what you sell/offer. Example: We sell custom software development services to help logistics firms automate tracking."
                 />
-                <p className="text-[10px] text-slate-450 dark:text-slate-500 mt-1 font-semibold uppercase">
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 font-semibold uppercase">
                   This description is used by Llama-3.1 to dynamically personalize cold messages.
                 </p>
               </div>
@@ -512,7 +512,7 @@ export default function Onboarding() {
                   type="text"
                   value={aiPersona}
                   onChange={(e) => setAiPersona(e.target.value)}
-                  className="block w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/55 rounded-2xl text-slate-855 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="block w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/55 rounded-2xl text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   placeholder="e.g. Sales representative booking demos"
                 />
               </div>
@@ -521,7 +521,7 @@ export default function Onboarding() {
                 <button
                   type="button"
                   onClick={() => setStep(1)}
-                  className="w-1/3 border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all"
+                  className="w-1/3 border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all"
                 >
                   Back
                 </button>
@@ -552,7 +552,7 @@ export default function Onboarding() {
             </div>
 
             {error && (
-              <div className="p-4 bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 rounded-2xl text-[11px] font-bold text-rose-600 dark:text-rose-450 uppercase tracking-wide">
+              <div className="p-4 bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 rounded-2xl text-[11px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wide">
                 {error}
               </div>
             )}
@@ -564,7 +564,7 @@ export default function Onboarding() {
                 </div>
                 <div className="space-y-2">
                   <h4 className="text-sm font-black text-slate-800 dark:text-slate-200 uppercase tracking-tight">Proxy-Gated Node connection</h4>
-                  <p className="text-xs text-slate-455 dark:text-slate-500 max-w-sm mx-auto leading-relaxed">
+                  <p className="text-xs text-slate-500 dark:text-slate-500 max-w-sm mx-auto leading-relaxed">
                     We initiate a secure sandboxed window powered by Unipile to capture cookies safely. Passwords are never collected.
                   </p>
                 </div>
@@ -572,7 +572,7 @@ export default function Onboarding() {
                 <div className="pt-2 flex flex-col sm:flex-row gap-3">
                   <button
                     onClick={handleSkipLinkedIn}
-                    className="flex-1 border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all"
+                    className="flex-1 border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all"
                   >
                     Skip & Link Later
                   </button>
@@ -611,7 +611,7 @@ export default function Onboarding() {
                         }
                       });
                     }}
-                    className="flex items-center justify-center gap-2 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all"
+                    className="flex items-center justify-center gap-2 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all"
                   >
                     <RefreshCw size={12} />
                     <span>Check Connection Status</span>
@@ -635,7 +635,7 @@ export default function Onboarding() {
                 <div className="space-y-1">
                   <h4 className="text-base font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight">LinkedIn Connected Successfully!</h4>
                   {connectedAccount && (
-                    <p className="text-xs text-slate-500 dark:text-slate-450">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
                       Active Node profile: <span className="font-extrabold text-blue-600">{connectedAccount.name}</span>
                     </p>
                   )}
@@ -657,14 +657,14 @@ export default function Onboarding() {
               <div className="bg-rose-50/30 dark:bg-rose-950/10 border border-rose-200/50 dark:border-rose-900/30 rounded-3xl p-8 text-center space-y-5">
                 <div className="text-rose-500 text-3xl">⚠️</div>
                 <h4 className="text-sm font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight">Connection Generation Failed</h4>
-                <p className="text-xs text-slate-500 dark:text-slate-450 leading-relaxed max-w-xs mx-auto">
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-xs mx-auto">
                   LinkedIn API key configuration is missing or expired.
                 </p>
  
                 <div className="pt-2 flex gap-3 max-w-xs mx-auto">
                   <button
                     onClick={handleSkipLinkedIn}
-                    className="flex-1 border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all"
+                    className="flex-1 border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all"
                   >
                     Skip Step
                   </button>
@@ -694,7 +694,7 @@ export default function Onboarding() {
             </div>
 
             {error && (
-              <div className="p-4 bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 rounded-2xl text-[11px] font-bold text-rose-600 dark:text-rose-450 uppercase tracking-wide">
+              <div className="p-4 bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 rounded-2xl text-[11px] font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wide">
                 {error}
               </div>
             )}
@@ -719,9 +719,9 @@ export default function Onboarding() {
                       setDailyLimit(val);
                       setWeeklyLimit(val * 5);
                     }}
-                    className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-650"
+                    className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
                   />
-                  <p className="text-[10px] text-slate-450 dark:text-slate-500 mt-1 font-semibold uppercase">Recommended limit: 15-25 daily requests</p>
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 font-semibold uppercase">Recommended limit: 15-25 daily requests</p>
                 </div>
 
                 <hr className="border-slate-100 dark:border-slate-800/80" />
@@ -740,7 +740,7 @@ export default function Onboarding() {
                     step={10}
                     value={weeklyLimit}
                     onChange={(e) => setWeeklyLimit(parseInt(e.target.value, 10))}
-                    className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-650"
+                    className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
                   />
                 </div>
               </div>
@@ -781,13 +781,13 @@ export default function Onboarding() {
         {/* Step 5: Complete State */}
         {step === 5 && (
           <div className="text-center space-y-7 py-4">
-            <div className="w-24 h-24 bg-gradient-to-tr from-blue-600 to-indigo-650 rounded-full flex items-center justify-center mx-auto shadow-xl shadow-blue-500/20 animate-bounce">
+            <div className="w-24 h-24 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-full flex items-center justify-center mx-auto shadow-xl shadow-blue-500/20 animate-bounce">
               <CheckCircle2 size={56} className="text-white" strokeWidth={1.5} />
             </div>
 
             <div className="space-y-2">
               <h2 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase">Setup Completed!</h2>
-              <p className="text-xs font-bold text-slate-455 dark:text-slate-500 uppercase tracking-widest">Your automated outreach workspace is ready</p>
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-500 uppercase tracking-widest">Your automated outreach workspace is ready</p>
             </div>
 
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-sm mx-auto font-medium">

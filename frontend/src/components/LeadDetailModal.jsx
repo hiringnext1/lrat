@@ -7,13 +7,13 @@ const PRESET_TAGS = ['Hot Lead', 'Interested', 'Not Interested', 'Document Share
 
 const STATUS_LABELS = {
   pending_connection: { label: 'Pending Connection', color: 'bg-slate-50 text-slate-500 border-slate-200 dark:bg-slate-900/40 dark:text-slate-400 dark:border-slate-800' },
-  connection_sent: { label: 'Connection Sent', color: 'bg-blue-50 text-blue-650 border-blue-100/50 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900/20' },
-  connected: { label: 'Connected', color: 'bg-indigo-50 text-indigo-650 border-indigo-100/50 dark:bg-indigo-950/20 dark:text-indigo-400 dark:border-indigo-900/20' },
+  connection_sent: { label: 'Connection Sent', color: 'bg-blue-50 text-blue-600 border-blue-100/50 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900/20' },
+  connected: { label: 'Connected', color: 'bg-indigo-50 text-indigo-600 border-indigo-100/50 dark:bg-indigo-950/20 dark:text-indigo-400 dark:border-indigo-900/20' },
   jd_sent: { label: 'Pitch Sent', color: 'bg-purple-50 text-purple-600 border-purple-100/50 dark:bg-purple-950/20 dark:text-purple-400 dark:border-purple-900/20' },
   follow_up_sent: { label: 'Follow-up Sent', color: 'bg-amber-50 text-amber-600 border-amber-100/50 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/20' },
-  replied: { label: 'Replied', color: 'bg-emerald-50 text-emerald-650 border-emerald-100/50 dark:bg-emerald-950/20 dark:text-emerald-455 dark:border-emerald-900/20' },
+  replied: { label: 'Replied', color: 'bg-emerald-50 text-emerald-600 border-emerald-100/50 dark:bg-emerald-950/20 dark:text-emerald-500 dark:border-emerald-900/20' },
   shortlisted: { label: 'Qualified', color: 'bg-green-50 text-green-600 border-green-100/50 dark:bg-green-950/20 dark:text-green-400 dark:border-green-900/20' },
-  not_interested: { label: 'Excluded', color: 'bg-rose-50 text-rose-600 border-rose-100/50 dark:bg-rose-950/20 dark:text-rose-455 dark:border-rose-900/20' },
+  not_interested: { label: 'Excluded', color: 'bg-rose-50 text-rose-600 border-rose-100/50 dark:bg-rose-950/20 dark:text-rose-500 dark:border-rose-900/20' },
 };
 
 const STATUS_PROGRESS = {
@@ -28,11 +28,11 @@ const STATUS_PROGRESS = {
 };
 
 const TAG_COLORS = {
-  'Hot Lead': 'bg-rose-50 text-rose-600 border-rose-105 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/30',
-  'Interested': 'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-455 dark:border-emerald-900/30',
-  'Not Interested': 'bg-slate-50 text-slate-500 border-slate-205 dark:bg-slate-900/40 dark:text-slate-400 dark:border-slate-800',
-  'Document Shared': 'bg-blue-50 text-blue-650 border-blue-100 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900/20',
-  'Call Scheduled': 'bg-purple-50 text-purple-655 border-purple-100 dark:bg-purple-950/20 dark:text-purple-400 dark:border-purple-900/20',
+  'Hot Lead': 'bg-rose-50 text-rose-600 border-rose-100 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/30',
+  'Interested': 'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-500 dark:border-emerald-900/30',
+  'Not Interested': 'bg-slate-50 text-slate-500 border-slate-200 dark:bg-slate-900/40 dark:text-slate-400 dark:border-slate-800',
+  'Document Shared': 'bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900/20',
+  'Call Scheduled': 'bg-purple-50 text-purple-700 border-purple-100 dark:bg-purple-950/20 dark:text-purple-400 dark:border-purple-900/20',
   'Qualified': 'bg-green-50 text-green-600 border-green-100 dark:bg-green-950/20 dark:text-green-400 dark:border-green-900/20',
 };
 
@@ -153,8 +153,8 @@ export default function LeadDetailModal({ leadId, onClose, onUpdate }) {
   if (loading) return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-md">
       <div className="bg-white dark:bg-slate-900 p-8 rounded-[32px] shadow-2xl flex flex-col items-center border border-slate-100 dark:border-slate-800">
-        <div className="w-8 h-8 border-3 border-blue-650 border-t-transparent rounded-full animate-spin mb-4 text-blue-600"></div>
-        <p className="text-[10px] font-black text-slate-450 uppercase tracking-widest animate-pulse">Syncing prospect record...</p>
+        <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mb-4 text-blue-600"></div>
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest animate-pulse">Syncing prospect record...</p>
       </div>
     </div>
   );
@@ -170,7 +170,7 @@ export default function LeadDetailModal({ leadId, onClose, onUpdate }) {
     </div>
   );
 
-  const currentStatus = STATUS_LABELS[lead.status] || { label: lead.status, color: 'bg-slate-150 text-slate-600 border-slate-200' };
+  const currentStatus = STATUS_LABELS[lead.status] || { label: lead.status, color: 'bg-slate-100 text-slate-600 border-slate-200' };
   const progressPercent = STATUS_PROGRESS[lead.status] || 0;
 
   return (
@@ -190,7 +190,7 @@ export default function LeadDetailModal({ leadId, onClose, onUpdate }) {
           </button>
           
           <div className="flex items-center gap-5">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-650 border border-slate-700 shrink-0 overflow-hidden shadow-md flex items-center justify-center text-white text-2xl font-black uppercase">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 border border-slate-700 shrink-0 overflow-hidden shadow-md flex items-center justify-center text-white text-2xl font-black uppercase">
               {lead.profile_photo_url ? (
                 <img src={lead.profile_photo_url} alt="" className="w-full h-full object-cover" />
               ) : (
@@ -215,7 +215,7 @@ export default function LeadDetailModal({ leadId, onClose, onUpdate }) {
                   </a>
                 )}
                 
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[9px] font-black uppercase tracking-widest bg-white/5 border-white/10 text-slate-350">
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[9px] font-black uppercase tracking-widest bg-white/5 border-white/10 text-slate-300">
                   <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
                   <span>{currentStatus.label}</span>
                 </div>
@@ -253,19 +253,19 @@ export default function LeadDetailModal({ leadId, onClose, onUpdate }) {
             {lead.fit_score > 0 && (
               <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800/80 shadow-sm space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="text-[9px] font-black text-slate-400 dark:text-slate-550 uppercase tracking-widest flex items-center gap-1.5">
+                  <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1.5">
                     <Brain size={12} className="text-purple-500" /> 
                     <span>AI Target Match Score</span>
                   </label>
                   <span className={`text-xs font-black ${
-                    lead.fit_score >= 80 ? 'text-blue-650 dark:text-blue-400' : 'text-slate-500'
+                    lead.fit_score >= 80 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500'
                   }`}>{lead.fit_score}% Fit</span>
                 </div>
                 
                 <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
                   <div 
                     className={`h-full rounded-full transition-all duration-500 ${
-                      lead.fit_score >= 80 ? 'bg-gradient-to-r from-blue-550 to-indigo-650' : 'bg-slate-400'
+                      lead.fit_score >= 80 ? 'bg-gradient-to-r from-blue-500 to-indigo-600' : 'bg-slate-400'
                     }`}
                     style={{ width: `${lead.fit_score}%` }}
                   />
@@ -276,11 +276,11 @@ export default function LeadDetailModal({ leadId, onClose, onUpdate }) {
             {/* AI Fit Explanation Reason */}
             {lead.ai_fit_reason && (
               <div className="bg-purple-50/40 dark:bg-purple-950/10 border border-purple-100/50 dark:border-purple-900/20 p-5 rounded-2xl space-y-2">
-                <label className="text-[9px] font-black text-purple-650 dark:text-purple-400 uppercase tracking-widest flex items-center gap-1.5">
+                <label className="text-[9px] font-black text-purple-600 dark:text-purple-400 uppercase tracking-widest flex items-center gap-1.5">
                   <Sparkles size={11} className="animate-pulse" /> 
                   <span>AI Qualification Intel</span>
                 </label>
-                <p className="text-xs font-semibold text-slate-750 dark:text-slate-300 leading-relaxed italic">
+                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 leading-relaxed italic">
                   "{lead.ai_fit_reason}"
                 </p>
               </div>
@@ -289,13 +289,13 @@ export default function LeadDetailModal({ leadId, onClose, onUpdate }) {
             {/* AI Sentiment analysis */}
             {lead.ai_sentiment && (
               <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800/80 shadow-sm space-y-2">
-                <label className="text-[9px] font-black text-slate-400 dark:text-slate-550 uppercase tracking-widest block">AI Response Sentiment</label>
+                <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block">AI Response Sentiment</label>
                 <span className={`inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-md border ${
                   lead.ai_sentiment === 'positive' 
                     ? 'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/30' 
                     : lead.ai_sentiment === 'negative' 
-                    ? 'bg-rose-50 text-rose-600 border-rose-100 dark:bg-rose-950/20 dark:text-rose-455 dark:border-rose-900/30' 
-                    : 'bg-slate-50 text-slate-500 border-slate-205 dark:bg-slate-900/40 dark:text-slate-400 dark:border-slate-800'
+                    ? 'bg-rose-50 text-rose-600 border-rose-100 dark:bg-rose-950/20 dark:text-rose-500 dark:border-rose-900/30' 
+                    : 'bg-slate-50 text-slate-500 border-slate-200 dark:bg-slate-900/40 dark:text-slate-400 dark:border-slate-800'
                 }`}>
                   <Sparkles size={9} />
                   {lead.ai_sentiment} response
@@ -315,7 +315,7 @@ export default function LeadDetailModal({ leadId, onClose, onUpdate }) {
                   <select 
                     value={lead.status} 
                     onChange={(e) => updateStatus(e.target.value)}
-                    className="w-full text-xs font-black border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2.5 bg-slate-50 dark:bg-slate-950/40 text-slate-700 dark:text-slate-205 outline-none cursor-pointer hover:border-slate-300 dark:hover:border-slate-750 transition-colors appearance-none"
+                    className="w-full text-xs font-black border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2.5 bg-slate-50 dark:bg-slate-950/40 text-slate-700 dark:text-slate-200 outline-none cursor-pointer hover:border-slate-300 dark:hover:border-slate-700 transition-colors appearance-none"
                   >
                     {Object.keys(STATUS_LABELS).map((s) => <option key={s} value={s}>{STATUS_LABELS[s].label}</option>)}
                   </select>
@@ -342,7 +342,7 @@ export default function LeadDetailModal({ leadId, onClose, onUpdate }) {
 
             {/* Canned Tags / Labels Cloud */}
             <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800/80 shadow-sm space-y-3">
-              <label className="text-[9px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest block flex items-center gap-1.5">
+              <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block flex items-center gap-1.5">
                 <Tag size={11} className="text-slate-400" />
                 <span>Prospect Labels</span>
               </label>
@@ -352,7 +352,7 @@ export default function LeadDetailModal({ leadId, onClose, onUpdate }) {
                   <span 
                     key={tag} 
                     className={`flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider border transition-all ${
-                      TAG_COLORS[tag] || 'bg-slate-50 text-slate-500 border-slate-150 dark:bg-slate-900/40 dark:text-slate-400 dark:border-slate-850'
+                      TAG_COLORS[tag] || 'bg-slate-50 text-slate-500 border-slate-100 dark:bg-slate-900/40 dark:text-slate-400 dark:border-slate-800'
                     }`}
                   >
                     <span>{tag}</span>
@@ -362,7 +362,7 @@ export default function LeadDetailModal({ leadId, onClose, onUpdate }) {
                   </span>
                 ))}
                 {tags.length === 0 && (
-                  <p className="text-[9px] font-bold text-slate-350 dark:text-slate-650 uppercase tracking-wider">No labels assigned</p>
+                  <p className="text-[9px] font-bold text-slate-300 dark:text-slate-600 uppercase tracking-wider">No labels assigned</p>
                 )}
               </div>
               
@@ -371,7 +371,7 @@ export default function LeadDetailModal({ leadId, onClose, onUpdate }) {
                   <button 
                     key={tag} 
                     onClick={() => addTag(tag)}
-                    className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded border border-dashed border-slate-205 dark:border-slate-800 text-slate-400 dark:text-slate-500 hover:border-blue-400 hover:text-blue-600 transition-colors cursor-pointer"
+                    className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded border border-dashed border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 hover:border-blue-400 hover:text-blue-600 transition-colors cursor-pointer"
                   >
                     + {tag}
                   </button>
@@ -384,11 +384,11 @@ export default function LeadDetailModal({ leadId, onClose, onUpdate }) {
                   onChange={(e) => setNewTag(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addTag(newTag)}
                   placeholder="Custom tag..."
-                  className="flex-1 text-[10px] font-bold border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 bg-slate-50 dark:bg-slate-950/40 text-slate-700 dark:text-slate-205 focus:outline-none focus:border-blue-500 placeholder:text-slate-400" 
+                  className="flex-1 text-[10px] font-bold border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 bg-slate-50 dark:bg-slate-950/40 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-blue-500 placeholder:text-slate-400" 
                 />
                 <button 
                   onClick={() => addTag(newTag)} 
-                  className="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 border border-slate-200 dark:border-slate-750 rounded-xl text-slate-600 dark:text-slate-450 flex items-center justify-center cursor-pointer"
+                  className="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-600 dark:text-slate-400 flex items-center justify-center cursor-pointer"
                 >
                   <Plus size={13} strokeWidth={2.5} />
                 </button>
@@ -405,18 +405,18 @@ export default function LeadDetailModal({ leadId, onClose, onUpdate }) {
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Add prospect notes, document links, feedback logs..."
-                className="w-full h-24 text-xs font-semibold leading-relaxed border border-slate-150 dark:border-slate-800 rounded-2xl p-4 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-205 focus:outline-none focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/10 focus:border-blue-500 transition-all resize-none shadow-sm placeholder:text-slate-350"
+                className="w-full h-24 text-xs font-semibold leading-relaxed border border-slate-100 dark:border-slate-800 rounded-2xl p-4 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/10 focus:border-blue-500 transition-all resize-none shadow-sm placeholder:text-slate-300"
               />
             </div>
 
             {/* Dotted Timeline History logs */}
-            <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-850/50">
-              <label className="text-[9px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest block flex items-center gap-1.5">
+            <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800/50">
+              <label className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block flex items-center gap-1.5">
                 <Calendar size={11} className="text-slate-400" />
                 <span>Timeline audit logs</span>
               </label>
               
-              <div className="relative pl-3.5 space-y-3.5 border-l border-slate-150 dark:border-slate-800 max-h-48 overflow-y-auto pr-1">
+              <div className="relative pl-3.5 space-y-3.5 border-l border-slate-100 dark:border-slate-800 max-h-48 overflow-y-auto pr-1">
                 {timeline.map((event) => {
                   const label = (() => {
                     switch (event.action_type) {
@@ -437,8 +437,8 @@ export default function LeadDetailModal({ leadId, onClose, onUpdate }) {
                       case 'jd_sent': return 'bg-purple-500';
                       case 'follow_up_sent': return 'bg-amber-500';
                       case 'reply_detected': return 'bg-emerald-500';
-                      case 'warning': return 'bg-rose-550';
-                      default: return 'bg-slate-405';
+                      case 'warning': return 'bg-rose-500';
+                      default: return 'bg-slate-400';
                     }
                   })();
 
@@ -446,19 +446,19 @@ export default function LeadDetailModal({ leadId, onClose, onUpdate }) {
                     <div key={event.id} className="relative">
                       <span className={`absolute -left-[19.5px] top-1.5 w-2 h-2 rounded-full border-2 border-white dark:border-slate-950 ${color}`} />
                       <div>
-                        <p className="text-[10px] font-black text-slate-700 dark:text-slate-350 leading-none">
+                        <p className="text-[10px] font-black text-slate-700 dark:text-slate-300 leading-none">
                           {label}
                           {event.account_name && (
                             <span className="text-[8px] font-bold text-blue-500 dark:text-blue-400"> via {event.account_name}</span>
                           )}
                         </p>
                         {event.message_preview && (
-                          <p className="text-[9px] text-slate-450 dark:text-slate-500 mt-1 italic font-medium">"{event.message_preview.slice(0, 80)}..."</p>
+                          <p className="text-[9px] text-slate-400 dark:text-slate-500 mt-1 italic font-medium">"{event.message_preview.slice(0, 80)}..."</p>
                         )}
                         {event.error_message && (
                           <p className="text-[8px] text-rose-500 dark:text-rose-400 mt-0.5">Error: {event.error_message}</p>
                         )}
-                        <p className="text-[8px] font-bold text-slate-400 dark:text-slate-550 mt-1 uppercase">
+                        <p className="text-[8px] font-bold text-slate-400 dark:text-slate-500 mt-1 uppercase">
                           {new Date(event.created_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
@@ -466,10 +466,10 @@ export default function LeadDetailModal({ leadId, onClose, onUpdate }) {
                   );
                 })}
                 {timeline.length === 0 && !loadingTimeline && (
-                  <p className="text-[9px] font-bold text-slate-355 dark:text-slate-600 uppercase tracking-wider">No sequence logs yet</p>
+                  <p className="text-[9px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-wider">No sequence logs yet</p>
                 )}
                 {loadingTimeline && (
-                  <p className="text-[9px] font-bold text-slate-300 dark:text-slate-750 uppercase tracking-wider animate-pulse">Syncing timeline...</p>
+                  <p className="text-[9px] font-bold text-slate-300 dark:text-slate-700 uppercase tracking-wider animate-pulse">Syncing timeline...</p>
                 )}
               </div>
             </div>
@@ -493,7 +493,7 @@ export default function LeadDetailModal({ leadId, onClose, onUpdate }) {
             <button 
               type="button"
               onClick={onClose} 
-              className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-450 hover:text-slate-650 transition-colors cursor-pointer"
+              className="px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
             >
               Cancel
             </button>

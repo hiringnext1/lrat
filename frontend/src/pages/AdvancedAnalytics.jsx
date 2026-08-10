@@ -110,7 +110,7 @@ export default function AdvancedAnalytics() {
           <p className="font-extrabold text-[10px] text-slate-400 uppercase tracking-widest mb-1.5">{label}</p>
           {payload.map((p, idx) => (
             <div key={idx} className="flex justify-between items-center gap-6 my-1">
-              <span className="font-semibold text-slate-350">{p.name}:</span>
+              <span className="font-semibold text-slate-300">{p.name}:</span>
               <span className="font-black" style={{ color: p.color || p.stroke }}>{p.value}</span>
             </div>
           ))}
@@ -145,7 +145,7 @@ export default function AdvancedAnalytics() {
           
           <button
             onClick={handlePrintReport}
-            className="px-4 py-2.5 rounded-xl border border-slate-250 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-extrabold text-xs transition-all flex items-center gap-1.5"
+            className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-extrabold text-xs transition-all flex items-center gap-1.5"
           >
             <Printer size={14} />
             <span>Print Report</span>
@@ -159,13 +159,13 @@ export default function AdvancedAnalytics() {
             <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl hidden group-hover:block hover:block z-50 overflow-hidden">
               <button
                 onClick={() => handleExportCSV('leads')}
-                className="w-full text-left px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
+                className="w-full text-left px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
               >
                 Export Leads Database
               </button>
               <button
                 onClick={() => handleExportCSV('campaigns')}
-                className="w-full text-left px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 border-t border-slate-100 dark:border-slate-800/80 transition-all"
+                className="w-full text-left px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 border-t border-slate-100 dark:border-slate-800/80 transition-all"
               >
                 Export Campaigns Stats
               </button>
@@ -184,7 +184,7 @@ export default function AdvancedAnalytics() {
                 <TrendingUp size={16} />
               </div>
               <div>
-                <span className="text-[10px] font-black text-slate-400 dark:text-slate-550 uppercase tracking-widest block">Outreach Speed</span>
+                <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block">Outreach Speed</span>
                 <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">Daily Conversion Trends</h3>
               </div>
             </div>
@@ -256,7 +256,7 @@ export default function AdvancedAnalytics() {
                 <Calculator size={16} />
               </div>
               <div>
-                <span className="text-[10px] font-black text-slate-400 dark:text-slate-550 uppercase tracking-widest block">Cost-Benefit Analysis</span>
+                <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block">Cost-Benefit Analysis</span>
                 <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">Live ROI Calculator</h3>
               </div>
             </div>
@@ -310,7 +310,7 @@ export default function AdvancedAnalytics() {
           </div>
 
           {/* Calculator Output Display */}
-          <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800/80 space-y-3 bg-slate-50/50 dark:bg-slate-900/40 p-3.5 rounded-2xl border border-dashed border-slate-205 dark:border-slate-800/50">
+          <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800/80 space-y-3 bg-slate-50/50 dark:bg-slate-900/40 p-3.5 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800/50">
             <div className="flex items-center justify-between">
               <span className="text-[10px] text-slate-500 font-bold">Time Value Retained:</span>
               <span className="text-xs font-black text-slate-900 dark:text-slate-200">${timeSavedValue}</span>
@@ -321,16 +321,16 @@ export default function AdvancedAnalytics() {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-[10px] text-slate-500 font-bold">Cost Per Lead (CPL):</span>
-              <span className="text-xs font-black text-blue-600 dark:text-blue-450">${cplValue}</span>
+              <span className="text-xs font-black text-blue-600 dark:text-blue-400">${cplValue}</span>
             </div>
             <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-2.5">
               <span className="text-xs font-black text-slate-800 dark:text-slate-200">Net Estimated Savings:</span>
-              <span className={`text-base font-black ${netRoiValue >= 0 ? 'text-emerald-600 dark:text-emerald-450' : 'text-rose-500'}`}>
+              <span className={`text-base font-black ${netRoiValue >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'}`}>
                 ${netRoiValue}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs font-black text-slate-850 dark:text-slate-250">Estimated ROI %:</span>
+              <span className="text-xs font-black text-slate-800 dark:text-slate-200">Estimated ROI %:</span>
               <span className="flex items-center gap-1.5 text-base font-black text-blue-600 dark:text-blue-400">
                 <Sparkles size={13} className="text-amber-500" />
                 {roiPercentage}%
@@ -347,7 +347,7 @@ export default function AdvancedAnalytics() {
                 <BarChart2 size={16} />
               </div>
               <div>
-                <span className="text-[10px] font-black text-slate-400 dark:text-slate-550 uppercase tracking-widest block">Profile Audits</span>
+                <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block">Profile Audits</span>
                 <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">Account outreach Output Comparison</h3>
               </div>
             </div>
@@ -398,7 +398,7 @@ export default function AdvancedAnalytics() {
               <MessageSquare size={16} />
             </div>
             <div>
-              <span className="text-[10px] font-black text-slate-400 dark:text-slate-550 uppercase tracking-widest block">Message Optimization</span>
+              <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block">Message Optimization</span>
               <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">A/B outreach Note Conversions</h3>
             </div>
           </div>
@@ -416,7 +416,7 @@ export default function AdvancedAnalytics() {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[700px] border-collapse">
               <thead>
-                <tr className="border-b border-slate-100 dark:border-slate-850">
+                <tr className="border-b border-slate-100 dark:border-slate-800">
                   <th className="py-3 text-[10px] font-black text-slate-400 uppercase tracking-wider text-left">Campaign Name / Note</th>
                   <th className="py-3 text-[10px] font-black text-slate-400 uppercase tracking-wider text-center">Invites Sent</th>
                   <th className="py-3 text-[10px] font-black text-slate-400 uppercase tracking-wider text-center">Connected</th>
@@ -425,12 +425,12 @@ export default function AdvancedAnalytics() {
                   <th className="py-3 text-[10px] font-black text-slate-400 uppercase tracking-wider text-center font-bold text-blue-600 dark:text-blue-400">Reply Rate</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-850/60">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
                 {advancedData.templates.map((temp) => (
                   <tr key={temp.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-all">
                     <td className="py-4">
                       <p className="text-xs font-black text-slate-900 dark:text-slate-100 mb-1">{temp.name}</p>
-                      <p className="text-[10px] font-bold text-slate-455 dark:text-slate-500 line-clamp-1 max-w-[400px]" title={temp.template}>
+                      <p className="text-[10px] font-bold text-slate-500 dark:text-slate-500 line-clamp-1 max-w-[400px]" title={temp.template}>
                         {temp.template}
                       </p>
                     </td>

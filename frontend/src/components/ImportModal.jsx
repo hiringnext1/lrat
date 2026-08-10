@@ -115,12 +115,12 @@ export default function ImportModal({ onClose, accounts, campaigns, onImported, 
         {/* Header */}
         <div className="flex items-center justify-between px-8 py-6 border-b border-slate-100 dark:border-slate-800 shrink-0">
           <div>
-            <h2 className="text-lg font-black text-slate-850 dark:text-slate-150 tracking-tight uppercase">Import Leads CRM</h2>
+            <h2 className="text-lg font-black text-slate-800 dark:text-slate-100 tracking-tight uppercase">Import Leads CRM</h2>
             <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold mt-0.5 uppercase tracking-wider">Feed prospects into outreach pipelines</p>
           </div>
           <button 
             onClick={onClose} 
-            className="p-2 rounded-xl text-slate-455 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
+            className="p-2 rounded-xl text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
           >
             <X size={18} />
           </button>
@@ -133,27 +133,27 @@ export default function ImportModal({ onClose, accounts, campaigns, onImported, 
               
               <button 
                 onClick={() => setMode('url')}
-                className="flex flex-col items-center gap-4 p-8 rounded-[28px] border-2 border-slate-100 dark:border-slate-800 hover:border-blue-500 dark:hover:border-blue-550 hover:bg-blue-50/20 dark:hover:bg-blue-950/10 transition-all group text-center"
+                className="flex flex-col items-center gap-4 p-8 rounded-[28px] border-2 border-slate-100 dark:border-slate-800 hover:border-blue-500 dark:hover:border-blue-500 hover:bg-blue-50/20 dark:hover:bg-blue-950/10 transition-all group text-center"
               >
                 <div className="w-14 h-14 bg-blue-50 dark:bg-blue-950/40 border border-blue-100/50 dark:border-blue-900/30 rounded-2xl flex items-center justify-center text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform">
                   <Globe size={24} />
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-slate-850 dark:text-slate-200 text-sm uppercase tracking-wider">LinkedIn People Search</h3>
-                  <p className="text-[10px] text-slate-450 dark:text-slate-500 font-medium mt-1 uppercase tracking-wide">Scrape query results directly</p>
+                  <h3 className="font-extrabold text-slate-800 dark:text-slate-200 text-sm uppercase tracking-wider">LinkedIn People Search</h3>
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium mt-1 uppercase tracking-wide">Scrape query results directly</p>
                 </div>
               </button>
 
               <button 
                 onClick={() => setMode('csv')}
-                className="flex flex-col items-center gap-4 p-8 rounded-[28px] border-2 border-slate-100 dark:border-slate-800 hover:border-emerald-500 dark:hover:border-emerald-550 hover:bg-emerald-50/20 dark:hover:bg-emerald-950/10 transition-all group text-center"
+                className="flex flex-col items-center gap-4 p-8 rounded-[28px] border-2 border-slate-100 dark:border-slate-800 hover:border-emerald-500 dark:hover:border-emerald-500 hover:bg-emerald-50/20 dark:hover:bg-emerald-950/10 transition-all group text-center"
               >
-                <div className="w-14 h-14 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100/50 dark:border-emerald-900/30 rounded-2xl flex items-center justify-center text-emerald-600 dark:text-emerald-450 group-hover:scale-110 transition-transform">
+                <div className="w-14 h-14 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100/50 dark:border-emerald-900/30 rounded-2xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform">
                   <FileText size={24} />
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-slate-850 dark:text-slate-200 text-sm uppercase tracking-wider">CSV/Excel Importer</h3>
-                  <p className="text-[10px] text-slate-450 dark:text-slate-500 font-medium mt-1 uppercase tracking-wide">Sync custom profile directories</p>
+                  <h3 className="font-extrabold text-slate-800 dark:text-slate-200 text-sm uppercase tracking-wider">CSV/Excel Importer</h3>
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium mt-1 uppercase tracking-wide">Sync custom profile directories</p>
                 </div>
               </button>
 
@@ -162,14 +162,14 @@ export default function ImportModal({ onClose, accounts, campaigns, onImported, 
             <div className="space-y-6">
               
               {/* Steps status indicator */}
-              <div className="flex items-center gap-2 pb-4 border-b border-slate-50 dark:border-slate-850/60">
+              <div className="flex items-center gap-2 pb-4 border-b border-slate-50 dark:border-slate-800/60">
                 {[1, 2, 3].map((s) => (
                   <div key={s} className="flex items-center gap-2">
                     <div className={`w-7 h-7 rounded-xl flex items-center justify-center text-[10px] font-black transition-all border ${
                       step > s 
                         ? 'bg-emerald-500 border-emerald-500 text-white' 
                         : step === s 
-                          ? 'bg-blue-650 border-blue-650 text-white shadow-md shadow-blue-500/20' 
+                          ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/20' 
                           : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500'
                     }`}>
                       {step > s ? <CheckCircle2 size={13} strokeWidth={2.5} /> : s}
@@ -193,7 +193,7 @@ export default function ImportModal({ onClose, accounts, campaigns, onImported, 
                           value={url} 
                           onChange={e => setUrl(e.target.value)}
                           placeholder="Paste search URL (e.g., https://www.linkedin.com/search/results/people/?keywords=...)"
-                          className="w-full bg-slate-50 dark:bg-slate-950/40 border border-transparent dark:border-slate-950 rounded-2xl px-4 py-3 text-xs font-semibold focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/10 focus:border-blue-500 outline-none text-slate-700 dark:text-slate-200 transition-all placeholder:text-slate-350"
+                          className="w-full bg-slate-50 dark:bg-slate-950/40 border border-transparent dark:border-slate-950 rounded-2xl px-4 py-3 text-xs font-semibold focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/10 focus:border-blue-500 outline-none text-slate-700 dark:text-slate-200 transition-all placeholder:text-slate-300"
                         />
                       </div>
                       
@@ -236,9 +236,9 @@ export default function ImportModal({ onClose, accounts, campaigns, onImported, 
                       </div>
                       
                       <div className="bg-amber-50 dark:bg-amber-950/20 p-4.5 rounded-2xl border border-amber-100 dark:border-amber-900/30 flex gap-3">
-                        <AlertCircle className="text-amber-550 shrink-0" size={16} />
-                        <p className="text-[10px] text-amber-750 dark:text-amber-400 leading-relaxed font-semibold uppercase tracking-wide">
-                          Ensure the CSV includes a <span className="underline font-black text-amber-800 dark:text-amber-305">LinkedIn Profile Link</span> column to run messaging automations correctly.
+                        <AlertCircle className="text-amber-500 shrink-0" size={16} />
+                        <p className="text-[10px] text-amber-700 dark:text-amber-400 leading-relaxed font-semibold uppercase tracking-wide">
+                          Ensure the CSV includes a <span className="underline font-black text-amber-800 dark:text-amber-300">LinkedIn Profile Link</span> column to run messaging automations correctly.
                         </p>
                       </div>
                     </div>
@@ -249,7 +249,7 @@ export default function ImportModal({ onClose, accounts, campaigns, onImported, 
               {/* Step 2: Mapping Form */}
               {step === 2 && (
                 <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                  <div className="bg-slate-50 dark:bg-slate-950/45 p-4 rounded-2xl border border-slate-100 dark:border-slate-850 flex justify-between items-center gap-4">
+                  <div className="bg-slate-50 dark:bg-slate-950/45 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 flex justify-between items-center gap-4">
                     <div>
                       <p className="text-xs font-extrabold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Target Campaign sequence</p>
                       <p className="text-[9px] text-slate-400 dark:text-slate-500 font-semibold uppercase mt-0.5 tracking-wide">Link imported prospects directly</p>
@@ -257,7 +257,7 @@ export default function ImportModal({ onClose, accounts, campaigns, onImported, 
                     <select 
                       value={campaignId} 
                       onChange={e => setCampaignId(e.target.value)}
-                      className="text-[10px] font-black uppercase tracking-wider border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 bg-white dark:bg-slate-850 text-slate-800 dark:text-slate-200 outline-none shadow-sm cursor-pointer"
+                      className="text-[10px] font-black uppercase tracking-wider border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 outline-none shadow-sm cursor-pointer"
                     >
                       <option value="">Select campaign...</option>
                       {campaigns.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -266,18 +266,18 @@ export default function ImportModal({ onClose, accounts, campaigns, onImported, 
 
                   {mode === 'url' ? (
                     <div className="border border-slate-100 dark:border-slate-800/80 rounded-2xl overflow-hidden shadow-sm">
-                      <div className="px-4.5 py-2.5 bg-slate-50 dark:bg-slate-850/60 text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800">
+                      <div className="px-4.5 py-2.5 bg-slate-50 dark:bg-slate-800/60 text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800">
                         Prospect Previews ({preview.length} profiles)
                       </div>
                       
-                      <div className="divide-y divide-slate-100 dark:divide-slate-850 max-h-60 overflow-y-auto bg-white dark:bg-slate-900/30">
+                      <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-60 overflow-y-auto bg-white dark:bg-slate-900/30">
                         {preview.map((p, i) => (
                           <div key={i} className={`flex items-center justify-between px-4.5 py-3 ${p.is_duplicate ? 'opacity-40' : ''}`}>
-                            <p className="text-xs font-bold text-slate-700 dark:text-slate-250 truncate">{p.full_name}</p>
+                            <p className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate">{p.full_name}</p>
                             {p.is_duplicate ? (
-                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider bg-slate-105 dark:bg-slate-800 px-2 py-0.5 rounded-md">In CRM</span>
+                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">In CRM</span>
                             ) : (
-                              <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-450 uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/20 px-2 py-0.5 rounded-md border border-emerald-100/50 dark:border-emerald-900/30">New node</span>
+                              <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/20 px-2 py-0.5 rounded-md border border-emerald-100/50 dark:border-emerald-900/30">New node</span>
                             )}
                           </div>
                         ))}
@@ -285,7 +285,7 @@ export default function ImportModal({ onClose, accounts, campaigns, onImported, 
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      <div className="bg-slate-50 dark:bg-slate-850/20 p-3 rounded-xl border border-slate-100 dark:border-slate-800 text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                      <div className="bg-slate-50 dark:bg-slate-800/20 p-3 rounded-xl border border-slate-100 dark:border-slate-800 text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                         Match CSV Fields to CRM Fields
                       </div>
                       
@@ -298,7 +298,7 @@ export default function ImportModal({ onClose, accounts, campaigns, onImported, 
                           { label: 'Location / City', key: 'location' }
                         ].map(field => (
                           <div key={field.key}>
-                            <label className="block text-[9px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest mb-1.5 ml-1">{field.label}</label>
+                            <label className="block text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 ml-1">{field.label}</label>
                             <select 
                               value={mapping[field.key]} 
                               onChange={e => setMapping({ ...mapping, [field.key]: e.target.value })}
@@ -319,10 +319,10 @@ export default function ImportModal({ onClose, accounts, campaigns, onImported, 
               {step === 3 && (
                 <div className="text-center py-10 space-y-4 animate-in zoom-in duration-500">
                   <div className="w-20 h-20 bg-emerald-50 dark:bg-emerald-950/30 rounded-full flex items-center justify-center mx-auto border-4 border-white dark:border-slate-800 shadow-xl shadow-emerald-500/10">
-                    <Sparkles size={32} className="text-emerald-555" />
+                    <Sparkles size={32} className="text-emerald-600" />
                   </div>
                   
-                  <h3 className="text-xl font-black text-slate-850 dark:text-slate-150 tracking-tight uppercase">Bulk Sync Initiated!</h3>
+                  <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 tracking-tight uppercase">Bulk Sync Initiated!</h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold max-w-sm mx-auto leading-relaxed uppercase">
                     {mode === 'url' 
                       ? "Search results are being fetched asynchronously. Check your CRM list momentarily."
@@ -333,7 +333,7 @@ export default function ImportModal({ onClose, accounts, campaigns, onImported, 
               )}
 
               {error && (
-                <div className="bg-rose-50 dark:bg-rose-950/20 p-4 rounded-2xl border border-rose-100 dark:border-rose-900/30 flex gap-3 text-rose-600 dark:text-rose-450 items-center animate-shake">
+                <div className="bg-rose-50 dark:bg-rose-950/20 p-4 rounded-2xl border border-rose-100 dark:border-rose-900/30 flex gap-3 text-rose-600 dark:text-rose-400 items-center animate-shake">
                   <AlertCircle size={16} />
                   <p className="text-xs font-black uppercase tracking-wide">{error}</p>
                 </div>

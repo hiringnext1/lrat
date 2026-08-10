@@ -10,7 +10,7 @@ import axios from 'axios';
 
 // ─── Step metadata ────────────────────────────────────────────────────────────
 const STEP_META = {
-  invite:       { icon: UserPlus,      color: '#3b82f6', border: 'border-blue-100 dark:border-blue-900/40',   text: 'text-blue-750 dark:text-blue-400',   label: 'Send Connection Request' },
+  invite:       { icon: UserPlus,      color: '#3b82f6', border: 'border-blue-100 dark:border-blue-900/40',   text: 'text-blue-700 dark:text-blue-400',   label: 'Send Connection Request' },
   message:      { icon: MessageSquare, color: '#10b981', border: 'border-emerald-100 dark:border-emerald-900/40', text: 'text-emerald-700 dark:text-emerald-400', label: 'Send Message' },
   view_profile: { icon: Eye,           color: '#0891b2', border: 'border-cyan-100 dark:border-cyan-900/40',   text: 'text-cyan-700 dark:text-cyan-400',   label: 'View Profile' },
   like_post:    { icon: ThumbsUp,      color: '#f97316', border: 'border-orange-100 dark:border-orange-900/40', text: 'text-orange-700 dark:text-orange-400', label: 'Like Post' },
@@ -577,7 +577,7 @@ function AddMenu({ onAdd, onClose }) {
             <button 
               key={opt.type} 
               onClick={() => { onAdd(opt.type); onClose(); }}
-              className="w-full flex items-center gap-3 p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-850 transition-colors group"
+              className="w-full flex items-center gap-3 p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group"
             >
               <span className="text-xl leading-none">{opt.emoji}</span>
               <div className="min-w-0">
@@ -587,7 +587,7 @@ function AddMenu({ onAdd, onClose }) {
             </button>
           ))}
         </div>
-        <button onClick={onClose} className="w-full text-center text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-650 py-2.5 mt-1">Close</button>
+        <button onClick={onClose} className="w-full text-center text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 py-2.5 mt-1">Close</button>
       </div>
       <div className="w-0.5 h-2 bg-slate-200 dark:bg-slate-800" />
     </div>
@@ -621,7 +621,7 @@ function StepIndicator({ current, onChange, isNew }) {
                   ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20 ring-4 ring-blue-500/10' 
                   : current > s.n 
                     ? 'bg-blue-50 text-blue-600 dark:bg-blue-950/20 dark:text-blue-400 border border-blue-100/50 dark:border-blue-900/30'
-                    : 'bg-slate-55 dark:bg-slate-800 text-slate-400 dark:text-slate-500'
+                    : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500'
               } ${isClickable && current !== s.n ? 'hover:bg-slate-100 dark:hover:bg-slate-700/60' : ''}`}>
                 <s.icon size={15} />
               </div>
@@ -630,7 +630,7 @@ function StepIndicator({ current, onChange, isNew }) {
               }`}>{s.l}</span>
             </button>
             {i < steps.length - 1 && (
-              <div className={`flex-1 h-0.5 mx-4 transition-all duration-500 ${current > s.n ? 'bg-blue-600' : 'bg-slate-100 dark:bg-slate-850'}`} />
+              <div className={`flex-1 h-0.5 mx-4 transition-all duration-500 ${current > s.n ? 'bg-blue-600' : 'bg-slate-100 dark:bg-slate-800'}`} />
             )}
           </div>
         );
@@ -926,21 +926,21 @@ export default function CampaignBuilder() {
           <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Campaign Date Window (Optional)</label>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <span className="block text-[9px] font-bold text-slate-450 dark:text-slate-500 uppercase mb-1.5">Start Date</span>
+              <span className="block text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase mb-1.5">Start Date</span>
               <input
                 type="date"
                 value={settings.startsAt || ''}
                 onChange={e => setSettings(s => ({ ...s, startsAt: e.target.value }))}
-                className="w-full text-xs font-semibold rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 px-4 py-3 text-slate-700 dark:text-slate-205 focus:outline-none focus:border-blue-500"
+                className="w-full text-xs font-semibold rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 px-4 py-3 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-blue-500"
               />
             </div>
             <div>
-              <span className="block text-[9px] font-bold text-slate-450 dark:text-slate-500 uppercase mb-1.5">End Date</span>
+              <span className="block text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase mb-1.5">End Date</span>
               <input
                 type="date"
                 value={settings.endsAt || ''}
                 onChange={e => setSettings(s => ({ ...s, endsAt: e.target.value }))}
-                className="w-full text-xs font-semibold rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 px-4 py-3 text-slate-700 dark:text-slate-205 focus:outline-none focus:border-blue-500"
+                className="w-full text-xs font-semibold rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 px-4 py-3 text-slate-700 dark:text-slate-200 focus:outline-none focus:border-blue-500"
               />
             </div>
           </div>
@@ -991,7 +991,7 @@ export default function CampaignBuilder() {
                 >
                   <span className="text-2xl leading-none pt-0.5">{pt.emoji}</span>
                   <div className="min-w-0">
-                    <span className="font-black text-xs uppercase tracking-wider text-slate-850 dark:text-slate-200 block mb-1">{pt.label}</span>
+                    <span className="font-black text-xs uppercase tracking-wider text-slate-800 dark:text-slate-200 block mb-1">{pt.label}</span>
                     <span className="text-[10px] text-slate-400 dark:text-slate-500 leading-normal font-semibold block">{pt.desc}</span>
                   </div>
                 </button>
@@ -1030,7 +1030,7 @@ export default function CampaignBuilder() {
                   const arr = settings.accounts || [];
                   setSettings(s => ({ ...s, accounts: e.target.checked ? [...arr, acc.id] : arr.filter(x => x !== acc.id) }));
                 }} 
-                className="w-4 h-4 rounded text-blue-600 border-slate-300 dark:border-slate-700 bg-slate-55 dark:bg-slate-900 focus:ring-blue-500" 
+                className="w-4 h-4 rounded text-blue-600 border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:ring-blue-500" 
               />
               <div className="relative flex-shrink-0">
                 <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden flex items-center justify-center border border-slate-200 dark:border-slate-700">
@@ -1244,7 +1244,7 @@ export default function CampaignBuilder() {
                           <button 
                             type="button"
                             onClick={() => setAddMenuAfter(idx)}
-                            className="flex items-center gap-1.5 text-[8px] font-black uppercase tracking-widest text-slate-400 hover:text-blue-600 hover:bg-blue-50/50 hover:border-blue-400 dark:hover:bg-blue-950/10 border border-dashed border-slate-200 dark:border-slate-805 rounded-full px-3 py-1.5 transition-all"
+                            className="flex items-center gap-1.5 text-[8px] font-black uppercase tracking-widest text-slate-400 hover:text-blue-600 hover:bg-blue-50/50 hover:border-blue-400 dark:hover:bg-blue-950/10 border border-dashed border-slate-200 dark:border-slate-800 rounded-full px-3 py-1.5 transition-all"
                           >
                             <Plus size={10} strokeWidth={3} /> Add Step
                           </button>
@@ -1286,8 +1286,8 @@ export default function CampaignBuilder() {
     return (
       <div className="space-y-6 text-left font-sans">
         <div>
-          <h3 className="text-sm font-black text-slate-800 dark:text-slate-105 uppercase tracking-wider mb-1">Start Sequence Trigger</h3>
-          <p className="text-xs text-slate-400 dark:text-slate-555 font-semibold uppercase tracking-wider">Configure general limits and sender accounts</p>
+          <h3 className="text-sm font-black text-slate-800 dark:text-slate-100 uppercase tracking-wider mb-1">Start Sequence Trigger</h3>
+          <p className="text-xs text-slate-400 dark:text-slate-600 font-semibold uppercase tracking-wider">Configure general limits and sender accounts</p>
         </div>
 
         <div className="border-t border-slate-100 dark:border-slate-800 my-4" />
@@ -1340,7 +1340,7 @@ export default function CampaignBuilder() {
             max={25} 
             value={settings.dailyLimit}
             onChange={e => setSettings(s => ({ ...s, dailyLimit: parseInt(e.target.value) }))}
-            className="w-full h-1.5 bg-slate-105 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-600 dark:accent-blue-500" 
+            className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-600 dark:accent-blue-500" 
           />
         </div>
 
@@ -1387,7 +1387,7 @@ export default function CampaignBuilder() {
                   className={`w-8 h-8 rounded-lg text-[10px] font-black transition-all ${
                     on 
                       ? 'bg-blue-600 text-white shadow-sm' 
-                      : 'bg-slate-50 dark:bg-slate-850 text-slate-400 hover:bg-slate-100/60 dark:hover:bg-slate-800'
+                      : 'bg-slate-50 dark:bg-slate-800 text-slate-400 hover:bg-slate-100/60 dark:hover:bg-slate-800'
                   }`}
                 >
                   {l}
@@ -1444,7 +1444,7 @@ export default function CampaignBuilder() {
 
           <button 
             onClick={() => setEditingId('trigger')}
-            className="text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-650"
+            className="text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600"
           >
             Trigger settings
           </button>
@@ -1463,7 +1463,7 @@ export default function CampaignBuilder() {
                   className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border-2 text-[10px] font-black uppercase tracking-wider transition-all ${
                     activeStep.data.aiNote 
                       ? 'border-purple-400 bg-purple-50/50 text-purple-700 dark:bg-purple-950/20 dark:text-purple-400' 
-                      : 'border-slate-200 bg-white dark:bg-slate-850 dark:border-slate-800 text-slate-400 hover:border-slate-200'
+                      : 'border-slate-200 bg-white dark:bg-slate-800 dark:border-slate-800 text-slate-400 hover:border-slate-200'
                   }`}
                 >
                   <Sparkles size={12} /> Llama AI auto-write
@@ -1474,7 +1474,7 @@ export default function CampaignBuilder() {
                   className={`flex-1 py-2.5 rounded-xl border-2 text-[10px] font-black uppercase tracking-wider transition-all ${
                     !activeStep.data.aiNote 
                       ? 'border-blue-500 bg-blue-50/50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400' 
-                      : 'border-slate-200 bg-white dark:bg-slate-855 dark:border-slate-800 text-slate-400 hover:border-slate-200'
+                      : 'border-slate-200 bg-white dark:bg-slate-800 dark:border-slate-800 text-slate-400 hover:border-slate-200'
                   }`}
                 >
                   Static template note
@@ -1497,7 +1497,7 @@ export default function CampaignBuilder() {
                             e.target.value = '';
                           }
                         }}
-                        className="w-full border border-slate-200 dark:border-slate-805 rounded-xl px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider bg-slate-50 dark:bg-slate-900 text-slate-500 cursor-pointer outline-none"
+                        className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider bg-slate-50 dark:bg-slate-900 text-slate-500 cursor-pointer outline-none"
                       >
                         <option value="">📁 Select canned response template...</option>
                         {cannedMessages.map(cm => (
@@ -1521,7 +1521,7 @@ export default function CampaignBuilder() {
                         key={v}
                         type="button"
                         onClick={() => insertVariable(activeStep.id, 'note', v)}
-                        className="text-[9px] px-2.5 py-1 rounded bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-450 hover:bg-slate-100 font-bold active:scale-95 transition-transform"
+                        className="text-[9px] px-2.5 py-1 rounded bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-100 font-bold active:scale-95 transition-transform"
                       >
                         +{v}
                       </button>
@@ -1541,7 +1541,7 @@ export default function CampaignBuilder() {
                       className={`text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg border-2 transition-all ${
                         activeStep.data.enableAB 
                           ? 'border-indigo-500 bg-indigo-50/50 text-indigo-700 dark:bg-indigo-950/20 dark:text-indigo-400' 
-                          : 'border-slate-200 bg-white dark:bg-slate-850 dark:border-slate-800 text-slate-400 hover:border-slate-200'
+                          : 'border-slate-200 bg-white dark:bg-slate-800 dark:border-slate-800 text-slate-400 hover:border-slate-200'
                       }`}
                     >
                       {activeStep.data.enableAB ? 'Enabled' : 'Disabled'}
@@ -1550,7 +1550,7 @@ export default function CampaignBuilder() {
 
                   {activeStep.data.enableAB && (
                     <div className="space-y-2 mt-2 border-l-2 border-indigo-200 dark:border-indigo-900/60 pl-3">
-                      <span className="block text-[9px] font-bold text-indigo-505 dark:text-indigo-400 uppercase tracking-wider">Variant B Connection Note</span>
+                      <span className="block text-[9px] font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-wider">Variant B Connection Note</span>
                       <textarea 
                         value={activeStep.data.noteB || ''} 
                         onChange={e => setStepData('noteB', e.target.value.slice(0, 280))}
@@ -1565,7 +1565,7 @@ export default function CampaignBuilder() {
                             key={v}
                             type="button"
                             onClick={() => insertVariable(activeStep.id, 'noteB', v)}
-                            className="text-[9px] px-2.5 py-1 rounded bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-450 hover:bg-slate-100 font-bold active:scale-95 transition-transform"
+                            className="text-[9px] px-2.5 py-1 rounded bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-100 font-bold active:scale-95 transition-transform"
                           >
                             +{v}
                           </button>
@@ -1598,7 +1598,7 @@ export default function CampaignBuilder() {
                       className={`flex-1 py-2.5 rounded-xl border-2 text-[10px] font-black uppercase tracking-wider transition-all ${
                         activeStep.data.msgType === v 
                           ? 'border-emerald-500 bg-emerald-50/30 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400' 
-                          : 'border-slate-200 bg-white dark:bg-slate-855 dark:border-slate-800 text-slate-400 hover:border-slate-200'
+                          : 'border-slate-200 bg-white dark:bg-slate-800 dark:border-slate-800 text-slate-400 hover:border-slate-200'
                       }`}
                     >
                       {l}
@@ -1616,7 +1616,7 @@ export default function CampaignBuilder() {
                     className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border-2 text-[10px] font-black uppercase tracking-wider transition-all ${
                       activeStep.data.aiMsg 
                         ? 'border-purple-400 bg-purple-50/50 text-purple-700 dark:bg-purple-950/20 dark:text-purple-400' 
-                        : 'border-slate-200 bg-white dark:bg-slate-855 dark:border-slate-800 text-slate-400 hover:border-slate-200'
+                        : 'border-slate-200 bg-white dark:bg-slate-800 dark:border-slate-800 text-slate-400 hover:border-slate-200'
                     }`}
                   >
                     <Sparkles size={12} /> AI personalized message
@@ -1627,7 +1627,7 @@ export default function CampaignBuilder() {
                     className={`flex-1 py-2.5 rounded-xl border-2 text-[10px] font-black uppercase tracking-wider transition-all ${
                       !activeStep.data.aiMsg 
                         ? 'border-emerald-500 bg-emerald-50/50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400' 
-                        : 'border-slate-200 bg-white dark:bg-slate-855 dark:border-slate-800 text-slate-400 hover:border-slate-200'
+                        : 'border-slate-200 bg-white dark:bg-slate-800 dark:border-slate-800 text-slate-400 hover:border-slate-200'
                     }`}
                   >
                     Static template message
@@ -1650,7 +1650,7 @@ export default function CampaignBuilder() {
                               e.target.value = '';
                             }
                           }}
-                          className="w-full border border-slate-200 dark:border-slate-805 rounded-xl px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider bg-slate-55 dark:bg-slate-900 text-slate-500 cursor-pointer outline-none"
+                          className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider bg-slate-50 dark:bg-slate-900 text-slate-500 cursor-pointer outline-none"
                         >
                           <option value="">📁 Select canned response template...</option>
                           {cannedMessages.map(cm => (
@@ -1676,7 +1676,7 @@ export default function CampaignBuilder() {
                         className={`text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg border-2 transition-all ${
                           activeStep.data.enableAB 
                             ? 'border-indigo-500 bg-indigo-50/50 text-indigo-700 dark:bg-indigo-950/20 dark:text-indigo-400' 
-                            : 'border-slate-200 bg-white dark:bg-slate-850 dark:border-slate-800 text-slate-400 hover:border-slate-200'
+                            : 'border-slate-200 bg-white dark:bg-slate-800 dark:border-slate-800 text-slate-400 hover:border-slate-200'
                         }`}
                       >
                         {activeStep.data.enableAB ? 'Enabled' : 'Disabled'}
@@ -1685,7 +1685,7 @@ export default function CampaignBuilder() {
 
                     {activeStep.data.enableAB && (
                       <div className="space-y-2 mt-2 border-l-2 border-indigo-200 dark:border-indigo-900/60 pl-3">
-                        <span className="block text-[9px] font-bold text-indigo-505 dark:text-indigo-400 uppercase tracking-wider">Variant B Pitch Message</span>
+                        <span className="block text-[9px] font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-wider">Variant B Pitch Message</span>
                         <textarea 
                           value={activeStep.data.messageB || ''} 
                           onChange={e => setStepData('messageB', e.target.value)}
@@ -1700,7 +1700,7 @@ export default function CampaignBuilder() {
                               key={v}
                               type="button"
                               onClick={() => insertVariable(activeStep.id, 'messageB', v)}
-                              className="text-[9px] px-2.5 py-1 rounded bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-450 hover:bg-slate-100 font-bold active:scale-95 transition-transform"
+                              className="text-[9px] px-2.5 py-1 rounded bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-100 font-bold active:scale-95 transition-transform"
                             >
                               +{v}
                             </button>
@@ -1716,7 +1716,7 @@ export default function CampaignBuilder() {
                           key={v}
                           type="button"
                           onClick={() => insertVariable(activeStep.id, 'message', v)}
-                          className="text-[9px] px-2.5 py-1 rounded bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-450 hover:bg-slate-100 font-bold active:scale-95 transition-transform"
+                          className="text-[9px] px-2.5 py-1 rounded bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-100 font-bold active:scale-95 transition-transform"
                         >
                           +{v}
                         </button>
@@ -1763,7 +1763,7 @@ export default function CampaignBuilder() {
                     className={`flex-1 py-2.5 rounded-xl border-2 text-base font-black transition-all ${
                       (activeStep.data.postCount || 1) === n 
                         ? 'border-orange-500 bg-orange-50/30 text-orange-700 dark:bg-orange-950/20 dark:text-orange-400' 
-                        : 'border-slate-200 bg-white dark:bg-slate-850 dark:border-slate-800 text-slate-400 hover:border-slate-200'
+                        : 'border-slate-200 bg-white dark:bg-slate-800 dark:border-slate-800 text-slate-400 hover:border-slate-200'
                     }`}
                   >
                     {n}
@@ -1791,7 +1791,7 @@ export default function CampaignBuilder() {
                     className={`text-[9px] px-3 py-1 rounded-full border transition-all font-black uppercase tracking-wider ${
                       activeStep.data.tagName === tag 
                         ? 'border-pink-400 bg-pink-50 text-pink-700 dark:bg-pink-950/20 dark:text-pink-400' 
-                        : 'border-slate-100 bg-slate-50 dark:bg-slate-855 dark:border-slate-800 text-slate-400 hover:border-pink-300 hover:text-pink-500'
+                        : 'border-slate-100 bg-slate-50 dark:bg-slate-800 dark:border-slate-800 text-slate-400 hover:border-pink-300 hover:text-pink-500'
                     }`}
                   >
                     {tag}
@@ -1840,7 +1840,7 @@ export default function CampaignBuilder() {
               value={sourceUrl} 
               onChange={e => setSourceUrl(e.target.value)}
               placeholder="Paste LinkedIn search URL (Regular or Sales Navigator)..."
-              className="w-full text-sm border border-slate-100 dark:border-slate-800 rounded-2xl pl-12 pr-4 py-3.5 bg-slate-55 dark:bg-slate-900 focus:bg-white focus:border-blue-500 outline-none text-slate-800 dark:text-slate-200 transition-all placeholder:text-slate-400" 
+              className="w-full text-sm border border-slate-100 dark:border-slate-800 rounded-2xl pl-12 pr-4 py-3.5 bg-slate-50 dark:bg-slate-900 focus:bg-white focus:border-blue-500 outline-none text-slate-800 dark:text-slate-200 transition-all placeholder:text-slate-400" 
             />
           </div>
           {/* URL type helper tips */}
@@ -1862,7 +1862,7 @@ export default function CampaignBuilder() {
             <select 
               value={sourceAccountId} 
               onChange={e => setSourceAccountId(e.target.value)}
-              className="w-full border border-slate-100 dark:border-slate-800 rounded-2xl px-4 py-3 text-sm font-bold bg-white dark:bg-slate-900 dark:text-slate-200 focus:border-blue-550 outline-none"
+              className="w-full border border-slate-100 dark:border-slate-800 rounded-2xl px-4 py-3 text-sm font-bold bg-white dark:bg-slate-900 dark:text-slate-200 focus:border-blue-500 outline-none"
             >
               <option value="">Select profile...</option>
               {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
@@ -1876,7 +1876,7 @@ export default function CampaignBuilder() {
               max={1000}
               value={maxLeads}
               onChange={e => setMaxLeads(Math.min(Math.max(parseInt(e.target.value) || 1, 1), 1000))}
-              className="w-full border border-slate-100 dark:border-slate-800 rounded-2xl px-4 py-3 text-sm font-bold bg-white dark:bg-slate-900 dark:text-slate-200 focus:border-blue-550 outline-none"
+              className="w-full border border-slate-100 dark:border-slate-800 rounded-2xl px-4 py-3 text-sm font-bold bg-white dark:bg-slate-900 dark:text-slate-200 focus:border-blue-500 outline-none"
             />
             <p className="mt-1.5 text-[10px] font-bold text-slate-400 dark:text-slate-500">Max 1000 per import · already-imported people are skipped</p>
           </div>
@@ -1895,7 +1895,7 @@ export default function CampaignBuilder() {
 
       {previewLeads.length > 0 && (
         <div className="bg-white dark:bg-slate-900/60 rounded-[32px] border border-slate-100 dark:border-slate-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.01)] overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-850 flex justify-between items-center bg-slate-100/30 dark:bg-slate-900/50">
+          <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-100/30 dark:bg-slate-900/50">
             <span className="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-widest">Found {totalFound} Match{totalFound !== 1 ? 'es' : ''}</span>
             <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20 px-2.5 py-1 rounded-lg uppercase tracking-wider border border-emerald-100/50">Ready to pull</span>
           </div>
@@ -1904,7 +1904,7 @@ export default function CampaignBuilder() {
             {previewLeads.map((p, i) => (
               <div key={i} className="px-6 py-3 flex items-center justify-between">
                 <div className="min-w-0 text-left">
-                  <p className="text-sm font-bold text-slate-800 dark:text-slate-250 truncate">{p.full_name}</p>
+                  <p className="text-sm font-bold text-slate-800 dark:text-slate-200 truncate">{p.full_name}</p>
                   <p className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold truncate max-w-[300px] mt-0.5">{p.designation} @ {p.company}</p>
                 </div>
                 {p.is_duplicate ? (
@@ -1916,7 +1916,7 @@ export default function CampaignBuilder() {
             ))}
           </div>
           
-          <div className="p-4 bg-slate-50 dark:bg-slate-900/40 border-t border-slate-100 dark:border-slate-850">
+          <div className="p-4 bg-slate-50 dark:bg-slate-900/40 border-t border-slate-100 dark:border-slate-800">
             <button 
               onClick={doImportLeads} 
               disabled={sourcingLoading || importStarted}
@@ -1984,19 +1984,19 @@ export default function CampaignBuilder() {
           <div className="grid grid-cols-2 gap-4 text-left">
             <div className="bg-slate-50/50 dark:bg-slate-900/40 rounded-2xl p-4 border border-slate-100 dark:border-slate-800">
               <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1">Attached Senders</span>
-              <span className="text-sm font-black text-slate-800 dark:text-slate-205">{settings.accounts?.length || 0} Account{settings.accounts?.length !== 1 ? 's' : ''}</span>
+              <span className="text-sm font-black text-slate-800 dark:text-slate-200">{settings.accounts?.length || 0} Account{settings.accounts?.length !== 1 ? 's' : ''}</span>
             </div>
             <div className="bg-slate-50/50 dark:bg-slate-900/40 rounded-2xl p-4 border border-slate-100 dark:border-slate-800">
               <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1">Safe Daily Limits</span>
-              <span className="text-sm font-black text-slate-800 dark:text-slate-205">{settings.dailyLimit} invites/day</span>
+              <span className="text-sm font-black text-slate-800 dark:text-slate-200">{settings.dailyLimit} invites/day</span>
             </div>
             <div className="bg-slate-50/50 dark:bg-slate-900/40 rounded-2xl p-4 border border-slate-100 dark:border-slate-800">
               <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1">Sequence Steps</span>
-              <span className="text-sm font-black text-slate-800 dark:text-slate-205">{nonEnd.length} Action Step{nonEnd.length !== 1 ? 's' : ''}</span>
+              <span className="text-sm font-black text-slate-800 dark:text-slate-200">{nonEnd.length} Action Step{nonEnd.length !== 1 ? 's' : ''}</span>
             </div>
             <div className="bg-slate-50/50 dark:bg-slate-900/40 rounded-2xl p-4 border border-slate-100 dark:border-slate-800">
               <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1">Working hours</span>
-              <span className="text-sm font-black text-slate-800 dark:text-slate-205">{settings.workingStart} - {settings.workingEnd}</span>
+              <span className="text-sm font-black text-slate-800 dark:text-slate-200">{settings.workingStart} - {settings.workingEnd}</span>
             </div>
           </div>
 
@@ -2057,14 +2057,14 @@ export default function CampaignBuilder() {
       <div className="bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800/80 px-8 py-5 flex items-center justify-between shrink-0">
         <button 
           onClick={() => wizardStep > 1 ? setWizardStep(wizardStep - 1) : navigate('/dashboard/campaigns')}
-          className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-700 dark:hover:text-slate-250 transition-colors"
+          className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
         >
           <ArrowLeft size={14} /> 
           <span>{wizardStep === 1 ? 'Cancel' : 'Back'}</span>
         </button>
 
         <div className="flex items-center gap-4">
-          {saveMsg && <span className="text-[9px] font-black text-emerald-605 dark:text-emerald-450 uppercase tracking-widest">{saveMsg}</span>}
+          {saveMsg && <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">{saveMsg}</span>}
           {wizardStep < 5 && (
             <button 
               onClick={() => wizardStep === 4 ? setWizardStep(5) : save(campaignStatus, wizardStep + 1)} 

@@ -24,7 +24,7 @@ function ProgressBar({ value, max }) {
 }
 
 function StatusDot({ status, isActive }) {
-  if (!isActive) return <span className="w-2 h-2 rounded-full bg-slate-350 dark:bg-slate-650 shrink-0" />;
+  if (!isActive) return <span className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600 shrink-0" />;
   if (status === 'warning') return <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0 animate-pulse" />;
   if (status === 'paused') return <span className="w-2 h-2 rounded-full bg-orange-400 shrink-0" />;
   return <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 animate-pulse" />;
@@ -59,11 +59,11 @@ export default function SafetyMonitor({ accounts, onToggleAccount }) {
       {/* Alert Header box */}
       {warningAccounts.length > 0 ? (
         <div className="bg-rose-50/50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 rounded-[24px] p-5 flex items-start gap-4 animate-in fade-in duration-300">
-          <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-455 flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-500 flex items-center justify-center shrink-0">
             <ShieldAlert size={20} strokeWidth={2.5} />
           </div>
           <div>
-            <p className="font-extrabold text-rose-700 dark:text-rose-450 text-sm uppercase tracking-wide">{warningAccounts.length} sender accounts restricted or paused</p>
+            <p className="font-extrabold text-rose-700 dark:text-rose-400 text-sm uppercase tracking-wide">{warningAccounts.length} sender accounts restricted or paused</p>
             <p className="text-xs text-rose-600/80 dark:text-rose-400 mt-1 font-semibold leading-relaxed">
               Verify LinkedIn credentials for: <span className="font-black text-rose-800 dark:text-rose-300">{warningAccounts.map((a) => a.name).join(', ')}</span> to avoid complete outreach lockouts.
             </p>
@@ -71,12 +71,12 @@ export default function SafetyMonitor({ accounts, onToggleAccount }) {
         </div>
       ) : (
         <div className="bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 rounded-[24px] p-5 flex items-center gap-4 animate-in fade-in duration-300">
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-455 flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-500 flex items-center justify-center shrink-0">
             <ShieldCheck size={20} strokeWidth={2.5} />
           </div>
           <div>
             <p className="font-extrabold text-emerald-700 dark:text-emerald-400 text-sm uppercase tracking-wide">LinkedIn automation running securely</p>
-            <p className="text-xs text-emerald-600/80 dark:text-emerald-450 mt-0.5 font-semibold">All configured candidate senders operating within limits.</p>
+            <p className="text-xs text-emerald-600/80 dark:text-emerald-400 mt-0.5 font-semibold">All configured candidate senders operating within limits.</p>
           </div>
         </div>
       )}
@@ -107,7 +107,7 @@ export default function SafetyMonitor({ accounts, onToggleAccount }) {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <StatusDot status={account.status} isActive={account.is_active} />
-                  <span className="font-extrabold text-slate-800 dark:text-slate-150 text-xs truncate leading-snug">{account.name}</span>
+                  <span className="font-extrabold text-slate-800 dark:text-slate-100 text-xs truncate leading-snug">{account.name}</span>
                 </div>
                 
                 <button
@@ -155,8 +155,8 @@ export default function SafetyMonitor({ accounts, onToggleAccount }) {
               </div>
 
               {/* Warmup state Footer */}
-              <div className="flex items-center justify-between text-[9px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 pt-2.5 border-t border-slate-50 dark:border-slate-850/50">
-                <span className="px-2 py-0.5 bg-slate-50 dark:bg-slate-850 rounded border border-slate-100 dark:border-slate-800">
+              <div className="flex items-center justify-between text-[9px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 pt-2.5 border-t border-slate-50 dark:border-slate-800/50">
+                <span className="px-2 py-0.5 bg-slate-50 dark:bg-slate-800 rounded border border-slate-100 dark:border-slate-800">
                   {account.warmup_week === 0
                     ? 'Warming inactive'
                     : account.warmup_week >= 4
@@ -176,12 +176,12 @@ export default function SafetyMonitor({ accounts, onToggleAccount }) {
         <div className="px-6 py-4.5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/60 flex items-center gap-2">
           <Activity size={16} className="text-blue-500" />
           <div className="flex-1">
-            <h3 className="text-xs font-black text-slate-850 dark:text-slate-150 uppercase tracking-wider">Live System activity stream</h3>
+            <h3 className="text-xs font-black text-slate-800 dark:text-slate-100 uppercase tracking-wider">Live System activity stream</h3>
             <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wide mt-0.5">Real-time Unipile API execution records</p>
           </div>
         </div>
         
-        <div className="divide-y divide-slate-50 dark:divide-slate-850/50 max-h-80 overflow-y-auto">
+        <div className="divide-y divide-slate-50 dark:divide-slate-800/50 max-h-80 overflow-y-auto">
           {activityLog.length === 0 && (
             <div className="p-10 text-center text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-wider">Waiting for scheduler logs...</div>
           )}
@@ -193,10 +193,10 @@ export default function SafetyMonitor({ accounts, onToggleAccount }) {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-xs font-extrabold text-slate-800 dark:text-slate-200">{log.account_name || `Account ID ${log.account_id}`}</span>
-                  <span className="text-slate-350 dark:text-slate-600 text-xs font-bold">→</span>
+                  <span className="text-slate-300 dark:text-slate-600 text-xs font-bold">→</span>
                   <span className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wide">{(log.action_type || '').replace(/_/g, ' ')}</span>
                   {log.lead_name && (
-                    <span className="text-[10px] font-black text-blue-650 dark:text-blue-400 uppercase tracking-widest bg-blue-50 dark:bg-blue-950/20 px-1.5 py-0.5 rounded-md">
+                    <span className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest bg-blue-50 dark:bg-blue-950/20 px-1.5 py-0.5 rounded-md">
                       Candidate: {log.lead_name}
                     </span>
                   )}
@@ -206,7 +206,7 @@ export default function SafetyMonitor({ accounts, onToggleAccount }) {
                 )}
               </div>
               
-              <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-550 shrink-0">
+              <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 shrink-0">
                 {log.created_at ? new Date(log.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : ''}
               </span>
             </div>
