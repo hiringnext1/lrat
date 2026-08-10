@@ -20,17 +20,36 @@ export default function Sidebar() {
 
   const isAdmin = user?.role === 'admin';
 
+  // Unread count in the tab title: when the app sits in a background tab this
+  // is the only signal the user actually sees.
+  useEffect(() => {
+    const base = 'GrowLeadz';
+    document.title = unreadCount > 0 ? `(${unreadCount}) ${base}` : base;
+    return () => { document.title = base; };
+  }, [unreadCount]);
+
   useEffect(() => {
     const onInboxUpdated = () => fetchUnread();
 
     socket.on('new_reply', onInboxUpdated);
     window.addEventListener('inbox_updated', onInboxUpdated);
 
+    // The socket is the fast path, but a dropped connection (laptop asleep,
+    // network change) would leave the count stale until a manual reload. Poll
+    // as a floor, and refresh whenever the user comes back to the tab.
+    const poll = setInterval(fetchUnread, 60000);
+    const onFocus = () => fetchUnread();
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onFocus);
+
     fetchUnread();
 
     return () => {
       socket.off('new_reply', onInboxUpdated);
       window.removeEventListener('inbox_updated', onInboxUpdated);
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onFocus);
+      clearInterval(poll);
     };
   }, []);
 

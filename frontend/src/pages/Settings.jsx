@@ -31,6 +31,21 @@ export default function Settings() {
   const [pwState, setPwState] = useState({ busy: false, msg: '', type: '' });
   const [del, setDel] = useState({ open: false, password: '', confirm: '', busy: false, error: '' });
 
+  const [notifPerm, setNotifPerm] = useState(
+    typeof Notification !== 'undefined' ? Notification.permission : 'unsupported'
+  );
+
+  async function enableDesktopAlerts() {
+    if (typeof Notification === 'undefined') return;
+    // Requested from a click, which is what browsers actually honour — asking
+    // on page load is commonly ignored or auto-denied.
+    const result = await Notification.requestPermission();
+    setNotifPerm(result);
+    if (result === 'granted') {
+      new Notification('Desktop alerts enabled', { body: "You'll be notified when a prospect replies.", icon: '/favicon.svg' });
+    }
+  }
+
   async function changePassword() {
     if (pw.new_password !== pw.confirm) return setPwState({ busy: false, msg: 'New passwords do not match', type: 'error' });
     if (pw.new_password.length < 6) return setPwState({ busy: false, msg: 'New password must be at least 6 characters', type: 'error' });
@@ -585,6 +600,40 @@ export default function Settings() {
               </span>
             )}
           </div>
+        </div>
+
+        {/* ═══ DESKTOP ALERTS ═════════════════════════════════════════ */}
+        <div className="bg-white dark:bg-slate-900/60 rounded-[32px] p-6 border border-slate-100 dark:border-slate-800/80">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/40 flex items-center justify-center">
+              <Bell size={15} className="text-amber-600 dark:text-amber-400" />
+            </div>
+            <div>
+              <h2 className="text-sm font-extrabold text-slate-800 dark:text-slate-100">Desktop alerts</h2>
+              <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">Get notified the moment a prospect replies</p>
+            </div>
+          </div>
+
+          {notifPerm === 'granted' ? (
+            <p className="text-[11px] font-bold text-emerald-500 flex items-center gap-1.5">
+              <CheckCircle size={13} /> Enabled — replies will pop up even when this tab is in the background.
+            </p>
+          ) : notifPerm === 'denied' ? (
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+              Blocked in your browser. Allow notifications for growleadz.co in the site settings (the icon next to the
+              address bar), then reload. Replies still appear in the app and in the tab title.
+            </p>
+          ) : notifPerm === 'unsupported' ? (
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">This browser doesn't support desktop notifications.</p>
+          ) : (
+            <button
+              onClick={enableDesktopAlerts}
+              className="flex items-center gap-2 border border-amber-200 dark:border-amber-900/50 text-amber-700 dark:text-amber-400 px-5 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-amber-50 dark:hover:bg-amber-950/20 transition-all"
+            >
+              <Bell size={13} strokeWidth={2.5} />
+              Enable desktop alerts
+            </button>
+          )}
         </div>
 
         {/* ═══ YOUR DATA ══════════════════════════════════════════════ */}
