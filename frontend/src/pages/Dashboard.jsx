@@ -683,53 +683,6 @@ export default function Dashboard() {
             )}
           </GlassCard>
 
-          {/* Engine Status */}
-          <GlassCard className="p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-[11px] font-black text-white uppercase tracking-widest flex items-center gap-2">
-                <Activity size={13} className="text-blue-400 animate-pulse" />
-                Engine Status
-              </h2>
-              <span className={`text-[9px] font-black px-2 py-0.5 rounded-lg border uppercase tracking-wider ${
-                engineActive ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-              }`}>{engine.status}</span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              {[
-                { label: 'Outreach Queue', val: engine.data?.queued?.pending_connections ?? 0 },
-                { label: 'Enrichment Queue', val: engine.data?.queued?.pending_enrichment ?? 0 },
-              ].map(({ label, val }) => (
-                <div key={label} className="p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)' }}>
-                  <p className="text-[8px] font-bold text-slate-600 uppercase tracking-wider">{label}</p>
-                  <p className="text-lg font-black text-white mt-1">{val}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className="space-y-2 pt-3 border-t border-white/6">
-              <p className="text-[9px] font-bold text-slate-600 uppercase tracking-widest mb-2">Task Processes</p>
-              {[
-                { name: 'Connection Sender', key: 'runSendConnections' },
-                { name: 'Profile Enrichment', key: 'runLeadEnrichment' },
-                { name: 'Flow Execution', key: 'runFlowExecution' },
-              ].map(task => {
-                const active = engine.data?.isRunning?.[task.key];
-                return (
-                  <div key={task.key} className="flex items-center justify-between text-[10px]">
-                    <span className="text-slate-400 font-medium">{task.name}</span>
-                    <div className="flex items-center gap-1.5">
-                      <span className={`w-1.5 h-1.5 rounded-full ${active ? 'bg-emerald-400 animate-ping' : 'bg-slate-700'}`} />
-                      <span className={`font-bold text-[9px] ${active ? 'text-emerald-400' : 'text-slate-600'}`}>
-                        {active ? 'Running' : 'Idle'}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </GlassCard>
-
           {/* Pipeline Funnel */}
           <GlassCard className="p-5">
             <h2 className="text-[11px] font-black text-white uppercase tracking-widest flex items-center gap-2 mb-5">
