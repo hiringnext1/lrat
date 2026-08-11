@@ -609,4 +609,28 @@ router.delete('/account', authenticateJWT, validate(deleteAccountSchema), async 
   }
 });
 
+// ─── One-click unsubscribe from the daily digest ─────────────────────────────
+// Public by design: a link in an email cannot depend on an active session.
+// The token identifies the user, so no one can unsubscribe anyone else.
+router.get('/unsubscribe', (req, res) => {
+  const page = (title, body) => `<!doctype html><meta charset="utf-8"><title>${title}</title>
+    <div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#080c18;color:#f1f5f9;min-height:100vh;display:flex;align-items:center;justify-content:center;">
+      <div style="max-width:420px;padding:40px;text-align:center;">
+        <h1 style="font-size:20px;margin:0 0 12px;">${title}</h1>
+        <p style="font-size:14px;line-height:1.6;color:#94a3b8;margin:0 0 24px;">${body}</p>
+        <a href="${process.env.FRONTEND_URL || 'https://growleadz.co'}/dashboard/settings" style="color:#60a5fa;font-size:13px;">Manage notification settings</a>
+      </div></div>`;
+
+  try {
+    const decoded = jwt.verify(req.query.token || '', process.env.JWT_SECRET);
+    if (decoded.purpose !== 'digest_unsubscribe') throw new Error('wrong token purpose');
+
+    getDb().prepare('UPDATE users SET email_digest_enabled = 0 WHERE id = ?').run(decoded.userId);
+    log.info({ userId: decoded.userId }, 'Unsubscribed from daily digest');
+    res.status(200).send(page('Unsubscribed', 'You will no longer receive the daily summary. You can turn it back on any time in Settings.'));
+  } catch (err) {
+    res.status(400).send(page('Link expired', 'This unsubscribe link is no longer valid. You can turn the daily summary off in Settings.'));
+  }
+});
+
 module.exports = router;

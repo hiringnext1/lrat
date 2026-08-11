@@ -341,6 +341,9 @@ function initSchema() {
   try { db.exec("ALTER TABLE users ADD COLUMN lead_scoring_weights TEXT"); } catch (_) {}
   // When the user last opened the notification bell — anything newer is unread
   try { db.exec("ALTER TABLE users ADD COLUMN notifications_seen_at TEXT"); } catch (_) {}
+  // Local calendar date of the last digest, so a restart (which re-registers
+  // the cron) cannot send a second one on the same day
+  try { db.exec("ALTER TABLE users ADD COLUMN last_digest_date TEXT"); } catch (_) {}
 
   // ── Campaign Date Scheduling Columns ─────────────────────────────────────────
   // ── Resumable lead imports ───────────────────────────────────────────────────
